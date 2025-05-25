@@ -1,0 +1,52 @@
+---
+const TECHNICAL_SKILLS = [
+  { name: "Python" },
+  { name: "JavaScript" },
+  { name: "PyTorch" },
+  { name: "TensorFlow" },
+  { name: "FastAPI" },
+  { name: "Wandb" },
+  { name: "Docker" },
+  { name: "GitHub Actions" },
+  { name: "MySQL" },
+  { name: "MongoDB" },
+  { name: "Google Cloud (Cloud Run, GKE, Functions, Cloud Build)" },
+  { name: "Azure" },
+];
+
+const COMPETENCIES = [
+  { name: "Trabajo en equipo" },
+  { name: "Comunicación efectiva" },
+  { name: "Pensamiento crítico" },
+  { name: "Resolución de problemas" },
+  { name: "Gestión del tiempo" },
+  { name: "Innovación" },
+  { name: "Competencias interculturales" },
+];
+
+// You can use existing components like Badge.astro for styling if desired,
+// or simple list elements. For now, let's use simple list elements.
+// Import Badge from './Badge.astro'; // If you decide to use Badge
+---
+
+<section class="mb-16">
+  <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Habilidades Técnicas</h3>
+  <ul class="flex flex-wrap gap-2">
+    {TECHNICAL_SKILLS.map(skill => (
+      <li class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-1 px-3 rounded-md text-sm">
+        {skill.name}
+      </li>
+    ))}
+  </ul>
+</section>
+
+<section>
+  <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Competencias</h3>
+  <ul class="flex flex-wrap gap-2">
+    {COMPETENCIES.map(competency => (
+      <li class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-1 px-3 rounded-md text-sm">
+        {competency.name}
+      </li>
+    ))}
+  </ul>
+</section>

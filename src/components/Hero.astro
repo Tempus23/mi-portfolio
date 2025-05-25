@@ -1,15 +1,16 @@
 ---
-const personalImageAlt = "Carlos Hernández"
+const personalImageAlt = "Carlos Hernández Martínez"
 import Badge from "@/components/Badge.astro"
 import LinkedInIcon from "@/components/icons/LinkedIn.astro"
 import MailIcon from "@/components/icons/Mail.astro"
+import GitHubIcon from "@/components/icons/GitHub.astro"
 import SocialPill from "@/components/SocialPill.astro"
 ---
 
 <div class="max-w-xl">  <div class="flex gap-4 mb-4">
     <img
       class="rounded-full shadow-lg size-16"
-      src="/mi-portfolio/midudev.webp"
+      src="/me.png"
       alt={personalImageAlt}
     />
     <a
@@ -24,24 +25,27 @@ import SocialPill from "@/components/SocialPill.astro"
   <h1
     class="text-4xl font-bold tracking-tight text-gray-800 sm:text-5xl dark:text-white"
   >
-    Hey, soy Carlos
+    Hey, soy Carlos Hernández Martínez
   </h1>
   <p
     class="mt-6 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300"
   >
-    +15 años de experiencia. <strong
-      >Ingeniero de Software y Creador de Contenido sobre Programación</strong
-    > de Barcelona, España 🇪🇸. Especializado en el desarrollo de aplicaciones web
-    únicas.
+    Ingeniero Informático | Especialista en Machine Learning & AI. <strong
+      >Soy un profesional alegre, resiliente y ambicioso, apasionado por la Inteligencia Artificial y el Machine Learning.</strong
+    >
   </p>
   <nav class="flex flex-wrap gap-4 mt-8">
-    <SocialPill href="mailto:miduga@gmail.com">
+    <SocialPill href="mailto:carlos.cbm32@gmail.com">
       <MailIcon class="size-4" />
       Contáctame
     </SocialPill>
     <SocialPill href="https://linkedin.com/in/carl0shdez">
       <LinkedInIcon class="size-4" />
       LinkedIn
+    </SocialPill>
+    <SocialPill href="https://github.com/Tempus23">
+      <GitHubIcon class="size-4" />
+      GitHub
     </SocialPill>
   </nav>
 </div>

@@ -3,6 +3,7 @@ import GitHub from "./icons/GitHub.astro"
 import NextJS from "./icons/NextJS.astro"
 import Tailwind from "./icons/Tailwind.astro"
 import Link from "./icons/Link.astro"
+import Code from "./icons/Code.astro" // Import Code icon
 import LinkButton from "./LinkButton.astro"
 
 const TAGS = {
@@ -16,23 +17,33 @@ const TAGS = {
     class: "bg-[#003159] text-white",
     icon: Tailwind,
   },
+  PYTORCH: {
+    name: "PyTorch",
+    class: "bg-orange-600 text-white",
+    icon: Code,
+  },
+  TENSORFLOW: {
+    name: "TensorFlow",
+    class: "bg-blue-600 text-white",
+    icon: Code,
+  },
 }
-const PROJECTS = [  {
-    title: "SVGL - A beautiful library with SVG logos",
-    description:
-      "Biblioteca de logos SVG de las marcas más populares. +10k visitas al mes. +2K svgs descargados. Creado desde cero con Next.js, React y Tailwind CSS.",
-    link: "https://svgl.vercel.app/",
-    github: "https://github.com/pheralb/svgl",
-    image: "/mi-portfolio/projects/svgl.webp",
-    tags: [TAGS.NEXT, TAGS.TAILWIND],
+const PROJECTS = [
+  {
+    title: "Neural Implicit Swept Volume Models for Fast Collision Detection",
+    description: "Investigación de representaciones neuronales implícitas (NeRF) para modelado de volúmenes barridos en entornos dinámicos. Implementé modelos en PyTorch con técnicas de ensembling, pruning y quantization para optimizar rendimiento y generalización.",
+    link: "",
+    github: "",
+    image: "/projects/placeholder1.webp",
+    tags: [TAGS.PYTORCH],
   },
   {
-    title: "AdventJS - Retos de programación con JavaScript y TypeScript",
-    description:
-      "Plataforma gratuita con retos de programación. Más de 1 millón de visitas en un mes. +50K retos completados. Creada desde cero con Next.js, React y Tailwind CSS.",
-    link: "https://adventjs.dev",
-    image: "/mi-portfolio/projects/adventjs.webp",
-    tags: [TAGS.NEXT, TAGS.TAILWIND],
+    title: "Clasificación Automática de Osteoartritis de Rodilla",
+    description: "Reproducción y ajuste de modelos SOTA en PyTorch y TensorFlow usando el dataset OAI. Fine-tune en datos felinos para pruebas cross-domain en colaboración con un proyecto de doctorado.",
+    link: "",
+    github: "",
+    image: "/projects/placeholder2.webp",
+    tags: [TAGS.PYTORCH, TAGS.TENSORFLOW],
   },
 ]
 ---

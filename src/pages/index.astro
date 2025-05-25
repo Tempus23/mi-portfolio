@@ -10,17 +10,13 @@ import Projects from "@/components/Projects.astro"
 import SectionContainer from "@/components/SectionContainer.astro"
 import Hero from "@/components/Hero.astro"
 import TitleSection from "@/components/TitleSection.astro"
+import Skills from "@/components/Skills.astro"; // Import Skills component
 ---
 
-<Layout
-  title="Porfolio de midudev - Desarrollador y Programador Web con 15 años de experiencia"
-  description="Contrata a midudev para crear tu aplicación web o móvil. Desarrollador Web y Creador de Contenido. Especializado en crear aplicaciones únicas."
->
+<Layout>
   <main class="px-4">
     <SectionContainer class="py-16 md:py-36">
-      <Hero>
-      </slot>
-    </Hero>
+      <Hero />
     </SectionContainer>
     <div class="space-y-24">
     <SectionContainer id="experiencia">
@@ -45,6 +41,14 @@ import TitleSection from "@/components/TitleSection.astro"
         Sobre mí
       </TitleSection>
       <AboutMe />
+    </SectionContainer>
+
+    <SectionContainer id="habilidades">
+      <TitleSection>
+        <CodeIcon class="size-7" />
+        Habilidades
+      </TitleSection>
+      <Skills />
     </SectionContainer>
   </div>
   </main>

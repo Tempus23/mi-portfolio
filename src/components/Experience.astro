@@ -1,29 +1,72 @@
 ---
 import ExperienceItem from "./ExperienceItem.astro"
-const EXPERIENCE = [
+
+const PROFESSIONAL_EXPERIENCE = [
   {
-    date: "Actualmente...",
-    title: "Creador de Contenido",
-    company: "Twitch",
-    description:
-      "Divulgo sobre programación y desarrollo web en diferentes plataformas. Galardonado como mejor creador de contenido de habla no-inglesa en 2022 y mejor comunidad en 2023 por GitHub.",
-    link: "https://twitch.tv/midudev",
+    date: "oct. 2024 – actual",
+    title: "AI Engineering Intern",
+    company: "Urobora SL",
+    description: "Diseño y despliegue de agentes de IA basados en LLM. Desarrollo backend y arquitecturas CI/CD en Google Cloud. Integración de servidores MCP para mejorar la productividad interna.",
   },
   {
-    date: "Septiembre 2022",
-    title: "Principal Frontend Engineer",
-    company: "Adevinta Spain",
-    description:
-      "Responsable de la plataforma, componentes y utilidades para la creación y desarrollo de aplicaciones web. Mejora de un 30% en la entrega de software. Implantación de medidas de integración continua y despliegue con A/B testing en más de 15 equipos.",
+    date: "Anterior",
+    title: "Delivery Driver",
+    company: "FlaschenPost, Múnich",
+    description: "",
   },
-]
+  {
+    date: "Anterior",
+    title: "Entrenador de Minibasket",
+    company: "Cambridge Black Cats C.F., Valencia",
+    description: "",
+  },
+];
+
+const ACADEMIC_FORMATION = [
+  {
+    date: "2021-2025",
+    title: "Ingeniería Informática",
+    company: "Universidad Politécnica de Valencia",
+    description: "",
+  },
+  {
+    date: "6 meses, 2024",
+    title: "Erasmus Computer Science",
+    company: "Technical University of Munich",
+    description: "",
+  },
+  {
+    date: "2023",
+    title: "Bankinter Innovation Foundation",
+    company: "Akademia",
+    description: "",
+  },
+  {
+    date: "2019-2020",
+    title: "Diploma en Innovación Social",
+    company: "CEU San Pablo Valencia / Edwards Lifesciences",
+    description: "",
+  },
+];
 ---
 
-<ol class="relative mt-16">
+<h2 class="text-2xl font-bold mb-8 text-gray-800 dark:text-white">Experiencia Profesional</h2>
+<ol class="relative mt-8">
   {
-    EXPERIENCE.map((experience) => (
+    PROFESSIONAL_EXPERIENCE.map((experience) => (
       <li class="">
         <ExperienceItem {...experience} />
+      </li>
+    ))
+  }
+</ol>
+
+<h2 class="text-2xl font-bold mt-16 mb-8 text-gray-800 dark:text-white">Formación Académica</h2>
+<ol class="relative mt-8">
+  {
+    ACADEMIC_FORMATION.map((formation) => (
+      <li class="">
+        <ExperienceItem {...formation} />
       </li>
     ))
   }
