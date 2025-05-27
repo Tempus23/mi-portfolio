@@ -39,7 +39,7 @@ export let personalImageAlt: string = 'Avatar de usuario';
           class="after:absolute after:content-[''] after:-left-2 after:top-2 after:border-8 after:border-transparent
                  after:border-r-blue-50 dark:after:border-r-blue-900"
         ></div>
-        ¡Hola! Soy Carlos Bot, ¿Qué quieres saber sobre mí?
+        Pronto podrás hablar conmigo!!! 
       </div>
     </div>
   </div>
@@ -88,29 +88,25 @@ export let personalImageAlt: string = 'Avatar de usuario';
   const chatToggle    = document.getElementById('chat-toggle');
   const chatClose     = document.getElementById('chat-close');
 
-  if (chatContainer) {
-    if (chatToggle) {
-      function openChat() {
-        chatContainer.classList.remove('pointer-events-none', 'opacity-0', 'scale-95');
-        chatToggle.classList.add('hidden');
-      }
-      if (chatToggle) chatToggle.addEventListener('click', openChat);
-    }
+  if (chatContainer && chatToggle && chatClose) {
+    const openChat = () => {
+      chatContainer.classList.remove('pointer-events-none', 'opacity-0', 'scale-95');
+      chatToggle.classList.add('hidden');
+    };
+    chatToggle.addEventListener('click', openChat);
 
-    if (chatClose) {
-      function closeChat() {
-        chatContainer.classList.add('opacity-0', 'scale-95');
-        if (chatToggle) {
-          chatToggle.classList.remove('hidden');
+    const closeChat = () => {
+      chatContainer.classList.add('opacity-0', 'scale-95');
+      chatToggle.classList.remove('hidden');
+
+      const handler = () => {
+        if (chatContainer.classList.contains('opacity-0')) {
+          chatContainer.classList.add('pointer-events-none');
         }
-        chatContainer.addEventListener('transitionend', function handler() {
-          if (chatContainer.classList.contains('opacity-0')) {
-            chatContainer.classList.add('pointer-events-none');
-          }
-          chatContainer.removeEventListener('transitionend', handler);
-        });
-      }
-      if (chatClose) chatClose.addEventListener('click', closeChat);
-    }
+        chatContainer.removeEventListener('transitionend', handler);
+      };
+      chatContainer.addEventListener('transitionend', handler);
+    };
+    chatClose.addEventListener('click', closeChat);
   }
 </script>
