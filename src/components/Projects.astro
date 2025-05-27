@@ -27,22 +27,32 @@ const TAGS = {
     class: "bg-blue-600 text-white",
     icon: Code,
   },
+  FASTAPI: {
+    name: "FastAPI",
+    class: "bg-green-600 text-white",
+    icon: Code,
+  },
+  GCP: {
+    name: "Google Cloud",
+    class: "bg-blue-500 text-white",
+    icon: Code,
+  },
 }
 const PROJECTS = [
   {
     title: "Neural Implicit Swept Volume Models for Fast Collision Detection",
-    description: "Investigación de representaciones neuronales implícitas (NeRF) para modelado de volúmenes barridos en entornos dinámicos. Implementé modelos en PyTorch con técnicas de ensembling, pruning y quantization para optimizar rendimiento y generalización.",
+    description: "Investigación en representaciones neuronales implícitas (NeRF) para detección de colisiones en entornos robóticos dinámicos. Desarrollé modelos en PyTorch con técnicas avanzadas de ensemble, pruning y quantization para optimizar el rendimiento en tiempo real. Colaboración con KUKA en la Technical University of Munich.",
     link: "",
-    github: "",
-    image: "/projects/placeholder1.webp",
+    github: "https://github.com/Amrsaeed/FastCollisionDetection",
+    image: "public/projects/sweept-volume.png",
     tags: [TAGS.PYTORCH],
   },
   {
     title: "Clasificación Automática de Osteoartritis de Rodilla",
-    description: "Reproducción y ajuste de modelos SOTA en PyTorch y TensorFlow usando el dataset OAI. Fine-tune en datos felinos para pruebas cross-domain en colaboración con un proyecto de doctorado.",
+    description: "Desarrollo de modelos SOTA para clasificación automática de osteoartritis usando el dataset OAI. Implementación de técnicas de fine-tuning en PyTorch y TensorFlow para datasets limitados, incluyendo validación cross-domain con datos felinos en colaboración con proyecto de doctorado.",
     link: "",
-    github: "",
-    image: "/projects/placeholder2.webp",
+    github: "https://github.com/Tempus23/Radiography_TFG",
+    image: "public/projects/rodilla-artrosis.png",
     tags: [TAGS.PYTORCH, TAGS.TENSORFLOW],
   },
 ]
@@ -98,6 +108,3 @@ const PROJECTS = [
     ))
   }
 </div>
-
-
-
