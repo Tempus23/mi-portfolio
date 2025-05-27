@@ -1,0 +1,116 @@
+---
+// src/components/ChatBot.astro
+
+// Definimos la prop para el texto alternativo de la imagen
+export interface Props {
+  personalImageAlt?: string;
+}
+export let personalImageAlt: string = 'Avatar de usuario';
+---
+<div
+  id="chat-container"
+  class="fixed bottom-4 right-4 w-[32rem] h-[60vh] bg-white rounded-2xl shadow-2xl p-4 flex flex-col space-y-3 dark:bg-neutral-900 dark:text-gray-200
+         opacity-0 scale-95 pointer-events-none
+         transition-opacity transition-transform duration-300 ease-out"
+>
+  <div class="flex justify-between items-center mb-2">
+    <h3 class="text-lg font-semibold">Carlos Bot</h3>
+    <button id="chat-close" class="absolute top-2 right-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+  <div
+    id="chat-history"
+    class="flex-1 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200
+           dark:scrollbar-thumb-blue-700 dark:scrollbar-track-neutral-700"
+  >
+    <!-- Mensajes -->
+    <div class="flex items-start space-x-2 animate-[fadeIn_0.3s_ease-out]">
+      <!-- Imagen personal -->
+      <img
+        class="rounded-full shadow-lg w-16 h-16"
+        src="public/me.jpg"
+        alt={personalImageAlt}
+      />
+      <div class="relative bg-blue-50 dark:bg-blue-900 text-gray-800 dark:text-gray-100 rounded-xl p-3 shadow">
+        <div
+          class="after:absolute after:content-[''] after:-left-2 after:top-2 after:border-8 after:border-transparent
+                 after:border-r-blue-50 dark:after:border-r-blue-900"
+        ></div>
+        ¡Hola! Soy Carlos Bot, ¿Qué quieres saber sobre mí?
+      </div>
+    </div>
+  </div>
+  <div class="flex space-x-2 mt-3">
+    <input
+      type="text"
+      id="chat-input"
+      class="flex-grow border border-gray-300 rounded-xl p-2 placeholder-gray-500
+             dark:bg-neutral-800 dark:border-neutral-600 dark:placeholder-gray-400"
+      placeholder="Escribe tu pregunta..."
+    />
+    <button
+      id="send-button"
+      class="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600
+             text-white font-bold py-2 px-4 rounded-xl shadow-lg transition-transform transform hover:scale-105"
+    >
+      Enviar
+    </button>
+  </div>
+</div>
+
+<button
+  id="chat-toggle"
+  class="fixed bottom-4 right-4 w-12 h-12 bg-blue-500 hover:bg-blue-700 text-white
+         rounded-full shadow-md flex items-center justify-center z-10 transition-colors duration-200"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+  </svg>
+</button>
+
+<script>
+  // Tema claro/oscuro
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+      localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    });
+  }
+  if (localStorage.theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  }
+
+  const chatContainer = document.getElementById('chat-container');
+  const chatToggle    = document.getElementById('chat-toggle');
+  const chatClose     = document.getElementById('chat-close');
+
+  if (chatContainer) {
+    if (chatToggle) {
+      function openChat() {
+        chatContainer.classList.remove('pointer-events-none', 'opacity-0', 'scale-95');
+        chatToggle.classList.add('hidden');
+      }
+      if (chatToggle) chatToggle.addEventListener('click', openChat);
+    }
+
+    if (chatClose) {
+      function closeChat() {
+        chatContainer.classList.add('opacity-0', 'scale-95');
+        if (chatToggle) {
+          chatToggle.classList.remove('hidden');
+        }
+        chatContainer.addEventListener('transitionend', function handler() {
+          if (chatContainer.classList.contains('opacity-0')) {
+            chatContainer.classList.add('pointer-events-none');
+          }
+          chatContainer.removeEventListener('transitionend', handler);
+        });
+      }
+      if (chatClose) chatClose.addEventListener('click', closeChat);
+    }
+  }
+</script>
