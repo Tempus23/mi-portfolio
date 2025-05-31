@@ -1,47 +1,51 @@
 ---
-const personalImageAlt = "Carlos Hernández Martínez"
-import Badge from "@/components/Badge.astro"
-import LinkedInIcon from "@/components/icons/LinkedIn.astro"
-import MailIcon from "@/components/icons/Mail.astro"
-import GitHubIcon from "@/components/icons/GitHub.astro"
-import SocialPill from "@/components/SocialPill.astro"
+import cvData from "@/data/cv_data.json";
+import Badge from "@/components/Badge.astro";
+import LinkedInIcon from "@/components/icons/LinkedIn.astro";
+import MailIcon from "@/components/icons/Mail.astro";
+import GitHubIcon from "@/components/icons/GitHub.astro";
+import SocialPill from "@/components/SocialPill.astro";
+
+const { basic_info } = cvData;
+const personalImageAlt = basic_info.personal_image_alt;
 ---
 
-<div class="max-w-xl">  <div class="flex gap-4 mb-4">
+<div class="max-w-xl">
+  <div class="flex gap-4 mb-4">
     <img
       class="rounded-full shadow-lg size-16"
-      src="public/me.jpg"
+      src={`/${basic_info.image_path}`}
       alt={personalImageAlt}
     />
     <a
-      href="https://linkedin.com/in/carl0shdez"
+      href={basic_info.linkedin}
       target="_blank"
       rel="noopener"
       class="flex items-center transition md:justify-center md:hover:scale-105"
     >
-      <Badge>Disponible para trabajar</Badge>
+      <Badge>{basic_info.availability}</Badge>
     </a>
   </div>
   <h1
     class="text-4xl font-bold tracking-tight text-gray-800 sm:text-5xl dark:text-white"
   >
-    Hey, soy Carlos Hernández Martínez
+    Hey, soy {basic_info.name}
   </h1>
   <p
     class="mt-6 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300"
+    set:html={basic_info.tagline.replace("Ingeniero Informático especializado en Machine Learning & AI.", "<strong>Ingeniero Informático especializado en Machine Learning & AI.</strong>")}
   >
-    <strong>Ingeniero Informático especializado en Machine Learning & AI.</strong> Apasionado por desarrollar soluciones innovadoras con tecnologías de vanguardia, desde modelos neuronales implícitos hasta agentes basados en LLM. Con experiencia internacional y enfoque en investigación aplicada.
   </p>
   <nav class="flex flex-wrap gap-4 mt-8">
-    <SocialPill href="mailto:carlos.cbm32@gmail.com">
+    <SocialPill href={`mailto:${basic_info.emails[0]}`}>
       <MailIcon class="size-4" />
       Contáctame
     </SocialPill>
-    <SocialPill href="https://linkedin.com/in/carl0shdez">
+    <SocialPill href={basic_info.linkedin}>
       <LinkedInIcon class="size-4" />
       LinkedIn
     </SocialPill>
-    <SocialPill href="https://github.com/Tempus23">
+    <SocialPill href={basic_info.github}>
       <GitHubIcon class="size-4" />
       GitHub
     </SocialPill>
