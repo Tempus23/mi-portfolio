@@ -1,4 +1,4 @@
-# 👨🏻‍💻 Porfolio para programadores y desarrolladores
+# 👨🏻‍💻 Porfolio de Carlos Hernández Martínez
 
 <div align="center">
 <a href="https://porfolio.dev/">
@@ -18,10 +18,9 @@
 
 </div>
 
-## 🫂 Contribuidores
+## 🫂 Github del portfolio original 
 
-<a href="https://github.com/midudev/porfolio.dev/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=midudev/porfolio.dev" />
+<a href="https://github.com/midudev/porfolio.dev/">
 </a>
 
 <p></p>
