@@ -12,13 +12,18 @@ const imagePath = `/${chatbot_info.image_path}`; // Assuming image_path is relat
 ---
 <div
   id="chat-container"
-  class="fixed bottom-4 right-4 w-[32rem] h-[60vh] bg-slate-50 rounded-2xl shadow-2xl p-4 flex flex-col space-y-3 dark:bg-slate-800 dark:text-gray-200
-         opacity-0 scale-95 pointer-events-none
+  class="fixed bottom-4 right-4 bg-slate-50 rounded-2xl shadow-2xl p-4 flex flex-col space-y-3 dark:bg-slate-800 dark:text-gray-200
+         opacity-0 scale-95 pointer-events-none overflow-hidden
          transition-opacity transition-transform duration-300 ease-out"
+  data-image-path={imagePath}
+  data-image-alt={personalImageAlt}
+  data-chatbot-name={chatbotName}
+  style="width: 32rem; height: 60vh;"
 >
+  <div id="resize-handle" class="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize bg-gray-400 opacity-50 hover:opacity-75 rounded-br-lg z-20"></div>
   <div class="flex justify-between items-center mb-2">
     <h3 class="text-lg font-semibold">{chatbotName}</h3>
-    <button id="chat-close" class="absolute top-2 right-2">
+    <button id="chat-close" class="absolute top-2 right-2 z-20">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
@@ -74,7 +79,7 @@ const imagePath = `/${chatbot_info.image_path}`; // Assuming image_path is relat
   </svg>
 </button>
 
-<script>
+<script is:inline>
   // Tema claro/oscuro
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
@@ -90,11 +95,24 @@ const imagePath = `/${chatbot_info.image_path}`; // Assuming image_path is relat
   const chatContainer = document.getElementById('chat-container');
   const chatToggle    = document.getElementById('chat-toggle');
   const chatClose     = document.getElementById('chat-close');
+  const chatHistory   = document.getElementById('chat-history');
+  const chatInput     = document.getElementById('chat-input');
+  const sendButton    = document.getElementById('send-button');
+  const resizeHandle  = document.getElementById('resize-handle');
 
-  if (chatContainer && chatToggle && chatClose) {
+  const personalImagePath = chatContainer.dataset.imagePath;
+  const personalImageAltText = chatContainer.dataset.imageAlt;
+  const chatbotNameText = chatContainer.dataset.chatbotName;
+
+  if (chatContainer && chatToggle && chatClose && chatHistory && chatInput && sendButton && resizeHandle) {
+    // Set initial size if not already set by Tailwind classes that might have been removed
+    // chatContainer.style.width = '32rem';
+    // chatContainer.style.height = '60vh';
+
     const openChat = () => {
       chatContainer.classList.remove('pointer-events-none', 'opacity-0', 'scale-95');
       chatToggle.classList.add('hidden');
+      chatInput.focus();
     };
     chatToggle.addEventListener('click', openChat);
 
@@ -111,5 +129,209 @@ const imagePath = `/${chatbot_info.image_path}`; // Assuming image_path is relat
       chatContainer.addEventListener('transitionend', handler);
     };
     chatClose.addEventListener('click', closeChat);
+
+    const appendMessage = (message, sender) => {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('flex', 'items-start', 'space-x-2', 'animate-[fadeIn_0.3s_ease-out]');
+
+      if (sender === 'bot') {
+        messageDiv.innerHTML = `
+          <img class="rounded-full shadow-lg w-16 h-16" src="${personalImagePath}" alt="${personalImageAltText}" />
+          <div class="relative bg-blue-50 dark:bg-blue-900 text-gray-800 dark:text-gray-100 rounded-xl p-3 shadow">
+            <div class="after:absolute after:content-[''] after:-left-2 after:top-2 after:border-8 after:border-transparent after:border-r-blue-50 dark:after:border-r-blue-900"></div>
+            ${message}
+          </div>
+        `;
+      } else {
+        messageDiv.classList.add('justify-end');
+        messageDiv.innerHTML = `
+          <div class="relative bg-green-50 dark:bg-green-700 text-gray-800 dark:text-gray-100 rounded-xl p-3 shadow">
+            <div class="after:absolute after:content-[''] after:-right-2 after:top-2 after:border-8 after:border-transparent after:border-l-green-50 dark:after:border-l-green-700"></div>
+            ${message}
+          </div>
+        `;
+      }
+      chatHistory.appendChild(messageDiv);
+      chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to bottom
+    };
+
+    const appendStreamedMessage = (sender, initialContent = "") => {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('flex', 'items-start', 'space-x-2', 'animate-[fadeIn_0.3s_ease-out]');
+      
+      let messageContentDiv;
+
+      if (sender === 'bot') {
+        messageDiv.innerHTML = `
+          <img class="rounded-full shadow-lg w-16 h-16" src="${personalImagePath}" alt="${personalImageAltText}" />
+          <div class="relative bg-blue-50 dark:bg-blue-900 text-gray-800 dark:text-gray-100 rounded-xl p-3 shadow message-content-wrapper">
+            <div class="after:absolute after:content-[''] after:-left-2 after:top-2 after:border-8 after:border-transparent after:border-r-blue-50 dark:after:border-r-blue-900"></div>
+            <span class="message-text">${initialContent}</span>
+          </div>
+        `;
+      } else { // user message - no streaming needed here, but structure kept for consistency if ever needed
+        messageDiv.classList.add('justify-end');
+        messageDiv.innerHTML = `
+          <div class="relative bg-green-50 dark:bg-green-700 text-gray-800 dark:text-gray-100 rounded-xl p-3 shadow message-content-wrapper">
+            <div class="after:absolute after:content-[''] after:-right-2 after:top-2 after:border-8 after:border-transparent after:border-l-green-50 dark:after:border-l-green-700"></div>
+            <span class="message-text">${initialContent}</span>
+          </div>
+        `;
+      }
+      chatHistory.appendChild(messageDiv);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+      
+      // Return the span where text will be appended for streaming
+      return messageDiv.querySelector('.message-text');
+    };
+
+
+    const sendMessage = async () => {
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      // appendMessage(message, 'user'); // Old way
+      appendStreamedMessage('user', message); // User messages aren't streamed but use the new structure
+      chatInput.value = '';
+      sendButton.disabled = true;
+      sendButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+      // Bot's placeholder message / typing indicator
+      const botMessageTextElement = appendStreamedMessage('bot', '<span class="italic">Escribiendo...</span>');
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message }),
+        });
+
+        if (!response.ok) {
+          // Try to parse error from stream if possible, or use status text
+          let errorText = `Error: ${response.status} ${response.statusText}`;
+          try {
+            const errorData = await response.json(); // This might fail if response is not JSON
+            errorText = errorData.error || errorText;
+          } catch (e) {
+            // Ignore if response is not JSON
+          }
+          throw new Error(errorText);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        botMessageTextElement.innerHTML = ''; // Clear "Escribiendo..."
+        let accumulatedResponse = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          
+          const chunkText = decoder.decode(value, { stream: true });
+          accumulatedResponse += chunkText;
+          botMessageTextElement.innerHTML = accumulatedResponse; // Update with accumulated text
+          chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll with new content
+        }
+
+        // Check for email sending signal after stream is complete
+        if (accumulatedResponse.startsWith('[INICIAR_ENVIO_CORREO]:::')) {
+          try {
+            const jsonDataString = accumulatedResponse.substring('[INICIAR_ENVIO_CORREO]:::'.length);
+            const emailData = JSON.parse(jsonDataString);
+            
+            // Replace the signal message with a user-friendly one
+            botMessageTextElement.innerHTML = `<span class="italic">Gestionando el envío de tu correo...</span>`;
+            
+            const emailApiResponse = await fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(emailData),
+            });
+
+            const emailApiResult = await emailApiResponse.json();
+
+            if (emailApiResponse.ok && emailApiResult.success) {
+              appendStreamedMessage('bot', `¡Gracias! Tu mensaje para Carlos ha sido procesado. Él se pondrá en contacto contigo pronto a través de ${emailData.emailRemitente}.`);
+            } else {
+              appendStreamedMessage('bot', `Lo siento, hubo un problema al enviar tu correo: ${emailApiResult.error || 'Error desconocido'}. Por favor, intenta contactar a Carlos directamente.`);
+            }
+            // Remove the "Gestionando..." message
+            botMessageTextElement.parentElement.parentElement.remove();
+
+          } catch (e) {
+            console.error("Error parsing email data or sending email:", e);
+            appendStreamedMessage('bot', 'Hubo un error al procesar tu solicitud de contacto. Por favor, intenta de nuevo o contacta a Carlos directamente.');
+             if (botMessageTextElement.parentElement && botMessageTextElement.parentElement.parentElement) {
+              botMessageTextElement.parentElement.parentElement.remove(); // remove the "Gestionando..." or original signal message
+            }
+          }
+        }
+
+      } catch (error) {
+        console.error('Error sending message or reading stream:', error);
+        if (botMessageTextElement) {
+            botMessageTextElement.innerHTML = `Lo siento, ha ocurrido un error. Por favor, inténtalo de nuevo. (${error.message || error})`;
+        } else { // Fallback if botMessageTextElement wasn't created
+            appendStreamedMessage('bot', `Lo siento, ha ocurrido un error. Por favor, inténtalo de nuevo. (${error.message || error})`);
+        }
+      } finally {
+        sendButton.disabled = false;
+        sendButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        chatInput.focus();
+      }
+    };
+
+    sendButton.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    // Resizing logic
+    let isResizing = false;
+    let initialX, initialY, initialWidth, initialHeight;
+    const minWidth = 200; // Minimum width in pixels
+    const minHeight = 200; // Minimum height in pixels
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      initialX = e.clientX;
+      initialY = e.clientY;
+      initialWidth = chatContainer.offsetWidth;
+      initialHeight = chatContainer.offsetHeight;
+      // Prevent text selection during resize
+      document.body.style.userSelect = 'none';
+      document.body.style.webkitUserSelect = 'none'; /* Safari */
+      document.body.style.msUserSelect = 'none'; /* IE 10+ */
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+
+      const dx = e.clientX - initialX;
+      const dy = e.clientY - initialY;
+
+      // Resizing from top-left means width decreases with positive dx, height decreases with positive dy
+      let newWidth = initialWidth - dx;
+      let newHeight = initialHeight - dy;
+
+      // Apply minimum size constraints
+      newWidth = Math.max(newWidth, minWidth);
+      newHeight = Math.max(newHeight, minHeight);
+      
+      chatContainer.style.width = `${newWidth}px`;
+      chatContainer.style.height = `${newHeight}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        // Re-enable text selection
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+        document.body.style.msUserSelect = '';
+      }
+    });
   }
 </script>

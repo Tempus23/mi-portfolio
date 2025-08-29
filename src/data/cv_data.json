@@ -4,15 +4,16 @@
     "image_path": "public/me.jpg",
     "personal_image_alt": "Carlos Hernández Martínez",
     "availability": "Disponible para trabajar",
-    "emails": ["carlos.cbm32@gmail.com", "chermar.pro@gmail.com"],
+    "emails": ["chermar.pro@gmail.com", "carlos.cbm32@gmail.com"],
     "linkedin": "https://linkedin.com/in/carl0shdez",
     "github": "https://github.com/Tempus23",
-    "tagline": "Ingeniero Informático especializado en Machine Learning & AI. Apasionado por desarrollar soluciones innovadoras con tecnologías de vanguardia, desde modelos neuronales implícitos hasta agentes basados en LLM. Con experiencia internacional y enfoque en investigación aplicada."
+    "location": "Valencia, España (disponible remoto)",
+    "tagline": "Ingeniero Informático apasionado en Machine Learning & AI. Apasionado por desarrollar soluciones innovadoras con tecnologías de vanguardia, desde modelos neuronales implícitos hasta agentes basados en LLM. Con experiencia internacional y enfoque en investigación aplicada."
   },
   "about_me": {
     "description_paragraphs": [
-      "Soy un Ingeniero Informático especializado en Machine Learning e Inteligencia Artificial con experiencia en investigación aplicada y desarrollo de soluciones innovadoras. Mi formación en la Universidad Politécnica de Valencia (nota media 7,7) y mi experiencia internacional en la Technical University of Munich me han proporcionado una sólida base técnica y una perspectiva global.",
-      "Actualmente trabajo como AI Engineering Intern en Urobora SL, donde diseño agentes basados en LLM y desarrollo arquitecturas en Google Cloud. Mi experiencia incluye investigación en representaciones neuronales implícitas (NeRF) para robótica en colaboración con KUKA, y desarrollo de modelos de clasificación médica usando técnicas SOTA.",
+      "Soy un Ingeniero Informático apasionado en Machine Learning e Inteligencia Artificial con experiencia en investigación aplicada y desarrollo de soluciones innovadoras. Mi formación en la Universidad Politécnica de Valencia (nota media 7,7) y mi experiencia internacional en la Technical University of Munich me han proporcionado una sólida base técnica y una perspectiva global.",
+      "Actualmente trabajo como AI Software Engineering Intern en Urobora SL, donde diseño agentes basados en LLM y desarrollo arquitecturas en Google Cloud. Mi experiencia incluye investigación en representaciones neuronales implícitas (NeRF) para robótica en colaboración con KUKA, y desarrollo de modelos de clasificación médica usando técnicas SOTA.",
       "Me caracterizo por ser proactivo, resiliente y orientado al crecimiento, con habilidades sólidas en trabajo en equipo, comunicación efectiva y resolución de problemas complejos. Domino tecnologías como PyTorch, TensorFlow, FastAPI y Google Cloud, siempre buscando aplicar la IA para generar impacto real."
     ],
     "attributes": [
@@ -27,9 +28,9 @@
   "professional_experience": [
     {
       "date": "oct. 2024 - actual",
-      "title": "AI Engineering Intern",
+      "title": "AI Software Engineering Intern",
       "company": "Urobora SL",
-      "description": "Diseño y desarrollo de agentes de IA basados en LLM para automatización de procesos. Implementación de backend con FastAPI y arquitecturas CI/CD en Google Cloud Platform. Integración de servidores MCP (Model Context Protocol) para optimizar la productividad interna del equipo."
+      "description": "Diseño y desarrollo de agentes de IA basados en LLM para automatización de procesos. Implementación de backend con FastAPI y arquitecturas CI/CD en Google Cloud Platform. Integración de servidores MCP (Model Context Protocol) y desarrollo de una aplicación web para la gestión de agentes y tareas."
     },
     {
       "date": "2025",
@@ -122,7 +123,7 @@
     "name": "Carlos Bot",
     "image_path": "public/me.jpg",
     "default_image_alt": "Avatar de usuario",
-    "initial_message": "Pronto podrás hablar conmigo!!!"
+    "initial_message": "Preguntame lo que quieras!!"
   },
   "footer_info": {
     "copyright_name": "Carlos Hernández Martínez",
