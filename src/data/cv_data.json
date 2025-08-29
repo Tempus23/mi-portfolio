@@ -1,0 +1,133 @@
+{
+  "basic_info": {
+    "name": "Carlos Hernández Martínez",
+    "image_path": "public/me.jpg",
+    "personal_image_alt": "Carlos Hernández Martínez",
+    "availability": "Disponible para trabajar",
+    "emails": ["chermar.pro@gmail.com", "carlos.cbm32@gmail.com"],
+    "linkedin": "https://linkedin.com/in/carl0shdez",
+    "github": "https://github.com/Tempus23",
+    "location": "Valencia, España (disponible remoto)",
+    "tagline": "Ingeniero Informático apasionado en Machine Learning & AI. Apasionado por desarrollar soluciones innovadoras con tecnologías de vanguardia, desde modelos neuronales implícitos hasta agentes basados en LLM. Con experiencia internacional y enfoque en investigación aplicada."
+  },
+  "about_me": {
+    "description_paragraphs": [
+      "Soy un Ingeniero Informático apasionado en Machine Learning e Inteligencia Artificial con experiencia en investigación aplicada y desarrollo de soluciones innovadoras. Mi formación en la Universidad Politécnica de Valencia (nota media 7,7) y mi experiencia internacional en la Technical University of Munich me han proporcionado una sólida base técnica y una perspectiva global.",
+      "Actualmente trabajo como AI Software Engineering Intern en Urobora SL, donde diseño agentes basados en LLM y desarrollo arquitecturas en Google Cloud. Mi experiencia incluye investigación en representaciones neuronales implícitas (NeRF) para robótica en colaboración con KUKA, y desarrollo de modelos de clasificación médica usando técnicas SOTA.",
+      "Me caracterizo por ser proactivo, resiliente y orientado al crecimiento, con habilidades sólidas en trabajo en equipo, comunicación efectiva y resolución de problemas complejos. Domino tecnologías como PyTorch, TensorFlow, FastAPI y Google Cloud, siempre buscando aplicar la IA para generar impacto real."
+    ],
+    "attributes": [
+      "Proactivo",
+      "Resiliente",
+      "Orientado al crecimiento",
+      "Trabajo en equipo",
+      "Comunicación efectiva",
+      "Resolución de problemas complejos"
+    ]
+  },
+  "professional_experience": [
+    {
+      "date": "oct. 2024 - actual",
+      "title": "AI Software Engineering Intern",
+      "company": "Urobora SL",
+      "description": "Diseño y desarrollo de agentes de IA basados en LLM para automatización de procesos. Implementación de backend con FastAPI y arquitecturas CI/CD en Google Cloud Platform. Integración de servidores MCP (Model Context Protocol) y desarrollo de una aplicación web para la gestión de agentes y tareas."
+    },
+    {
+      "date": "2025",
+      "title": "Trabajo de Fin de Grado - Clasificación Automática de Osteoartritis",
+      "company": "Universidad Politécnica de Valencia",
+      "description": "Clasificación automática de osteoartritis de rodilla usando modelos SOTA en PyTorch y TensorFlow. Implementación de técnicas de fine-tuning en datasets limitados y validación cross-domain."
+    },
+    {
+      "date": "2024",
+      "title": "Investigador - Neural Implicit Swept Volume Models",
+      "company": "Technical University of Munich & KUKA",
+      "description": "Investigación en representaciones neuronales implícitas (NeRF) para detección de colisiones en entornos robóticos dinámicos. Desarrollo en PyTorch con técnicas avanzadas de ensemble, pruning y quantization para optimización de modelos."
+    }
+  ],
+  "academic_formation": [
+    {
+      "date": "2021-2025",
+      "title": "Grado en Ingeniería Informática",
+      "company": "Universidad Politécnica de Valencia (PUV)",
+      "description": "Nota media: 7,7. Especialización en Inteligencia Artificial y Machine Learning. Desarrollo de competencias en programación, algoritmos, bases de datos y arquitecturas de software."
+    },
+    {
+      "date": "6 meses, 2024",
+      "title": "Erasmus en Computer Science",
+      "company": "Technical University of Munich (TUM)",
+      "description": "Programa de intercambio internacional enfocado en investigación avanzada en IA. Colaboración en proyectos de representaciones neuronales implícitas y robótica."
+    },
+    {
+      "date": "2023",
+      "title": "Akademia Bankinter Innovation Foundation",
+      "company": "Bankinter Innovation Foundation",
+      "description": "Programa de formación en innovación y emprendimiento tecnológico. Desarrollo de habilidades en liderazgo, pensamiento disruptivo y gestión de proyectos innovadores."
+    },
+    {
+      "date": "2019-2020",
+      "title": "Diploma en Innovación Social",
+      "company": "CEU San Pablo Valencia",
+      "description": "Formación especializada en innovación social y responsabilidad corporativa en colaboración con Edwards Lifesciences. Enfoque en soluciones tecnológicas para impacto social."
+    }
+  ],
+  "skills": {
+    "technical": [
+      "Python",
+      "JavaScript",
+      "PyTorch",
+      "TensorFlow",
+      "FastAPI",
+      "Weights & Biases",
+      "Git",
+      "Docker",
+      "Kubernetes",
+      "GitHub Actions",
+      "MySQL",
+      "MongoDB",
+      "Google Cloud Platform",
+      "Microsoft Azure",
+      "Visual Studio Code",
+      "APIs REST",
+      "Prompt Engineering"
+    ],
+    "competencies": [
+      "Trabajo en equipo",
+      "Comunicación efectiva",
+      "Pensamiento crítico",
+      "Resolución de problemas",
+      "Gestión del tiempo",
+      "Innovación",
+      "Competencias interculturales"
+    ]
+  },
+  "projects": [
+    {
+      "title": "Neural Implicit Swept Volume Models for Fast Collision Detection",
+      "description": "Investigación en representaciones neuronales implícitas (NeRF) para detección de colisiones en entornos robóticos dinámicos. Desarrollé modelos en PyTorch con técnicas avanzadas de ensemble, pruning y quantization para optimizar el rendimiento en tiempo real. Colaboración con KUKA en la Technical University of Munich.",
+      "link": "",
+      "github": "https://github.com/Amrsaeed/FastCollisionDetection",
+      "image": "public/projects/sweept-volume.png",
+      "tags": ["PyTorch"]
+    },
+    {
+      "title": "Clasificación Automática de Osteoartritis de Rodilla",
+      "description": "Desarrollo de modelos SOTA para clasificación automática de osteoartritis usando el dataset OAI. Implementación de técnicas de fine-tuning en PyTorch y TensorFlow para datasets limitados, incluyendo validación cross-domain con datos felinos en colaboración con proyecto de doctorado.",
+      "link": "",
+      "github": "https://github.com/Tempus23/Radiography_TFG",
+      "image": "public/projects/rodilla-artrosis.png",
+      "tags": ["PyTorch", "TensorFlow"]
+    }
+  ],
+  "chatbot_info": {
+    "name": "Carlos Bot",
+    "image_path": "public/me.jpg",
+    "default_image_alt": "Avatar de usuario",
+    "initial_message": "Preguntame lo que quieras!!"
+  },
+  "footer_info": {
+    "copyright_name": "Carlos Hernández Martínez",
+    "contact_email": "chermar.pro@gmail.com",
+    "about_me_link": "/mi-portfolio/#sobre-mi"
+  }
+}

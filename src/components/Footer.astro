@@ -1,5 +1,11 @@
 ---
-const currentYear = new Date().getFullYear()
+import cvData from "@/data/cv_data.json";
+
+const { footer_info, basic_info } = cvData;
+const currentYear = new Date().getFullYear();
+const copyrightName = footer_info.copyright_name || basic_info.name;
+const contactEmail = footer_info.contact_email || basic_info.emails[1] || basic_info.emails[0]; // Fallback for email
+const aboutMeLink = footer_info.about_me_link;
 ---
 
 <footer
@@ -10,16 +16,17 @@ const currentYear = new Date().getFullYear()
   >
     <span class="text-sm sm:text-center text-zinc-800/90 dark:text-zinc-200/90"
       >© {currentYear}
-      <a href="" class="hover:underline">Carlos Hernández Martínez</a>. Casi
+      <a href="https://linkedin.com/in/carl0shdez" target="_blank" rel="noopener" class="hover:underline">{copyrightName}</a>. Casi
       todos los derechos reservados
-    </span>    <ul
+    </span>
+    <ul
       class="flex flex-wrap items-center mt-3 text-sm font-medium dark:text-white/90 sm:mt-0"
     >
       <li>
-        <a href="/mi-portfolio/#sobre-mi" class="hover:underline me-4 md:me-6">Sobre mí</a>
+        <a href={aboutMeLink} class="hover:underline me-4 md:me-6">Sobre mí</a>
       </li>
       <li>
-        <a id="contacto" href="mailto:chermar.pro@gmail.com" class="hover:underline"
+        <a id="contacto" href={`mailto:${contactEmail}`} class="hover:underline"
           >Contacto</a
         >
       </li>

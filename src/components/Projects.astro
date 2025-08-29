@@ -1,61 +1,54 @@
 ---
-import GitHub from "./icons/GitHub.astro"
-import NextJS from "./icons/NextJS.astro"
-import Tailwind from "./icons/Tailwind.astro"
-import Link from "./icons/Link.astro"
-import Code from "./icons/Code.astro" // Import Code icon
-import LinkButton from "./LinkButton.astro"
+import GitHub from "./icons/GitHub.astro";
+import NextJS from "./icons/NextJS.astro";
+import Tailwind from "./icons/Tailwind.astro";
+import Link from "./icons/Link.astro";
+import Code from "./icons/Code.astro"; // Import Code icon
+import LinkButton from "./LinkButton.astro";
+import cvData from "@/data/cv_data.json";
 
-const TAGS = {
-  NEXT: {
+const { projects: PROJECTS_DATA } = cvData;
+
+type TagName = keyof typeof TAGS_LOOKUP;
+
+const TAGS_LOOKUP = {
+  "Next.js": {
     name: "Next.js",
     class: "bg-black text-white",
     icon: NextJS,
   },
-  TAILWIND: {
+  "Tailwind CSS": {
     name: "Tailwind CSS",
     class: "bg-[#003159] text-white",
     icon: Tailwind,
   },
-  PYTORCH: {
+  "PyTorch": {
     name: "PyTorch",
     class: "bg-orange-600 text-white",
     icon: Code,
   },
-  TENSORFLOW: {
+  "TensorFlow": {
     name: "TensorFlow",
     class: "bg-blue-600 text-white",
     icon: Code,
   },
-  FASTAPI: {
+  "FastAPI": {
     name: "FastAPI",
     class: "bg-green-600 text-white",
     icon: Code,
   },
-  GCP: {
+  "Google Cloud": {
     name: "Google Cloud",
     class: "bg-blue-500 text-white",
     icon: Code,
   },
-}
-const PROJECTS = [
-  {
-    title: "Neural Implicit Swept Volume Models for Fast Collision Detection",
-    description: "Investigación en representaciones neuronales implícitas (NeRF) para detección de colisiones en entornos robóticos dinámicos. Desarrollé modelos en PyTorch con técnicas avanzadas de ensemble, pruning y quantization para optimizar el rendimiento en tiempo real. Colaboración con KUKA en la Technical University of Munich.",
-    link: "",
-    github: "https://github.com/Amrsaeed/FastCollisionDetection",
-    image: "projects/sweept-volume.png",
-    tags: [TAGS.PYTORCH],
-  },
-  {
-    title: "Clasificación Automática de Osteoartritis de Rodilla",
-    description: "Desarrollo de modelos SOTA para clasificación automática de osteoartritis usando el dataset OAI. Implementación de técnicas de fine-tuning en PyTorch y TensorFlow para datasets limitados, incluyendo validación cross-domain con datos felinos en colaboración con proyecto de doctorado.",
-    link: "",
-    github: "https://github.com/Tempus23/Radiography_TFG",
-    image: "projects/rodilla-artrosis.png",
-    tags: [TAGS.PYTORCH, TAGS.TENSORFLOW],
-  },
-]
+};
+
+const PROJECTS = PROJECTS_DATA.map(project => ({
+  ...project,
+  image: `/${project.image}`, // Prepend slash if image paths in JSON are relative to root
+  tags: project.tags.map(tagName => TAGS_LOOKUP[tagName as TagName]).filter(tag => tag) // Map tag names to tag objects
+}));
 ---
 
 <div class="flex flex-col gap-y-16">
@@ -64,7 +57,7 @@ const PROJECTS = [
     <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
   <div class="w-full md:w-1/2">
     <div class="relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50">
-      <img alt="Recién llegado vs 5 años en Nueva Zelanda" class="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105" loading="lazy" src={image} />
+      <img alt={title} class="object-cover object-top w-full h-56 transition duration-500 sm:h-full md:scale-110 md:group-hover:scale-105" loading="lazy" src={image} />
     </div>
   </div>
 

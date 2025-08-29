@@ -8,6 +8,7 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "astro": "astro"
+    
   },
   "dependencies": {
     "@astrojs/check": "0.5.6",
@@ -16,6 +17,8 @@
     "astro": "4.4.5",
     "astro-robots-txt": "1.0.0",
     "dependencies": "^0.0.1",
+    "openai": "^5.0.1",
+    "resend": "^4.5.1",
     "tailwindcss": "3.4.1",
     "typescript": "5.3.3"
   }

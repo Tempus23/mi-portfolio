@@ -1,33 +1,8 @@
 ---
-const TECHNICAL_SKILLS = [
-  { name: "Python" },
-  { name: "JavaScript" },
-  { name: "PyTorch" },
-  { name: "TensorFlow" },
-  { name: "FastAPI" },
-  { name: "Weights & Biases" },
-  { name: "Git" },
-  { name: "Docker" },
-  { name: "Kubernetes" },
-  { name: "GitHub Actions" },
-  { name: "MySQL" },
-  { name: "MongoDB" },
-  { name: "Google Cloud Platform" },
-  { name: "Microsoft Azure" },
-  { name: "Visual Studio Code" },
-  { name: "APIs REST" },
-  { name: "Prompt Engineering" },
-];
+import cvData from "@/data/cv_data.json";
 
-const COMPETENCIES = [
-  { name: "Trabajo en equipo" },
-  { name: "Comunicación efectiva" },
-  { name: "Pensamiento crítico" },
-  { name: "Resolución de problemas" },
-  { name: "Gestión del tiempo" },
-  { name: "Innovación" },
-  { name: "Competencias interculturales" },
-];
+const { skills } = cvData;
+const { technical: TECHNICAL_SKILLS, competencies: COMPETENCIES } = skills;
 
 // You can use existing components like Badge.astro for styling if desired,
 // or simple list elements. For now, let's use simple list elements.
@@ -39,7 +14,7 @@ const COMPETENCIES = [
   <ul class="flex flex-wrap gap-2">
     {TECHNICAL_SKILLS.map(skill => (
       <li class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-1 px-3 rounded-md text-sm">
-        {skill.name}
+        {skill}
       </li>
     ))}
   </ul>
@@ -50,7 +25,7 @@ const COMPETENCIES = [
   <ul class="flex flex-wrap gap-2">
     {COMPETENCIES.map(competency => (
       <li class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-1 px-3 rounded-md text-sm">
-        {competency.name}
+        {competency}
       </li>
     ))}
   </ul>
