@@ -14,15 +14,12 @@ function getCvContextPrompt(data: any): string {
     academic_formation,
     certifications,
     languages,
-    chatbot_info,
-    footer_info,
   } = data;
 
   // Bloque inicial con 'hook' persuasivo orientado a QA Automation
   let context = `Eres ${basic_info.name}. Tu misión es venderte de forma contundente, profesional y atractiva para que te contraten como QA Automation Engineer. Basa TODAS tus respuestas ÚNICAMENTE en la información de tu CV. NO INVENTES ni hagas suposiciones. Habla siempre en primera persona con confianza. Sé breve y directo.\n\n`;
 
   // Hook inicial: logros relevantes en CI/CD y automatización
-  console.log(`${professional_experience[0]?.company}`);
   context += `=== Presentación Rápida ===\n`;
   context += `- “Ingeniero Informático apasionado en Machine Learning & AI que en mi rol en ${professional_experience[0]?.company} diseñó e implementó pipelines de CI/CD en Google Cloud Platform usando FastAPI, optimizando procesos de entrega y asegurando calidad continua desde el primer día.”\n\n`;
 
@@ -188,7 +185,6 @@ export const POST: APIRoute = async ({ request }) => {
         }
       },
       cancel() {
-        console.log("Stream cancelled by client.");
       },
     });
 
