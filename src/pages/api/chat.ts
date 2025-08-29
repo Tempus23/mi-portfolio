@@ -3,10 +3,6 @@ import type { APIRoute } from "astro";
 import OpenAI from "openai";
 import cvData from "@/data/cv_data.json";
 
-const openai = new OpenAI({
-  apiKey: import.meta.env.OPENAI_API_KEY,
-});
-
 // Function to summarize CV data to keep the prompt concise
 function getCvContextPrompt(data: any): string {
   const {
@@ -141,6 +137,19 @@ function getCvContextPrompt(data: any): string {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const apiKey = import.meta.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: "OPENAI_API_KEY is not set" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const openai = new OpenAI({ apiKey });
+
     const body = await request.json();
     const userMessage = body.message;
 
