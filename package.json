@@ -13,7 +13,6 @@
     "@astrojs/check": "0.5.6",
     "@astrojs/tailwind": "5.1.0",
     "@fontsource-variable/onest": "5.0.2",
-    "astro": "4.4.5",
     "astro-robots-txt": "1.0.0",
     "dependencies": "^0.0.1",
     "openai": "^5.0.1",
@@ -22,7 +21,8 @@
     "typescript": "5.3.3"
   },
   "devDependencies": {
-    "@astrojs/cloudflare": "^11.2.0",
+    "@astrojs/cloudflare": "^12.6.7",
+    "astro": "^5.13.5",
     "wrangler": "^4.33.1"
   }
 }
