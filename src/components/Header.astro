@@ -89,22 +89,49 @@ const navItems = [
 </script>
 
 <style>
-  nav {
-    animation: nav-shadown 1s linear both;
-    animation-timeline: scroll();
-    animation-range: 0 100px;
+  /* Usa una var para el color de fondo final, según tema */
+  :root {
+    --nav-bg: rgba(255, 255, 255, 0.5);        /* equivale a bg-white/50 */
+    --nav-ring: rgba(255, 255, 255, 0.10);     /* ring-white/10 */
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --nav-bg: rgba(31, 41, 55, 0.90);        /* ≈ dark:bg-gray-800/90 */
+      --nav-ring: rgba(255, 255, 255, 0.10);
+    }
   }
 
   nav {
-    @apply dark:bg-gray-800/90 bg-white/50;
+    /* scroll-driven animation */
+    animation: nav-shadown 1s linear both;
+    animation-timeline: scroll();
+    animation-range: 0 100px;
+
+    /* utilidades que SÍ puedes mantener fuera de @keyframes */
+    /* (equivalentes a bg-* base si quieres estado inicial visible) */
+    background-color: var(--nav-bg);
   }
 
   @keyframes nav-shadown {
     0% {
-      @apply dark:bg-gray-800/0 bg-white/0;
+      /* antes: @apply dark:bg-gray-800/0 bg-white/0; */
+      background-color: rgba(0, 0, 0, 0);         /* transparente */
+      box-shadow: none;
+      outline: 0 solid transparent;               /* ring 0 */
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
-    to {
-      @apply shadow-lg ring-1 backdrop-blur ring-white/10;
+    100% {
+      /* antes: @apply shadow-lg ring-1 backdrop-blur ring-white/10; */
+      background-color: var(--nav-bg);            /* fondo final */
+      /* sombra aprox de Tailwind shadow-lg */
+      box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      outline: 1px solid var(--nav-ring);         /* ring-1 ring-white/10 */
+      backdrop-filter: blur(8px);                 /* backdrop-blur */
+      -webkit-backdrop-filter: blur(8px);
     }
   }
 </style>
+
