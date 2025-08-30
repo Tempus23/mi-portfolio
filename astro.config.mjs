@@ -1,10 +1,7 @@
-import { defineConfig } from 'astro/config';
-import cloudflare from '@astrojs/cloudflare';
+// astro.config.mjs
+import { defineConfig } from "astro/config";
+import tailwind from "@tailwindcss/vite";
 
 export default defineConfig({
-  output: 'server',
-  adapter: cloudflare({ platformProxy: { enabled: true } }),
-  image: {
-    service: { entrypoint: 'astro/assets/services/squoosh' }
-  }
+  vite: { plugins: [tailwind()] }
 });
