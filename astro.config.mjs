@@ -1,10 +1,11 @@
+// astro.config.mjs
 import { defineConfig } from "astro/config";
-import tailwind from "@astrojs/tailwind";
-import robotsTxt from "astro-robots-txt";
+import cloudflare from "@astrojs/cloudflare";
 
 export default defineConfig({
-  integrations: [tailwind(), robotsTxt()],
+  output: "server", // <-- necesario para usar el adapter en Pages/Workers
   adapter: cloudflare({
-    platformProxy: { enabled: true }, // habilita runtime CF en `astro dev`
+    // Opcional: runtime de Cloudflare en `astro dev`
+    platformProxy: { enabled: true },
   }),
 });
