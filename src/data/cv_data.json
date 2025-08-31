@@ -3,7 +3,7 @@
     "name": "Carlos Hernández Martínez",
     "image_path": "me.jpg",
     "personal_image_alt": "Carlos Hernández Martínez",
-    "availability": "Disponible para trabajar",
+    "availability": "Trabajando en Mercadona",
     "emails": ["chermar.pro@gmail.com", "carlos.cbm32@gmail.com"],
     "linkedin": "https://linkedin.com/in/carl0shdez",
     "github": "https://github.com/Tempus23",
@@ -27,7 +27,13 @@
   },
   "professional_experience": [
     {
-      "date": "oct. 2024 - actual",
+      "date": "jul. 2025 - actual",
+      "title": "QA Automation Engineering",
+      "company": "Mercadona",
+      "description": "Diseño, desarrollo y ejecución de planes de pruebas automatizadas dentro del ecosistema DevHub Edge. Creación de escenarios E2E con Playwright y Postman. Colaboración directa con Tech Leads, Product Owners y desarrolladores para detectar riesgos, optimizar procesos y mejorar la fiabilidad del software."
+    },
+    {
+      "date": "oct. 2024 - jun. 2025",
       "title": "AI Software Engineering Intern",
       "company": "Urobora SL",
       "description": "Diseño y desarrollo de agentes de IA basados en LLM para automatización de procesos. Implementación de backend con FastAPI y arquitecturas CI/CD en Google Cloud Platform. Integración de servidores MCP (Model Context Protocol) y desarrollo de una aplicación web para la gestión de agentes y tareas."
@@ -71,34 +77,44 @@
       "description": "Formación especializada en innovación social y responsabilidad corporativa en colaboración con Edwards Lifesciences. Enfoque en soluciones tecnológicas para impacto social."
     }
   ],
-  "skills": {
+ "skills": {
     "technical": [
       "Python",
-      "JavaScript",
+      "JavaScript / TypeScript",
+      "Playwright",
+      "Postman",
       "PyTorch",
       "TensorFlow",
       "FastAPI",
       "Weights & Biases",
       "Git",
       "Docker",
+      "Podman",
       "Kubernetes",
       "GitHub Actions",
+      "Jenkins / CloudBees",
+      "Spinnaker",
       "MySQL",
       "MongoDB",
       "Google Cloud Platform",
       "Microsoft Azure",
-      "Visual Studio Code",
+      "Cloudflare Workers",
+      "CI/CD Pipelines",
       "APIs REST",
+      "Feature Flags (LaunchDarkly-style)",
+      "Visual Studio Code",
       "Prompt Engineering"
     ],
     "competencies": [
-      "Trabajo en equipo",
+      "Trabajo en equipo multidisciplinar",
       "Comunicación efectiva",
       "Pensamiento crítico",
-      "Resolución de problemas",
-      "Gestión del tiempo",
-      "Innovación",
-      "Competencias interculturales"
+      "Resolución de problemas complejos",
+      "Gestión del tiempo y priorización",
+      "Innovación y mejora continua",
+      "Competencias interculturales",
+      "Orientación a resultados",
+      "Proactividad en entornos ágiles (Scrum/Kanban)"
     ]
   },
   "projects": [
@@ -119,12 +135,6 @@
       "tags": ["PyTorch", "TensorFlow"]
     }
   ],
-  "chatbot_info": {
-    "name": "Carlos Bot",
-    "image_path": "me.jpg",
-    "default_image_alt": "Avatar de usuario",
-    "initial_message": "Preguntame lo que quieras!!"
-  },
   "footer_info": {
     "copyright_name": "Carlos Hernández Martínez",
     "contact_email": "chermar.pro@gmail.com",

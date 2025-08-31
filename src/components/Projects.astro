@@ -48,7 +48,7 @@ const PROJECTS = PROJECTS_DATA.map(project => ({
   ...project,
   image: `/${project.image}`, // Prepend slash if image paths in JSON are relative to root
   tags: project.tags.map(tagName => TAGS_LOOKUP[tagName as TagName]).filter(tag => tag) // Map tag names to tag objects
-}));
+})); 
 ---
 
 <div class="flex flex-col gap-y-16">
