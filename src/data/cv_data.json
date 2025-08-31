@@ -1,7 +1,7 @@
 {
   "basic_info": {
     "name": "Carlos Hernández Martínez",
-    "image_path": "public/me.jpg",
+    "image_path": "/me.jpg",
     "personal_image_alt": "Carlos Hernández Martínez",
     "availability": "Disponible para trabajar",
     "emails": ["chermar.pro@gmail.com", "carlos.cbm32@gmail.com"],
@@ -107,7 +107,7 @@
       "description": "Investigación en representaciones neuronales implícitas (NeRF) para detección de colisiones en entornos robóticos dinámicos. Desarrollé modelos en PyTorch con técnicas avanzadas de ensemble, pruning y quantization para optimizar el rendimiento en tiempo real. Colaboración con KUKA en la Technical University of Munich.",
       "link": "",
       "github": "https://github.com/Amrsaeed/FastCollisionDetection",
-      "image": "public/projects/sweept-volume.png",
+      "image": "/projects/sweept-volume.png",
       "tags": ["PyTorch"]
     },
     {
@@ -115,13 +115,13 @@
       "description": "Desarrollo de modelos SOTA para clasificación automática de osteoartritis usando el dataset OAI. Implementación de técnicas de fine-tuning en PyTorch y TensorFlow para datasets limitados, incluyendo validación cross-domain con datos felinos en colaboración con proyecto de doctorado.",
       "link": "",
       "github": "https://github.com/Tempus23/Radiography_TFG",
-      "image": "public/projects/rodilla-artrosis.png",
+      "image": "/projects/rodilla-artrosis.png",
       "tags": ["PyTorch", "TensorFlow"]
     }
   ],
   "chatbot_info": {
     "name": "Carlos Bot",
-    "image_path": "public/me.jpg",
+    "image_path": "/me.jpg",
     "default_image_alt": "Avatar de usuario",
     "initial_message": "Preguntame lo que quieras!!"
   },
