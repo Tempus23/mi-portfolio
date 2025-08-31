@@ -3,81 +3,81 @@
     "name": "Carlos Hernández Martínez",
     "image_path": "me.jpg",
     "personal_image_alt": "Carlos Hernández Martínez",
-    "availability": "Trabajando en Mercadona",
+    "availability": "QA Automation Engineering en Mercadona IT",
     "emails": ["chermar.pro@gmail.com", "carlos.cbm32@gmail.com"],
     "linkedin": "https://linkedin.com/in/carl0shdez",
     "github": "https://github.com/Tempus23",
     "location": "Valencia, España (disponible remoto)",
-    "tagline": "Ingeniero Informático apasionado en Machine Learning & AI. Apasionado por desarrollar soluciones innovadoras con tecnologías de vanguardia, desde modelos neuronales implícitos hasta agentes basados en LLM. Con experiencia internacional y enfoque en investigación aplicada."
+    "tagline": "Ingeniero Informático en formación con experiencia en QA Automation y proyectos de Machine Learning aplicados. Interés en aplicar la IA y la ingeniería de software para resolver problemas reales."
   },
   "about_me": {
     "description_paragraphs": [
-      "Soy un Ingeniero Informático apasionado en Machine Learning e Inteligencia Artificial con experiencia en investigación aplicada y desarrollo de soluciones innovadoras. Mi formación en la Universidad Politécnica de Valencia (nota media 7,7) y mi experiencia internacional en la Technical University of Munich me han proporcionado una sólida base técnica y una perspectiva global.",
-      "Actualmente trabajo como AI Software Engineering Intern en Urobora SL, donde diseño agentes basados en LLM y desarrollo arquitecturas en Google Cloud. Mi experiencia incluye investigación en representaciones neuronales implícitas (NeRF) para robótica en colaboración con KUKA, y desarrollo de modelos de clasificación médica usando técnicas SOTA.",
-      "Me caracterizo por ser proactivo, resiliente y orientado al crecimiento, con habilidades sólidas en trabajo en equipo, comunicación efectiva y resolución de problemas complejos. Domino tecnologías como PyTorch, TensorFlow, FastAPI y Google Cloud, siempre buscando aplicar la IA para generar impacto real."
+      "Soy estudiante de último curso de Ingeniería Informática en la Universidad Politécnica de Valencia, especializado en Inteligencia Artificial y Machine Learning. Complemento mi formación académica con experiencia práctica en QA Automation e investigación aplicada en visión por computador.",
+      "Actualmente trabajo en Mercadona IT como QA Automation Engineering, donde diseño y ejecuto pruebas automatizadas E2E con Playwright y Postman. Previamente, realicé prácticas en Urobora SL como AI Software Engineering Intern, desarrollando microservicios y agentes basados en LLM para automatización de procesos.",
+      "También he colaborado en proyectos de investigación en la Technical University of Munich junto a KUKA, aplicando modelos neuronales implícitos en robótica, y en mi Trabajo de Fin de Grado en la UPV sobre clasificación automática de artrosis de rodilla con deep learning. Me considero una persona proactiva, con capacidad de adaptación y motivación por aprender."
     ],
     "attributes": [
       "Proactivo",
-      "Resiliente",
-      "Orientado al crecimiento",
+      "Orientado al aprendizaje",
+      "Resolución de problemas",
       "Trabajo en equipo",
       "Comunicación efectiva",
-      "Resolución de problemas complejos"
+      "Gestión del tiempo"
     ]
   },
   "professional_experience": [
     {
       "date": "jul. 2025 - actual",
       "title": "QA Automation Engineering",
-      "company": "Mercadona",
-      "description": "Diseño, desarrollo y ejecución de planes de pruebas automatizadas dentro del ecosistema DevHub Edge. Creación de escenarios E2E con Playwright y Postman. Colaboración directa con Tech Leads, Product Owners y desarrolladores para detectar riesgos, optimizar procesos y mejorar la fiabilidad del software."
+      "company": "Mercadona IT",
+      "description": "Diseño y desarrollo de planes de pruebas automatizadas dentro del ecosistema DevHub Edge. Creación de escenarios E2E con Playwright y Postman. Colaboración con Tech Leads, Product Owners y desarrolladores para detectar riesgos y mejorar la fiabilidad del software."
     },
     {
       "date": "oct. 2024 - jun. 2025",
       "title": "AI Software Engineering Intern",
       "company": "Urobora SL",
-      "description": "Diseño y desarrollo de agentes de IA basados en LLM para automatización de procesos. Implementación de backend con FastAPI y arquitecturas CI/CD en Google Cloud Platform. Integración de servidores MCP (Model Context Protocol) y desarrollo de una aplicación web para la gestión de agentes y tareas."
+      "description": "Prácticas en desarrollo de agentes de IA basados en LLM y microservicios en Python. Implementación de backend con FastAPI y despliegues en Google Cloud Platform. Colaboración en el diseño de pipelines CI/CD y en la integración de servicios de IA para automatización empresarial."
     },
     {
       "date": "2025",
       "title": "Trabajo de Fin de Grado - Clasificación Automática de Osteoartritis",
       "company": "Universidad Politécnica de Valencia",
-      "description": "Clasificación automática de osteoartritis de rodilla usando modelos SOTA en PyTorch y TensorFlow. Implementación de técnicas de fine-tuning en datasets limitados y validación cross-domain."
+      "description": "Desarrollo de modelos de deep learning en PyTorch y TensorFlow para la clasificación automática de artrosis de rodilla. Uso de técnicas de fine-tuning en datasets médicos limitados y validación cruzada con otros dominios."
     },
     {
       "date": "2024",
-      "title": "Investigador - Neural Implicit Swept Volume Models",
-      "company": "Technical University of Munich & KUKA",
-      "description": "Investigación en representaciones neuronales implícitas (NeRF) para detección de colisiones en entornos robóticos dinámicos. Desarrollo en PyTorch con técnicas avanzadas de ensemble, pruning y quantization para optimización de modelos."
+      "title": "Estancia Erasmus - Investigación en Representaciones Implícitas",
+      "company": "Technical University of Munich (colaboración con KUKA)",
+      "description": "Colaboración en investigación sobre modelos neuronales implícitos aplicados a la detección de colisiones en robótica. Desarrollo de prototipos en PyTorch y exploración de técnicas de optimización de modelos."
     }
   ],
   "academic_formation": [
     {
       "date": "2021-2025",
       "title": "Grado en Ingeniería Informática",
-      "company": "Universidad Politécnica de Valencia (PUV)",
-      "description": "Nota media: 7,7. Especialización en Inteligencia Artificial y Machine Learning. Desarrollo de competencias en programación, algoritmos, bases de datos y arquitecturas de software."
+      "company": "Universidad Politécnica de Valencia (UPV)",
+      "description": "Nota media: 7,7. Especialización en Inteligencia Artificial y Machine Learning. Formación en programación, algoritmos, bases de datos y arquitecturas de software."
     },
     {
       "date": "6 meses, 2024",
       "title": "Erasmus en Computer Science",
       "company": "Technical University of Munich (TUM)",
-      "description": "Programa de intercambio internacional enfocado en investigación avanzada en IA. Colaboración en proyectos de representaciones neuronales implícitas y robótica."
+      "description": "Programa de intercambio internacional enfocado en IA y robótica. Participación en proyectos de investigación aplicada en modelos neuronales implícitos."
     },
     {
       "date": "2023",
       "title": "Akademia Bankinter Innovation Foundation",
       "company": "Bankinter Innovation Foundation",
-      "description": "Programa de formación en innovación y emprendimiento tecnológico. Desarrollo de habilidades en liderazgo, pensamiento disruptivo y gestión de proyectos innovadores."
+      "description": "Programa de formación en innovación y emprendimiento tecnológico. Desarrollo de habilidades en liderazgo y gestión de proyectos innovadores."
     },
     {
       "date": "2019-2020",
       "title": "Diploma en Innovación Social",
       "company": "CEU San Pablo Valencia",
-      "description": "Formación especializada en innovación social y responsabilidad corporativa en colaboración con Edwards Lifesciences. Enfoque en soluciones tecnológicas para impacto social."
+      "description": "Formación en innovación social y responsabilidad corporativa en colaboración con Edwards Lifesciences."
     }
   ],
- "skills": {
+  "skills": {
     "technical": [
       "Python",
       "JavaScript / TypeScript",
@@ -86,7 +86,6 @@
       "PyTorch",
       "TensorFlow",
       "FastAPI",
-      "Weights & Biases",
       "Git",
       "Docker",
       "Podman",
@@ -101,38 +100,34 @@
       "Cloudflare Workers",
       "CI/CD Pipelines",
       "APIs REST",
-      "Feature Flags (LaunchDarkly-style)",
-      "Visual Studio Code",
       "Prompt Engineering"
     ],
     "competencies": [
       "Trabajo en equipo multidisciplinar",
       "Comunicación efectiva",
       "Pensamiento crítico",
-      "Resolución de problemas complejos",
+      "Resolución de problemas",
       "Gestión del tiempo y priorización",
-      "Innovación y mejora continua",
-      "Competencias interculturales",
-      "Orientación a resultados",
-      "Proactividad en entornos ágiles (Scrum/Kanban)"
+      "Aprendizaje continuo",
+      "Adaptabilidad en entornos ágiles"
     ]
   },
   "projects": [
     {
-      "title": "Neural Implicit Swept Volume Models for Fast Collision Detection",
-      "description": "Investigación en representaciones neuronales implícitas (NeRF) para detección de colisiones en entornos robóticos dinámicos. Desarrollé modelos en PyTorch con técnicas avanzadas de ensemble, pruning y quantization para optimizar el rendimiento en tiempo real. Colaboración con KUKA en la Technical University of Munich.",
-      "link": "",
-      "github": "https://github.com/Amrsaeed/FastCollisionDetection",
-      "image": "projects/sweept-volume.png",
-      "tags": ["PyTorch"]
-    },
-    {
       "title": "Clasificación Automática de Osteoartritis de Rodilla",
-      "description": "Desarrollo de modelos SOTA para clasificación automática de osteoartritis usando el dataset OAI. Implementación de técnicas de fine-tuning en PyTorch y TensorFlow para datasets limitados, incluyendo validación cross-domain con datos felinos en colaboración con proyecto de doctorado.",
+      "description": "Proyecto de TFG en la UPV aplicando modelos de deep learning (PyTorch, TensorFlow) sobre radiografías médicas para detección de artrosis. Incluye técnicas de fine-tuning y validación cross-domain.",
       "link": "",
       "github": "https://github.com/Tempus23/Radiography_TFG",
       "image": "projects/rodilla-artrosis.png",
       "tags": ["PyTorch", "TensorFlow"]
+    },
+    {
+      "title": "Neural Implicit Swept Volume Models",
+      "description": "Colaboración en la TUM con KUKA para el desarrollo de modelos neuronales implícitos aplicados a la detección de colisiones en robótica. Prototipado en PyTorch.",
+      "link": "",
+      "github": "https://github.com/Amrsaeed/FastCollisionDetection",
+      "image": "projects/sweept-volume.png",
+      "tags": ["PyTorch"]
     }
   ],
   "footer_info": {

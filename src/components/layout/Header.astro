@@ -1,6 +1,7 @@
 ---
 import ThemeToggle from "@/components/ui/ThemeToggle.astro"
-
+import cvData from "@/data/cv_data.json"
+const { basic_info } = cvData;
 const navItems = [
   {
     title: "Experiencia",
@@ -20,7 +21,7 @@ const navItems = [
   {
     title: "Contacto",
     label: "contacto",
-    url: "mailto:chermar.pro@gmail.com",
+    url: `mailto:${basic_info.emails[0]}`,
   },
 ]
 ---
