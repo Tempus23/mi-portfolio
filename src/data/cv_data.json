@@ -28,9 +28,9 @@
   "professional_experience": [
     {
       "date": "jul. 2025 - actual",
-      "title": "QA Automation Engineering",
+      "title": "QA Backend Developer",
       "company": "Mercadona IT",
-      "description": "Diseño y desarrollo de planes de pruebas automatizadas dentro del ecosistema DevHub Edge. Creación de escenarios E2E con Playwright y Postman. Colaboración con Tech Leads, Product Owners y desarrolladores para detectar riesgos y mejorar la fiabilidad del software."
+     "description": "Desarrollo de microservicios y framework orientados a la automatización de pruebas y la integración continua. Implementación de pipelines CI/CD en CloudBees, ejecución de pruebas unitarias, de integración y mutantes, y análisis de calidad con SonarQube. Colaboración con equipos de desarrollo backend para optimizar la arquitectura, mejorar la trazabilidad entre servicios y asegurar la fiabilidad del software en producción."
     },
     {
       "date": "oct. 2024 - jun. 2025",
