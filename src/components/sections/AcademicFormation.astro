@@ -1,0 +1,18 @@
+---
+import cvData from "@/data/cv_data.json";
+import ExperienceItem from "@/components/sections/ExperienceItem.astro";
+
+const { academic_formation } = cvData;
+---
+
+<div class="flex flex-col gap-y-16">
+  <ol class="relative mt-8">
+    {
+      academic_formation.map((formation) => (
+        <li class="">
+          <ExperienceItem {...formation} />
+        </li>
+      ))
+    }
+  </ol>
+</div>
