@@ -6,7 +6,7 @@ import Mail from "@/components/icons/Mail.astro"
 import GitHubIcon from "@/components/icons/GitHub.astro";
 import SocialPill from "@/components/ui/SocialPill.astro";
 
-const { basic_info } = cvData;
+const { basic_info, languages } = cvData;
 const personalImageAlt = basic_info.personal_image_alt;
 ---
 
@@ -36,6 +36,11 @@ const personalImageAlt = basic_info.personal_image_alt;
     set:html={basic_info.tagline.replace("Ingeniero Informático especializado en Machine Learning & AI.", "<strong>Ingeniero Informático especializado en Machine Learning & AI.</strong>")}
   >
   </p>
+  <div class="flex flex-wrap gap-2 mt-4">
+    {languages.map(language => (
+      <Badge>{language.name} {language.level}</Badge>
+    ))}
+  </div>
   <nav class="flex flex-wrap gap-4 mt-8">
 
     <SocialPill href={`mailto:${basic_info.emails[0]}`}>

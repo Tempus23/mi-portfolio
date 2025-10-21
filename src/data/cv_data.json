@@ -36,7 +36,7 @@
       "date": "oct. 2024 - jun. 2025",
       "title": "AI Software Engineering Intern",
       "company": "Urobora SL",
-      "description": "Prácticas en desarrollo de agentes de IA basados en LLM y microservicios en Python. Implementación de backend con FastAPI y despliegues en Google Cloud Platform. Colaboración en el diseño de pipelines CI/CD y en la integración de servicios de IA para automatización empresarial."
+      "description": "Prácticas en desarrollo de agentes de IA basados en LLM y microservicios en Python. Implementación de backend con FastAPI y despliegues en Google Cloud Platform. Colaboración en el diseño de pipelines CI/CD y en la integración de servicios de IA para automatización empresarial. Trabajo en un equipo internacional"
     }
   ],
   "academic_formation": [
@@ -100,6 +100,16 @@
       "Adaptabilidad en entornos ágiles"
     ]
   },
+  "languages": [
+    {
+      "name": "Español",
+      "level": "Nativo"
+    },
+    {
+      "name": "Inglés",
+      "level": "B2"
+    }
+  ],,
   "projects": [
     {
       "title": "Predicción Inteligente de Ventas en Walmart utilizando Machine Learning",
