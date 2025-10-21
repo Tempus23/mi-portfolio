@@ -37,18 +37,6 @@
       "title": "AI Software Engineering Intern",
       "company": "Urobora SL",
       "description": "Prácticas en desarrollo de agentes de IA basados en LLM y microservicios en Python. Implementación de backend con FastAPI y despliegues en Google Cloud Platform. Colaboración en el diseño de pipelines CI/CD y en la integración de servicios de IA para automatización empresarial."
-    },
-    {
-      "date": "2025",
-      "title": "Trabajo de Fin de Grado - Clasificación Automática de Osteoartritis",
-      "company": "Universidad Politécnica de Valencia",
-      "description": "Desarrollo de modelos de deep learning en PyTorch y TensorFlow para la clasificación automática de artrosis de rodilla. Uso de técnicas de fine-tuning en datasets médicos limitados y validación cruzada con otros dominios."
-    },
-    {
-      "date": "2024",
-      "title": "Estancia Erasmus - Investigación en Representaciones Implícitas",
-      "company": "Technical University of Munich (colaboración con KUKA)",
-      "description": "Colaboración en investigación sobre modelos neuronales implícitos aplicados a la detección de colisiones en robótica. Desarrollo de prototipos en PyTorch y exploración de técnicas de optimización de modelos."
     }
   ],
   "academic_formation": [
@@ -56,7 +44,7 @@
       "date": "2021-2025",
       "title": "Grado en Ingeniería Informática",
       "company": "Universidad Politécnica de Valencia (UPV)",
-      "description": "Nota media: 7,7. Especialización en Inteligencia Artificial y Machine Learning. Formación en programación, algoritmos, bases de datos y arquitecturas de software."
+      "description": "Mención en computación. Formación en programación, algoritmos, bases de datos y arquitecturas de software."
     },
     {
       "date": "6 meses, 2024",
@@ -113,6 +101,13 @@
     ]
   },
   "projects": [
+    {
+      "title": "[EN PROGRESO] Predicción Inteligente de Ventas en Walmart utilizando Machine Learning",
+      "description": "Proyecto personal utilizando el dataset público de kaggle para predecir las ventas de productos en Walmart",
+      "github": "https://github.com/Tempus23/walmart-sales-kg",
+      "image": "projects/walmart-sales.png",
+      "tags": ["Python", "Pandas", "Scikit-Learn", "XGBoost"]
+    },
     {
       "title": "Clasificación Automática de Osteoartritis de Rodilla",
       "description": "Proyecto de TFG en la UPV aplicando modelos de deep learning (PyTorch, TensorFlow) sobre radiografías médicas para detección de artrosis. Incluye técnicas de fine-tuning y validación cross-domain.",

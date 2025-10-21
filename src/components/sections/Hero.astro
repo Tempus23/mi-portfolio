@@ -2,7 +2,7 @@
 import cvData from "@/data/cv_data.json";
 import Badge from "@/components/ui/Badge.astro";
 import LinkedInIcon from "@/components/icons/LinkedIn.astro";
-import MailIcon from "@/components/icons/Mail.astro";
+import Mail from "@/components/icons/Mail.astro"
 import GitHubIcon from "@/components/icons/GitHub.astro";
 import SocialPill from "@/components/ui/SocialPill.astro";
 
@@ -37,17 +37,18 @@ const personalImageAlt = basic_info.personal_image_alt;
   >
   </p>
   <nav class="flex flex-wrap gap-4 mt-8">
+
     <SocialPill href={`mailto:${basic_info.emails[0]}`}>
-      <MailIcon class="size-4" />
-      Contáctame
+      <Mail class="size-4" />
+      {basic_info.emails[0]}
     </SocialPill>
     <SocialPill href={basic_info.linkedin}>
       <LinkedInIcon class="size-4" />
-      LinkedIn
+      carl0shdez
     </SocialPill>
     <SocialPill href={basic_info.github}>
       <GitHubIcon class="size-4" />
-      GitHub
+      Tempus23
     </SocialPill>
   </nav>
 </div>
