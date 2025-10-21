@@ -102,7 +102,7 @@
   },
   "projects": [
     {
-      "title": "[EN PROGRESO] Predicción Inteligente de Ventas en Walmart utilizando Machine Learning",
+      "title": "Predicción Inteligente de Ventas en Walmart utilizando Machine Learning",
       "description": "Proyecto personal utilizando el dataset público de kaggle para predecir las ventas de productos en Walmart",
       "github": "https://github.com/Tempus23/walmart-sales-kg",
       "image": "projects/walmart-sales.png",
