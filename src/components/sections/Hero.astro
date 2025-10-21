@@ -4,6 +4,7 @@ import Badge from "@/components/ui/Badge.astro";
 import LinkedInIcon from "@/components/icons/LinkedIn.astro";
 import Mail from "@/components/icons/Mail.astro"
 import GitHubIcon from "@/components/icons/GitHub.astro";
+import ProfileCheck from "@/components/icons/ProfileCheck.astro";
 import SocialPill from "@/components/ui/SocialPill.astro";
 
 const { basic_info, languages } = cvData;
@@ -26,6 +27,14 @@ const personalImageAlt = basic_info.personal_image_alt;
       <Badge>{basic_info.availability}</Badge>
     </a>
   </div>
+  <div class="flex items-center gap-x-2">
+    <ProfileCheck class="size-4" />
+    <p class="text-gray-800 dark:text-gray-300 text-sm">
+      {languages.map(language => (`${language.name} ${language.level}`)).join(', ')}
+    </p>
+  </div>
+  </p>
+  </div>
   <h1
     class="text-4xl font-bold tracking-tight text-gray-800 sm:text-5xl dark:text-white"
   >
@@ -36,11 +45,6 @@ const personalImageAlt = basic_info.personal_image_alt;
     set:html={basic_info.tagline.replace("Ingeniero Informático especializado en Machine Learning & AI.", "<strong>Ingeniero Informático especializado en Machine Learning & AI.</strong>")}
   >
   </p>
-  <div class="flex flex-wrap gap-2 mt-4">
-    {languages.map(language => (
-      <Badge>{language.name}  -  {language.level}</Badge>
-    ))}
-  </div>
   <nav class="flex flex-wrap gap-4 mt-8">
 
     <SocialPill href={`mailto:${basic_info.emails[0]}`}>
