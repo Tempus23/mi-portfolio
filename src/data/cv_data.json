@@ -12,10 +12,10 @@
   },
   "about_me": {
     "description_paragraphs": [
-      "Soy estudiante de último curso de Ingeniería Informática en la Universidad Politécnica de Valencia, especializado en Inteligencia Artificial y Machine Learning. Complemento mi formación académica con experiencia práctica en QA Automation e investigación aplicada en visión por computador.",
-      "Actualmente trabajo en Mercadona IT como QA Automation Engineering, donde diseño y ejecuto pruebas automatizadas E2E con Playwright y Postman. Previamente, realicé prácticas en Urobora SL como AI Software Engineering Intern, desarrollando microservicios y agentes basados en LLM para automatización de procesos.",
-      "También he colaborado en proyectos de investigación en la Technical University of Munich junto a KUKA, aplicando modelos neuronales implícitos en robótica, y en mi Trabajo de Fin de Grado en la UPV sobre clasificación automática de artrosis de rodilla con deep learning. Me considero una persona proactiva, con capacidad de adaptación y motivación por aprender."
-    ],
+      "Graduado en Ingeniería Informática por la Universidad Politécnica de Valencia, con especialización en Inteligencia Artificial y Machine Learning. Experiencia en QA Automation, desarrollo backend e investigación en visión por computador.",
+      "Actualmente trabajo en Mercadona IT como QA Backend Developer, donde desarrollo el framework de integración para componentes backend, integradas en pipelines CI/CD. Participo en la validación de agentes de IA, asegurando la calidad y fiabilidad del software mediante pruebas automatizadas y análisis de calidad.",
+      "Soy una persona con mentalidad analítica y resolutiva, que disfruta afrontando nuevos retos y optimizando procesos. Me motiva aprender de forma constante, asumir responsabilidades y aportar valor tanto a nivel técnico como en la dinámica del equipo."
+  ],  
     "attributes": [
       "Proactivo",
       "Orientado al aprendizaje",
