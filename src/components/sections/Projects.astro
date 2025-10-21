@@ -5,6 +5,7 @@ import Tailwind from "@/components/icons/Tailwind.astro";
 import Link from "@/components/icons/Link.astro";
 import Code from "@/components/icons/Code.astro"; // Import Code icon
 import LinkButton from "@/components/ui/LinkButton.astro";
+import Badge from "@/components/ui/Badge.astro";
 import cvData from "@/data/cv_data.json";
 
 const { projects: PROJECTS_DATA } = cvData;
@@ -50,6 +51,7 @@ const PROJECTS = PROJECTS_DATA.map((project) => ({
   tags: project.tags
     .map((tagName) => TAGS_LOOKUP[tagName as TagName])
     .filter((tag) => tag), // Map tag names to tag objects
+  inProgress: project.inProgress || false,
 }));
 ---
 
@@ -71,6 +73,7 @@ const PROJECTS = PROJECTS_DATA.map((project) => ({
         <div class="w-full md:w-1/2 md:max-w-lg">
           <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100">
             {title}
+            {inProgress && <Badge>En Construcción</Badge>}
           </h3>
           <div class="flex flex-wrap mt-2">
             <ul class="flex flex-row mb-2 gap-x-2">
