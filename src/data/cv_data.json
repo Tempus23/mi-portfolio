@@ -3,40 +3,40 @@
     "name": "Carlos Hernández Martínez",
     "image_path": "me.jpg",
     "personal_image_alt": "Carlos Hernández Martínez",
-    "availability": "QA Backend Developer",
+    "availability": "AI QA Engineer & Backend Developer",
     "emails": ["chermar.pro@gmail.com", "carlos.cbm32@gmail.com"],
     "linkedin": "https://linkedin.com/in/carl0shdez",
     "github": "https://github.com/Tempus23",
     "location": "Valencia, España (disponible remoto)",
-    "tagline": "Ingeniero Informático en formación con experiencia en QA Automation y proyectos de Machine Learning aplicados. Interés en aplicar la IA y la ingeniería de software para resolver problemas reales."
+    "tagline": "Ingeniero Informático especializado en Inteligencia Artificial y Backend Development. Experiencia desarrollando agentes de IA, frameworks de testing enterprise y modelos de Machine Learning. Mentalidad orientada a liderazgo técnico y optimización de procesos mediante automatización inteligente."
   },
   "about_me": {
     "description_paragraphs": [
-      "Graduado en Ingeniería Informática por la Universidad Politécnica de Valencia, con especialización en Inteligencia Artificial y Machine Learning. Experiencia en QA Automation, desarrollo backend e investigación en visión por computador.",
-      "Actualmente trabajo en Mercadona IT como QA Backend Developer, donde desarrollo el framework de integración para componentes backend, integradas en pipelines CI/CD. Participo en la validación de agentes de IA, asegurando la calidad y fiabilidad del software mediante pruebas automatizadas y análisis de calidad.",
-      "Soy una persona con mentalidad analítica y resolutiva, que disfruta afrontando nuevos retos y optimizando procesos. Me motiva aprender de forma constante, asumir responsabilidades y aportar valor tanto a nivel técnico como en la dinámica del equipo."
+      "Ingeniero Informático graduado por la Universidad Politécnica de Valencia con especialización en Inteligencia Artificial y Machine Learning. Experiencia profesional desarrollando agentes de IA, automatización de testing enterprise, backend con Python/TypeScript, y modelos de Deep Learning aplicados a problemas reales.",
+      "Actualmente en Mercadona IT liderando el desarrollo del framework de testing propietario para componentes backend, integrando análisis de calidad con SonarQube y scripts Python avanzados. Próximamente participaré en la validación de agentes de código, asegurando la fiabilidad de sistemas de IA en producción. Previamente colaboré con equipos frontend (Angular) y backend optimizando arquitecturas y acelerando ciclos de desarrollo.",
+      "Perfil versátil con experiencia internacional (TUM Múnich, equipos multinacionales), mentalidad de liderazgo técnico y pasión por construir soluciones escalables. Busco seguir creciendo en roles de AI/ML Engineering con proyección hacia posiciones de gestión técnica, donde pueda combinar expertise en IA, ingeniería de software y visión estratégica."
   ],  
     "attributes": [
-      "Proactivo",
-      "Orientado al aprendizaje",
-      "Resolución de problemas",
-      "Trabajo en equipo",
-      "Comunicación efectiva",
-      "Gestión del tiempo"
+      "Liderazgo técnico",
+      "Visión estratégica",
+      "Resolución de problemas complejos",
+      "Colaboración cross-functional",
+      "Comunicación efectiva internacional",
+      "Aprendizaje continuo y adaptabilidad"
     ]
   },
   "professional_experience": [
     {
       "date": "jul. 2025 - actual",
-      "title": "QA Backend Developer",
+      "title": "AI QA Engineer & Backend Developer",
       "company": "Mercadona IT",
-     "description": "Desarrollo de microservicios y framework orientados a la automatización de pruebas y la integración continua. Implementación de pipelines CI/CD en CloudBees, ejecución de pruebas unitarias, de integración y mutantes, y análisis de calidad con SonarQube. Colaboración con equipos de desarrollo backend para optimizar la arquitectura, mejorar la trazabilidad entre servicios y asegurar la fiabilidad del software en producción."
+     "description": "Desarrollo del framework de testing propietario de Mercadona para componentes backend, integrando análisis de calidad con SonarQube y automatización mediante scripts Python avanzados. Implementación de pipelines CI/CD en CloudBees con pruebas unitarias, de integración y mutantes. Colaboración cross-functional con equipos frontend (Angular) y backend (Python) para optimizar arquitecturas y acelerar ciclos de desarrollo durante 2 meses. Próximamente asignado al flujo de validación de agentes de código IA, asegurando la fiabilidad de sistemas de IA generativa en producción enterprise."
     },
     {
       "date": "oct. 2024 - jun. 2025",
-      "title": "AI Software Engineering Intern",
-      "company": "Urobora SL",
-      "description": "Prácticas en desarrollo de agentes de IA basados en LLM y microservicios en Python. Implementación de backend con FastAPI y despliegues en Google Cloud Platform. Colaboración en el diseño de pipelines CI/CD y en la integración de servicios de IA para automatización empresarial. Trabajo en un equipo internacional"
+      "title": "Backend AI Engineer",
+      "company": "Urobora SL (Startup de IA)",
+      "description": "Desarrollo backend en startup de investigación en IA enfocada en automatización empresarial mediante tecnologías emergentes. Implementación de agentes autónomos basados en LLMs (GPT API, LM Studio), sistemas RAG (Retrieval-Augmented Generation) y Model Context Protocol (MCP). Arquitectura de microservicios en Python/FastAPI desplegados en Google Cloud Platform con infraestructura Kubernetes y pipelines CI/CD. Colaboración en equipo internacional multicultural, contribuyendo al stack tecnológico de vanguardia en IA aplicada."
     }
   ],
   "academic_formation": [
@@ -67,37 +67,36 @@
   ],
   "skills": {
     "technical": [
-      "Python",
+      "Python (Expert)",
       "JavaScript / TypeScript",
-      "Playwright",
-      "Postman",
-      "PyTorch",
-      "TensorFlow",
-      "FastAPI",
-      "Git",
-      "Docker",
-      "Podman",
-      "Kubernetes",
-      "GitHub Actions",
-      "Jenkins / CloudBees",
-      "Spinnaker",
-      "MySQL",
-      "MongoDB",
+      "PyTorch & TensorFlow",
+      "LLMs & RAG Systems",
+      "GPT API & LM Studio",
+      "Model Context Protocol (MCP)",
+      "FastAPI & Microservices",
+      "Pytest & Testing Frameworks",
+      "Angular (Frontend Support)",
+      "SonarQube & Code Quality",
+      "Docker & Podman",
+      "Kubernetes & GKE",
       "Google Cloud Platform",
-      "Microsoft Azure",
-      "Cloudflare Workers",
-      "CI/CD Pipelines",
+      "CI/CD (CloudBees, GitHub Actions, Jenkins)",
+      "Spinnaker",
+      "MySQL & MongoDB",
+      "Playwright & Postman",
       "APIs REST",
-      "Prompt Engineering"
+      "Prompt Engineering & Fine-tuning",
+      "Git & Version Control"
     ],
     "competencies": [
-      "Trabajo en equipo multidisciplinar",
-      "Comunicación efectiva",
-      "Pensamiento crítico",
-      "Resolución de problemas",
-      "Gestión del tiempo y priorización",
-      "Aprendizaje continuo",
-      "Adaptabilidad en entornos ágiles"
+      "Liderazgo técnico y mentoría",
+      "Visión estratégica de producto",
+      "Colaboración cross-functional (Frontend, Backend, QA)",
+      "Comunicación técnica internacional",
+      "Pensamiento analítico y resolución de problemas complejos",
+      "Gestión de proyectos y priorización",
+      "Aprendizaje continuo de tecnologías emergentes",
+      "Adaptabilidad en entornos ágiles y startups"
     ]
   },
   "languages": [
@@ -107,33 +106,33 @@
     },
     {
       "name": "Inglés",
-      "level": "B2"
+      "level": "B2 (Cambridge Certificate)"
     }
   ],
   "projects": [
     {
-      "title": "Predicción Inteligente de Ventas en Walmart utilizando Machine Learning",
-      "description": "Proyecto personal utilizando el dataset público de kaggle para predecir las ventas de productos en Walmart",
+      "title": "Sistema de Predicción de Ventas con Machine Learning",
+      "description": "Desarrollo de pipeline completo de ML para predicción de ventas en retail (dataset Walmart/Kaggle). Exploración de múltiples algoritmos (Random Forest, XGBoost, Gradient Boosting) con optimización de hiperparámetros. Feature engineering avanzado y análisis de series temporales. Proyecto en curso enfocado en aplicabilidad real y escalabilidad.",
       "github": "https://github.com/Tempus23/walmart-sales-kg",
       "image": "projects/walmart-sales.png",
-      "tags": ["Python"],
+      "tags": ["Python", "Scikit-learn", "XGBoost", "Machine Learning"],
       "inProgress": true
     },
     {
-      "title": "Clasificación Automática de Osteoartritis de Rodilla",
-      "description": "Proyecto de TFG en la UPV aplicando modelos de deep learning (PyTorch, TensorFlow) sobre radiografías médicas para detección de artrosis. Incluye técnicas de fine-tuning y validación cross-domain.",
+      "title": "Sistema de Diagnóstico Médico con Deep Learning - TFG",
+      "description": "Proyecto de Trabajo Fin de Grado desarrollando sistema de clasificación automática de osteoartritis de rodilla mediante radiografías médicas. Implementación de arquitecturas CNN (ResNet, EfficientNet) con PyTorch y TensorFlow, alcanzando 80% de precisión en clasificación binaria. Aplicación de técnicas de fine-tuning, data augmentation y validación cross-domain. Enfoque en utilidad clínica real y escalabilidad del sistema de diagnóstico asistido.",
       "link": "",
       "github": "https://github.com/Tempus23/Radiography_TFG",
       "image": "projects/rodilla-artrosis.png",
-      "tags": ["Python", "PyTorch", "TensorFlow"]
+      "tags": ["Python", "PyTorch", "TensorFlow", "Computer Vision", "Healthcare AI"]
     },
     {
-      "title": "Neural Implicit Swept Volume Models",
-      "description": "Colaboración en la TUM con KUKA para el desarrollo de modelos neuronales implícitos aplicados a la detección de colisiones en robótica. Prototipado en PyTorch.",
+      "title": "Neural Implicit Models for Robotics - TUM Research",
+      "description": "Investigación colaborativa en la Technical University of Munich (TUM) con KUKA Robotics. Desarrollo de modelos neuronales implícitos para detección de colisiones en tiempo real en manipuladores robóticos. Implementación en PyTorch de swept volume models y optimización para inferencia eficiente. Contribución a paper de investigación en intersección de Deep Learning y robótica industrial.",
       "link": "",
       "github": "https://github.com/Amrsaeed/FastCollisionDetection",
       "image": "projects/sweept-volume.png",
-      "tags": ["Python", "PyTorch"]
+      "tags": ["Python", "PyTorch", "Robotics", "Research", "Neural Networks"]
     }
   ],
   "footer_info": {
