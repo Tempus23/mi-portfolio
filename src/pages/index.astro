@@ -20,7 +20,7 @@ import Education from "@/components/icons/Education.astro";
     <SectionContainer class="py-16 md:py-36">
       <Hero />
     </SectionContainer>
-    <div class="space-y-24">
+    <div class="space-y-24 pb-16">
     <SectionContainer id="experiencia">
       <TitleSection>
         <Briefcase class="size-8" />
@@ -32,9 +32,17 @@ import Education from "@/components/icons/Education.astro";
     <SectionContainer id="proyectos">
       <TitleSection>
         <CodeIcon class="size-7" />
-        Proyectos
+        Proyectos destacados
       </TitleSection>
       <Projects />
+    </SectionContainer>
+
+    <SectionContainer id="habilidades">
+      <TitleSection>
+        <CodeIcon class="size-7" />
+        Stack Tecnológico
+      </TitleSection>
+      <Skills />
     </SectionContainer>
 
     <SectionContainer id="formacion">
@@ -45,22 +53,12 @@ import Education from "@/components/icons/Education.astro";
       <AcademicFormation />
     </SectionContainer>
 
-    
-
     <SectionContainer id="sobre-mi">
       <TitleSection>
         <ProfileCheck class="size-8" />
         Sobre mí
       </TitleSection>
       <AboutMe />
-    </SectionContainer>
-
-    <SectionContainer id="habilidades">
-      <TitleSection>
-        <CodeIcon class="size-7" />
-        Habilidades
-      </TitleSection>
-      <Skills />
     </SectionContainer>
   </div>
   </main>

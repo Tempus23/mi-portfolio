@@ -3,31 +3,42 @@ import cvData from "@/data/cv_data.json";
 
 const { about_me } = cvData;
 
-// Helper function to bold specific phrases. This is a simple example.
-// For more complex HTML structures or many replacements, consider a more robust approach.
 function formatParagraph(paragraph: string): string {
   let formattedParagraph = paragraph;
-  // Example of bolding, adjust keywords as needed based on your cv_data.json structure
   const boldKeywords = [
-    "Ingeniero Informático especializado en Machine Learning e Inteligencia Artificial",
-    "AI Engineering Intern en Urobora SL",
-    "proactivo, resiliente y orientado al crecimiento",
-    // Add other phrases you want to bold from your paragraphs
+    "Inteligencia Artificial",
+    "Machine Learning",
+    "Deep Learning",
+    "agentes de IA",
+    "backend",
+    "liderazgo técnico",
+    "experiencia internacional",
   ];
   boldKeywords.forEach(keyword => {
-    formattedParagraph = formattedParagraph.replace(keyword, `<strong>${keyword}</strong>`);
+    const regex = new RegExp(keyword, 'gi');
+    formattedParagraph = formattedParagraph.replace(regex, `<strong>${keyword}</strong>`);
   });
   return formattedParagraph;
 }
 ---
 
-<article class="flex flex-col items-center justify-center gap-8 text-gray-700 dark:text-gray-300 md:flex-row">
-  <div
-    class="[&>p]:mb-4 [&>p>strong]:text-yellow-500 dark:[&>p>strong]:text-yellow-100 [&>p>strong]:font-normal [&>p>strong]:font-mono text-pretty order-2 md:order-1"
-  >
+<article class="flex flex-col items-center justify-center gap-8 text-gray-700 dark:text-gray-300">
+  <div class="[&>p]:mb-6 [&>p]:text-lg [&>p]:leading-relaxed [&>p>strong]:text-blue-600 dark:[&>p>strong]:text-blue-400 [&>p>strong]:font-semibold text-pretty">
     {about_me.description_paragraphs.map((paragraph) => (
       <p set:html={formatParagraph(paragraph)} />
     ))}
+  </div>
+  
+  <div class="w-full border-t border-gray-200 dark:border-gray-700 pt-6">
+    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Valores clave</h3>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {about_me.attributes.map(attribute => (
+        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+          <span class="text-green-500">✓</span>
+          <span>{attribute}</span>
+        </div>
+      ))}
+    </div>
   </div>
 </article>
 

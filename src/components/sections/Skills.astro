@@ -3,30 +3,44 @@ import cvData from "@/data/cv_data.json";
 
 const { skills } = cvData;
 const { technical: TECHNICAL_SKILLS, competencies: COMPETENCIES } = skills;
-
-// You can use existing components like Badge.astro for styling if desired,
-// or simple list elements. For now, let's use simple list elements.
-// Import Badge from './Badge.astro'; // If you decide to use Badge
 ---
 
-<section class="mb-16">
-  <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Habilidades Técnicas</h3>
-  <ul class="flex flex-wrap gap-2">
-    {TECHNICAL_SKILLS.map(skill => (
-      <li class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-1 px-3 rounded-md text-sm">
-        {skill}
-      </li>
-    ))}
-  </ul>
-</section>
+<div class="grid md:grid-cols-2 gap-8">
+  <section>
+    <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+      <span class="text-3xl">🔧</span>
+      Habilidades Técnicas
+    </h3>
+    <ul class="flex flex-wrap gap-2">
+      {TECHNICAL_SKILLS.map(skill => (
+        <li class="bg-gradient-to-r from-blue-50 to-violet-50 dark:from-blue-900/20 dark:to-violet-900/20 
+                   border border-blue-200 dark:border-blue-800 
+                   text-gray-800 dark:text-gray-200 
+                   py-2 px-4 rounded-lg text-sm font-medium
+                   hover:scale-105 hover:shadow-md transition-all duration-200
+                   cursor-default">
+          {skill}
+        </li>
+      ))}
+    </ul>
+  </section>
 
-<section>
-  <h3 class="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Competencias</h3>
-  <ul class="flex flex-wrap gap-2">
-    {COMPETENCIES.map(competency => (
-      <li class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-1 px-3 rounded-md text-sm">
-        {competency}
-      </li>
-    ))}
-  </ul>
-</section>
+  <section>
+    <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+      <span class="text-3xl">💡</span>
+      Competencias Profesionales
+    </h3>
+    <ul class="flex flex-wrap gap-2">
+      {COMPETENCIES.map(competency => (
+        <li class="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 
+                   border border-emerald-200 dark:border-emerald-800 
+                   text-gray-800 dark:text-gray-200 
+                   py-2 px-4 rounded-lg text-sm font-medium
+                   hover:scale-105 hover:shadow-md transition-all duration-200
+                   cursor-default">
+          {competency}
+        </li>
+      ))}
+    </ul>
+  </section>
+</div>
