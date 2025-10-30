@@ -22,22 +22,22 @@ const TAGS_LOOKUP = {
     class: "bg-[#003159] text-white",
     icon: Tailwind,
   },
-  "Python": {
+  Python: {
     name: "Python",
-    class: "bg-[#3776AB] text-white", 
+    class: "bg-[#3776AB] text-white",
     icon: Code,
   },
-  "PyTorch": {
+  PyTorch: {
     name: "PyTorch",
-    class: "bg-[#EE4C2C] text-white", 
+    class: "bg-[#EE4C2C] text-white",
     icon: Code,
   },
-  "TensorFlow": {
+  TensorFlow: {
     name: "TensorFlow",
     class: "bg-[#FF6F00] text-white",
     icon: Code,
   },
-  "FastAPI": {
+  FastAPI: {
     name: "FastAPI",
     class: "bg-green-600 text-white",
     icon: Code,
@@ -52,7 +52,7 @@ const TAGS_LOOKUP = {
     class: "bg-[#F7931E] text-white",
     icon: Code,
   },
-  "XGBoost": {
+  XGBoost: {
     name: "XGBoost",
     class: "bg-[#DC143C] text-white",
     icon: Code,
@@ -72,12 +72,12 @@ const TAGS_LOOKUP = {
     class: "bg-teal-600 text-white",
     icon: Code,
   },
-  "Robotics": {
+  Robotics: {
     name: "Robotics",
     class: "bg-slate-700 text-white",
     icon: Code,
   },
-  "Research": {
+  Research: {
     name: "Research",
     class: "bg-amber-600 text-white",
     icon: Code,
@@ -101,42 +101,45 @@ const PROJECTS = PROJECTS_DATA.map((project) => ({
 
 <div class="flex flex-col gap-y-16">
   {
-    PROJECTS.map(({ image, title, description, tags, link, github, inProgress }) => (
-      <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
-        <div class="w-full md:w-1/2">
-          <div class="relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50">
-            <img
-              alt={title}
-              class="object-cover object-center w-full aspect-video h-auto transition duration-500 sm:h-56 md:scale-100 md:group-hover:scale-105"
-              loading="lazy"
-              src={image}
-            />
+    PROJECTS.map(
+      ({ image, title, description, tags, link, github, inProgress }) => (
+        <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
+          <div class="w-full md:w-1/2">
+            <div class="relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50">
+              <img
+                alt={title}
+                class="object-cover object-center w-full aspect-video h-auto transition duration-500 sm:h-56 md:scale-100 md:group-hover:scale-105"
+                loading="lazy"
+                src={image}
+              />
+            </div>
           </div>
-        </div>
 
-        <div class="w-full md:w-1/2 md:max-w-lg">
-          <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-x-2">
-            {title}
-          </h3>
-          <div class="flex flex-wrap mt-2">
-            <ul class="flex flex-row mb-2 gap-x-2">
-              {inProgress && <Badge class="bg-yellow-400/10 text-yellow-800 dark:bg-yellow-400/20 dark:text-yellow-200 text-sm">En Construcción</Badge>}
+          <div class="w-full md:w-1/2 md:max-w-lg">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">
+              {title}
+            </h3>
+            <div class="flex flex-wrap gap-2 mb-4">
+              {inProgress && (
+                <Badge class="bg-yellow-400/10 text-yellow-800 dark:bg-yellow-400/20 dark:text-yellow-200 text-xs">
+                  En Construcción
+                </Badge>
+              )}
               {tags.map((tag) => (
-                <li>
-                  <span
-                    class={`flex gap-x-2 rounded-full text-xs ${tag.class} py-1 px-2 `}
-                  >
-                    <tag.icon class="size-4" />
-                    {tag.name}
-                  </span>
-                </li>
+                <span
+                  class={`inline-flex items-center gap-1.5 rounded-lg text-xs font-medium ${tag.class} py-1.5 px-3 shadow-sm`}
+                >
+                  <tag.icon class="size-3.5" />
+                  {tag.name}
+                </span>
               ))}
-            </ul>
+            </div>
 
-            <div class="mt-2 text-gray-700 dark:text-gray-400">
+            <div class="text-gray-700 dark:text-gray-400 leading-relaxed">
               {description}
             </div>
-            <footer class="flex items-end justify-start mt-4 gap-x-4">
+
+            <footer class="flex items-end justify-start mt-6 gap-x-4">
               {github && (
                 <LinkButton href={github}>
                   <GitHub class="size-6" />
@@ -151,12 +154,8 @@ const PROJECTS = PROJECTS_DATA.map((project) => ({
               )}
             </footer>
           </div>
-        </div>
-      </article>
-      
-    ))
+        </article>
+      )
+    )
   }
-  
 </div>
-
-
