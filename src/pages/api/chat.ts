@@ -1,6 +1,6 @@
 // src/pages/api/chat.ts
 import type { APIRoute } from "astro";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import cvDataEs from "@/data/cv_data_es.json";
 import cvDataEn from "@/data/cv_data.json";
 
@@ -117,10 +117,10 @@ function getCvContextPrompt(data: any, language: string = "es"): string {
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    const apiKey = import.meta.env.GEMINI_API_KEY;
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "OPENAI_API_KEY is not set" }),
+        JSON.stringify({ error: "GEMINI_API_KEY is not set" }),
         {
           status: 500,
           headers: { "Content-Type": "application/json" },
@@ -128,7 +128,8 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const openai = new OpenAI({ apiKey });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     const body = await request.json();
     const { message, history = [], language = "es" } = body;
@@ -144,26 +145,35 @@ export const POST: APIRoute = async ({ request }) => {
     const cvData = language === "en" ? cvDataEn : cvDataEs;
     const systemPrompt = getCvContextPrompt(cvData, language);
 
-    // Build messages array with conversation history
-    const messages: any[] = [
-      { role: "system", content: systemPrompt }
-    ];
-
+    // Build conversation history for Gemini
+    // Gemini uses a different format: array of {role: "user" | "model", parts: [{text: string}]}
+    const chatHistory: any[] = [];
+    
     // Add conversation history (limit to last 10 messages to avoid token limit)
     const recentHistory = history.slice(-10);
-    messages.push(...recentHistory);
-
-    // Add current user message
-    messages.push({ role: "user", content: message });
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages,
-      temperature: 0.7,
-      max_tokens: 500,
+    recentHistory.forEach((msg: any) => {
+      chatHistory.push({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }]
+      });
     });
 
-    const response = completion.choices[0]?.message?.content || "Lo siento, no pude generar una respuesta.";
+    // Start chat with history
+    const chat = model.startChat({
+      history: chatHistory,
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 500,
+      },
+    });
+
+    // Combine system prompt with user message for better context
+    const fullMessage = chatHistory.length === 0 
+      ? `${systemPrompt}\n\nUser: ${message}`
+      : message;
+
+    const result = await chat.sendMessage(fullMessage);
+    const response = result.response.text() || "Lo siento, no pude generar una respuesta.";
 
     return new Response(
       JSON.stringify({ response }),
@@ -175,9 +185,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error: any) {
     console.error("Error in /api/chat POST handler:", error);
     let errorMessage = "Internal Server Error";
-    if (error.response && error.response.data && error.response.data.error) {
-      errorMessage = error.response.data.error.message || errorMessage;
-    } else if (error.message) {
+    if (error.message) {
       errorMessage = error.message;
     }
     return new Response(JSON.stringify({ error: errorMessage }), {

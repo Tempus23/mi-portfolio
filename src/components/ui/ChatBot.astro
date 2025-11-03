@@ -35,11 +35,11 @@
       class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between"
     >
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-          <span class="text-2xl">🤖</span>
+        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
+          <img src="/me.jpg" alt="Carlos Hernández" class="w-full h-full object-cover" />
         </div>
         <div>
-          <h3 class="font-semibold">Assistant</h3>
+          <h3 class="font-semibold">Carlos's Assistant</h3>
           <p class="text-xs opacity-90">Ask me about Carlos</p>
         </div>
       </div>
@@ -71,8 +71,8 @@
     >
       <!-- Welcome Message -->
       <div class="flex gap-2">
-        <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <span class="text-white text-sm">🤖</span>
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-blue-500">
+          <img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-3 max-w-[80%] shadow-sm">
           <p class="text-sm text-gray-800 dark:text-gray-200">
@@ -188,14 +188,14 @@
     }
 
     const avatar = document.createElement("div");
-    avatar.className = "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0";
+    avatar.className = "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden";
     
     if (isUser) {
-      avatar.className += " bg-gradient-to-r from-green-500 to-teal-600 order-2";
+      avatar.className += " bg-gradient-to-r from-green-500 to-teal-600 order-2 border-2 border-green-500";
       avatar.innerHTML = '<span class="text-white text-sm">👤</span>';
     } else {
-      avatar.className += " bg-gradient-to-r from-blue-500 to-purple-600";
-      avatar.innerHTML = '<span class="text-white text-sm">🤖</span>';
+      avatar.className += " border-2 border-blue-500";
+      avatar.innerHTML = '<img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />';
     }
 
     const bubble = document.createElement("div");
@@ -233,8 +233,8 @@
     typingDiv.className = "flex gap-2 message-animate";
 
     const avatar = document.createElement("div");
-    avatar.className = "w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0";
-    avatar.innerHTML = '<span class="text-white text-sm">🤖</span>';
+    avatar.className = "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-blue-500";
+    avatar.innerHTML = '<img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />';
 
     const bubble = document.createElement("div");
     bubble.className = "bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-3 shadow-sm";
