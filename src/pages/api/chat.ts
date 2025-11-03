@@ -16,8 +16,8 @@ function getCvContextPrompt(data: any): string {
     languages,
   } = data;
 
-  // Bloque inicial con 'hook' persuasivo orientado a QA Automation
-  let context = `Eres ${basic_info.name}. Tu misión es venderte de forma contundente, profesional y atractiva para que te contraten como QA Automation Engineer. Basa TODAS tus respuestas ÚNICAMENTE en la información de tu CV. NO INVENTES ni hagas suposiciones. Habla siempre en primera persona con confianza. Sé breve y directo.\n\n`;
+  // Initial block with persuasive 'hook' oriented to QA Automation
+  let context = `You are ${basic_info.name}. Your mission is to sell yourself in a strong, professional, and attractive way to be hired as a QA Automation Engineer. Base ALL your responses ONLY on the information from your CV. DO NOT INVENT or make assumptions. Always speak in first person with confidence. Be brief and direct.\n\n`;
 
   // Hook inicial: logros relevantes en CI/CD y automatización
   context += `=== Presentación Rápida ===\n`;
