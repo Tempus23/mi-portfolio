@@ -1,0 +1,316 @@
+---
+import ChatIcon from "@/components/icons/ChatIcon.astro";
+---
+
+<!-- Gemini Chat Widget -->
+<div id="gemini-chat-widget" class="fixed bottom-6 right-6 z-50">
+  <!-- Chat Button -->
+  <button
+    id="chat-toggle-btn"
+    class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+    aria-label="Open chat"
+  >
+    <ChatIcon class="size-6" />
+  </button>
+
+  <!-- Chat Window -->
+  <div
+    id="chat-window"
+    class="hidden absolute bottom-20 right-0 w-96 h-[500px] bg-white dark:bg-gray-800 rounded-lg shadow-2xl flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700"
+  >
+    <!-- Chat Header -->
+    <div class="bg-blue-600 text-white p-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+        <span class="font-semibold">Chat with Carlos</span>
+      </div>
+      <button
+        id="chat-close-btn"
+        class="hover:bg-blue-700 rounded p-1 transition-colors"
+        aria-label="Close chat"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+            clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Chat Messages -->
+    <div
+      id="chat-messages"
+      class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900"
+    >
+      <!-- Welcome message -->
+      <div class="flex gap-2">
+        <div class="flex-shrink-0">
+          <div
+            class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold"
+          >
+            AI
+          </div>
+        </div>
+        <div
+          class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm max-w-[80%]"
+        >
+          <p class="text-sm text-gray-800 dark:text-gray-200">
+            Hi! I'm an AI assistant here to help you learn about Carlos, an
+            AI/ML Engineer and Backend Developer. Feel free to ask me about his
+            experience, skills, projects, or how to get in touch!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Input -->
+    <div class="p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+      <form id="chat-form" class="flex gap-2">
+        <input
+          id="chat-input"
+          type="text"
+          placeholder="Ask me anything..."
+          class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          autocomplete="off"
+        />
+        <button
+          id="chat-send-btn"
+          type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Send message"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
+            ></path>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Chat state
+  let chatHistory: Array<{ role: string; content: string }> = [];
+  let isLoading = false;
+
+  // Get elements
+  const toggleBtn = document.getElementById("chat-toggle-btn");
+  const closeBtn = document.getElementById("chat-close-btn");
+  const chatWindow = document.getElementById("chat-window");
+  const chatForm = document.getElementById("chat-form") as HTMLFormElement;
+  const chatInput = document.getElementById("chat-input") as HTMLInputElement;
+  const chatMessages = document.getElementById("chat-messages");
+  const sendBtn = document.getElementById("chat-send-btn") as HTMLButtonElement;
+
+  // Toggle chat window
+  toggleBtn?.addEventListener("click", () => {
+    chatWindow?.classList.toggle("hidden");
+    if (!chatWindow?.classList.contains("hidden")) {
+      chatInput?.focus();
+    }
+  });
+
+  closeBtn?.addEventListener("click", () => {
+    chatWindow?.classList.add("hidden");
+  });
+
+  // Add message to chat
+  function addMessage(role: "user" | "assistant", content: string) {
+    if (!chatMessages) return;
+
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "flex gap-2";
+
+    if (role === "user") {
+      messageDiv.innerHTML = `
+        <div class="flex-1"></div>
+        <div class="bg-blue-600 text-white rounded-lg p-3 shadow-sm max-w-[80%]">
+          <p class="text-sm">${escapeHtml(content)}</p>
+        </div>
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white text-sm font-semibold">
+            U
+          </div>
+        </div>
+      `;
+    } else {
+      messageDiv.innerHTML = `
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+            AI
+          </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm max-w-[80%]">
+          <p class="text-sm text-gray-800 dark:text-gray-200">${escapeHtml(content)}</p>
+        </div>
+      `;
+    }
+
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // Add typing indicator
+  function addTypingIndicator() {
+    if (!chatMessages) return;
+
+    const typingDiv = document.createElement("div");
+    typingDiv.id = "typing-indicator";
+    typingDiv.className = "flex gap-2";
+    typingDiv.innerHTML = `
+      <div class="flex-shrink-0">
+        <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+          AI
+        </div>
+      </div>
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
+        <div class="flex gap-1">
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        </div>
+      </div>
+    `;
+
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // Remove typing indicator
+  function removeTypingIndicator() {
+    const typingDiv = document.getElementById("typing-indicator");
+    if (typingDiv) {
+      typingDiv.remove();
+    }
+  }
+
+  // Escape HTML to prevent XSS
+  function escapeHtml(text: string): string {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Handle form submission
+  chatForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    if (isLoading || !chatInput?.value.trim()) return;
+
+    const message = chatInput.value.trim();
+    chatInput.value = "";
+
+    // Add user message
+    addMessage("user", message);
+    chatHistory.push({ role: "user", content: message });
+
+    // Disable input while loading
+    isLoading = true;
+    chatInput.disabled = true;
+    sendBtn.disabled = true;
+
+    // Show typing indicator
+    addTypingIndicator();
+
+    try {
+      const response = await fetch("/api/gemini-chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+          history: chatHistory.slice(0, -1), // Don't include the message we just added
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      // Remove typing indicator
+      removeTypingIndicator();
+
+      // Read the stream
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantMessage = "";
+
+      if (reader) {
+        // Create a message element for streaming
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "flex gap-2";
+        messageDiv.innerHTML = `
+          <div class="flex-shrink-0">
+            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+              AI
+            </div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm max-w-[80%]">
+            <p class="text-sm text-gray-800 dark:text-gray-200" id="streaming-message"></p>
+          </div>
+        `;
+        chatMessages?.appendChild(messageDiv);
+
+        const streamingP = document.getElementById("streaming-message");
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          assistantMessage += chunk;
+
+          if (streamingP) {
+            streamingP.textContent = assistantMessage;
+            chatMessages!.scrollTop = chatMessages!.scrollHeight;
+          }
+        }
+      }
+
+      // Add to history
+      chatHistory.push({ role: "assistant", content: assistantMessage });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      removeTypingIndicator();
+      addMessage(
+        "assistant",
+        "Sorry, there was an error processing your message. Please try again."
+      );
+    } finally {
+      isLoading = false;
+      chatInput.disabled = false;
+      sendBtn.disabled = false;
+      chatInput.focus();
+    }
+  });
+</script>
+
+<style>
+  @keyframes bounce {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-0.5rem);
+    }
+  }
+
+  .animate-bounce {
+    animation: bounce 1s infinite;
+  }
+</style>
