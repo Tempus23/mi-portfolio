@@ -1,6 +1,5 @@
 // src/pages/api/chat.ts
 import type { APIRoute } from "astro";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import cvDataEs from "@/data/cv_data_es.json";
 import cvDataEn from "@/data/cv_data.json";
 
