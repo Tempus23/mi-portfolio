@@ -1,4 +1,6 @@
 // src/pages/api/send-email.ts
+export const prerender = false;
+
 import type { APIRoute } from "astro";
 // import { Resend } from 'resend'; // Will be uncommented later
 

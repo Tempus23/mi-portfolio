@@ -1,4 +1,6 @@
 // src/pages/api/gemini-chat.ts
+export const prerender = false;
+
 import type { APIRoute } from "astro";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import cvData from "@/data/cv_data.json";

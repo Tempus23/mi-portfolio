@@ -1,4 +1,6 @@
 // src/pages/api/chat.ts
+export const prerender = false;
+
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
 import cvData from "@/data/cv_data.json";
