@@ -21,7 +21,7 @@ const personalImageAlt = basic_info.personal_image_alt;
       <h1
         class="text-4xl font-bold tracking-tight text-gray-800 sm:text-5xl dark:text-white mb-6"
       >
-        Hey, soy <span
+        <span data-i18n="hero.greeting">Hey, I'm</span> <span
           class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400"
           >{basic_info.name.split(" ")[0]}</span
         >
@@ -33,17 +33,18 @@ const personalImageAlt = basic_info.personal_image_alt;
   </div>
   <p
     class="mt-6 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300 leading-relaxed"
+    data-i18n="hero.tagline"
     set:html={basic_info.tagline
       .replace(
-        "Inteligencia Artificial",
-        "<strong>Inteligencia Artificial</strong>"
+        "Artificial Intelligence",
+        "<strong>Artificial Intelligence</strong>"
       )
       .replace("Backend Development", "<strong>Backend Development</strong>")}
   />
   <div class="flex flex-wrap gap-2 mt-6">
     {
       languages.map((language) => (
-        <Badge class="bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-700">
+        <Badge class="bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-700" data-lang-badge>
           {language.name} · {language.level}
         </Badge>
       ))
@@ -53,7 +54,7 @@ const personalImageAlt = basic_info.personal_image_alt;
   <nav class="flex flex-wrap gap-4 mt-8">
     <SocialPill href={`mailto:${basic_info.emails[0]}`}>
       <Mail class="size-4" />
-      Contáctame
+      <span data-i18n="hero.contactMe">Contact Me</span>
     </SocialPill>
     <SocialPill href={basic_info.linkedin}>
       <LinkedInIcon class="size-4" />

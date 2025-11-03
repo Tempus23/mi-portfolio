@@ -1,0 +1,142 @@
+---
+---
+
+<div class="language-switcher">
+  <button
+    id="lang-en"
+    class="lang-button"
+    data-lang="en"
+    aria-label="Switch to English"
+  >
+    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 30">
+      <clipPath id="s">
+        <path d="M0,0 v30 h60 v-30 z"/>
+      </clipPath>
+      <clipPath id="t">
+        <path d="M30,15 h30 v15 z v-15 h-30 z h-30 v15 z v-15 h30 z"/>
+      </clipPath>
+      <g clip-path="url(#s)">
+        <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
+        <path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#t)" stroke="#C8102E" stroke-width="4"/>
+        <path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/>
+        <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/>
+      </g>
+    </svg>
+    <span>EN</span>
+  </button>
+  <span class="separator">/</span>
+  <button
+    id="lang-es"
+    class="lang-button"
+    data-lang="es"
+    aria-label="Cambiar a Español"
+  >
+    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 500">
+      <rect width="750" height="500" fill="#c60b1e"/>
+      <rect width="750" height="250" y="125" fill="#ffc400"/>
+    </svg>
+    <span>ES</span>
+  </button>
+</div>
+
+<style>
+  .language-switcher {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    padding: 0.25rem;
+  }
+
+  .separator {
+    color: rgb(156 163 175);
+    font-weight: 300;
+    font-size: 0.875rem;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .separator {
+      color: rgb(107 114 128);
+    }
+  }
+
+  .lang-button {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    background: transparent;
+    border: none;
+    color: rgb(107 114 128);
+    cursor: pointer;
+  }
+
+  .lang-button:hover {
+    background: rgb(243 244 246);
+    color: rgb(59 130 246);
+  }
+
+  .lang-button.active {
+    color: rgb(37 99 235);
+    background: rgb(239 246 255);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .lang-button {
+      color: rgb(156 163 175);
+    }
+    
+    .lang-button:hover {
+      background: rgb(55 65 81);
+      color: rgb(147 197 253);
+    }
+    
+    .lang-button.active {
+      color: rgb(147 197 253);
+      background: rgb(30 58 138 / 0.3);
+    }
+  }
+
+  .lang-button svg {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.125rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+</style>
+
+<script>
+  import { getLanguage, setLanguage, type Language } from '@/utils/languageStore';
+
+  function updateActiveButton(lang: Language) {
+    document.querySelectorAll('.lang-button').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.getElementById(`lang-${lang}`)?.classList.add('active');
+  }
+
+  function handleLanguageChange(lang: Language) {
+    setLanguage(lang);
+    updateActiveButton(lang);
+    // Reload the page to apply the new language
+    window.location.reload();
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    const currentLang = getLanguage();
+    updateActiveButton(currentLang);
+
+    document.querySelectorAll('.lang-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang') as Language;
+        if (lang) {
+          handleLanguageChange(lang);
+        }
+      });
+    });
+  });
+</script>

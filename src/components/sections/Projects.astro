@@ -62,8 +62,18 @@ const TAGS_LOOKUP = {
     class: "bg-purple-600 text-white",
     icon: Code,
   },
+  "Machine Learning · Aprendizaje Automático": {
+    name: "Machine Learning · Aprendizaje Automático",
+    class: "bg-purple-600 text-white",
+    icon: Code,
+  },
   "Computer Vision": {
     name: "Computer Vision",
+    class: "bg-indigo-600 text-white",
+    icon: Code,
+  },
+  "Computer Vision · Visión Artificial": {
+    name: "Computer Vision · Visión Artificial",
     class: "bg-indigo-600 text-white",
     icon: Code,
   },
@@ -72,8 +82,18 @@ const TAGS_LOOKUP = {
     class: "bg-teal-600 text-white",
     icon: Code,
   },
+  "Healthcare AI · IA en Salud": {
+    name: "Healthcare AI · IA en Salud",
+    class: "bg-teal-600 text-white",
+    icon: Code,
+  },
   Robotics: {
     name: "Robotics",
+    class: "bg-slate-700 text-white",
+    icon: Code,
+  },
+  "Robotics · Robótica": {
+    name: "Robotics · Robótica",
     class: "bg-slate-700 text-white",
     icon: Code,
   },
@@ -82,8 +102,18 @@ const TAGS_LOOKUP = {
     class: "bg-amber-600 text-white",
     icon: Code,
   },
+  "Research · Investigación": {
+    name: "Research · Investigación",
+    class: "bg-amber-600 text-white",
+    icon: Code,
+  },
   "Neural Networks": {
     name: "Neural Networks",
+    class: "bg-pink-600 text-white",
+    icon: Code,
+  },
+  "Neural Networks · Redes Neuronales": {
+    name: "Neural Networks · Redes Neuronales",
     class: "bg-pink-600 text-white",
     icon: Code,
   },
@@ -103,7 +133,7 @@ const PROJECTS = PROJECTS_DATA.map((project) => ({
   {
     PROJECTS.map(
       ({ image, title, description, tags, link, github, inProgress }) => (
-        <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0">
+        <article class="flex flex-col space-x-0 space-y-8 group md:flex-row md:space-x-8 md:space-y-0" data-project>
           <div class="w-full md:w-1/2">
             <div class="relative flex flex-col items-center col-span-6 row-span-5 gap-8 transition duration-500 ease-in-out transform shadow-xl overflow-clip rounded-xl sm:rounded-xl md:group-hover:-translate-y-1 md:group-hover:shadow-2xl lg:border lg:border-gray-800 lg:hover:border-gray-700 lg:hover:bg-gray-800/50">
               <img
@@ -116,13 +146,13 @@ const PROJECTS = PROJECTS_DATA.map((project) => ({
           </div>
 
           <div class="w-full md:w-1/2 md:max-w-lg">
-            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3" data-project-title>
               {title}
             </h3>
             <div class="flex flex-wrap gap-2 mb-4">
               {inProgress && (
-                <Badge class="bg-yellow-400/10 text-yellow-800 dark:bg-yellow-400/20 dark:text-yellow-200 text-xs">
-                  En Construcción
+                <Badge class="bg-yellow-400/10 text-yellow-800 dark:bg-yellow-400/20 dark:text-yellow-200 text-xs" data-project-in-progress>
+                  In Progress
                 </Badge>
               )}
               {tags.map((tag) => (
@@ -135,7 +165,7 @@ const PROJECTS = PROJECTS_DATA.map((project) => ({
               ))}
             </div>
 
-            <div class="text-gray-700 dark:text-gray-400 leading-relaxed">
+            <div class="text-gray-700 dark:text-gray-400 leading-relaxed" data-project-description>
               {description}
             </div>
 

@@ -9,7 +9,7 @@ const { technical: TECHNICAL_SKILLS, competencies: COMPETENCIES } = skills;
   <section>
     <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
       <span class="text-3xl">🔧</span>
-      Habilidades Técnicas
+      <span data-i18n="skills.technicalSkills">Technical Skills</span>
     </h3>
     <ul class="flex flex-wrap gap-2">
       {TECHNICAL_SKILLS.map(skill => (
@@ -18,7 +18,7 @@ const { technical: TECHNICAL_SKILLS, competencies: COMPETENCIES } = skills;
                    text-gray-800 dark:text-gray-200 
                    py-2 px-4 rounded-lg text-sm font-medium
                    hover:scale-105 hover:shadow-md transition-all duration-200
-                   cursor-default">
+                   cursor-default" data-skill-type="technical">
           {skill}
         </li>
       ))}
@@ -28,7 +28,7 @@ const { technical: TECHNICAL_SKILLS, competencies: COMPETENCIES } = skills;
   <section>
     <h3 class="text-2xl font-semibold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
       <span class="text-3xl">💡</span>
-      Competencias Profesionales
+      <span data-i18n="skills.professionalCompetencies">Professional Competencies</span>
     </h3>
     <ul class="flex flex-wrap gap-2">
       {COMPETENCIES.map(competency => (
@@ -37,7 +37,7 @@ const { technical: TECHNICAL_SKILLS, competencies: COMPETENCIES } = skills;
                    text-gray-800 dark:text-gray-200 
                    py-2 px-4 rounded-lg text-sm font-medium
                    hover:scale-105 hover:shadow-md transition-all duration-200
-                   cursor-default">
+                   cursor-default" data-skill-type="competency">
           {competency}
         </li>
       ))}

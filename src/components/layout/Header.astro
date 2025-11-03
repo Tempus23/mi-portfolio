@@ -1,31 +1,32 @@
 ---
 import ThemeToggle from "@/components/ui/ThemeToggle.astro"
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher.astro"
 import cvData from "@/data/cv_data.json"
 const { basic_info } = cvData;
 const navItems = [
   {
-    title: "Experiencia",
-    label: "experiencia",
-    url: "/mi-portfolio/#experiencia",
+    title: "Experience",
+    label: "experience",
+    url: "/mi-portfolio/#experience",
   },
   {
-    title: "Proyectos",
-    label: "proyectos",
-    url: "/mi-portfolio/#proyectos",
+    title: "Projects",
+    label: "projects",
+    url: "/mi-portfolio/#projects",
   },
   {
     title: "Skills",
-    label: "habilidades",
-    url: "/mi-portfolio/#habilidades",
+    label: "skills",
+    url: "/mi-portfolio/#skills",
   },
   {
-    title: "Sobre mí",
-    label: "sobre-mi",
-    url: "/mi-portfolio/#sobre-mi",
+    title: "About Me",
+    label: "about-me",
+    url: "/mi-portfolio/#about-me",
   },
   {
-    title: "Contacto",
-    label: "contacto",
+    title: "Contact",
+    label: "contact",
     url: `mailto:${basic_info.emails[0]}`,
   },
 ]
@@ -48,6 +49,7 @@ const navItems = [
         </a>
       ))
     }
+    <LanguageSwitcher />
     <ThemeToggle />
   </nav>
 </header>
