@@ -60,7 +60,7 @@ function getSystemPrompt(data: any): string {
   prompt += `3. If asked about something not in the CV, politely say you don't have that information\n`;
   prompt += `4. Keep responses concise but informative\n`;
   prompt += `5. Encourage questions about projects, skills, or experience\n`;
-  prompt += `6. If someone wants to contact Carlos, provide the email: ${basic_info.email}\n`;
+  prompt += `6. If someone wants to contact Carlos, provide the email: ${basic_info.emails[0]}\n`;
   
   return prompt;
 }
@@ -111,7 +111,7 @@ function handleToolCall(toolName: string, args: any): string {
   // This is a placeholder - tools don't actually do anything yet
   switch (toolName) {
     case "get_contact_info":
-      return `Contact: ${cvData.basic_info.email}`;
+      return `Contact: ${cvData.basic_info.emails[0]}`;
     case "get_project_details":
       return `Project details for: ${args.project_name}`;
     case "get_skills_by_category":
