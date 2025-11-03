@@ -1,40 +1,30 @@
 ---
 import ThemeToggle from "@/components/ui/ThemeToggle.astro"
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher.astro"
 import cvData from "@/data/cv_data.json"
-import cvDataEs from "@/data/cv_data_es.json"
-import translations from "@/data/translations.json"
-
-// This will be replaced by client-side script
 const { basic_info } = cvData;
 const navItems = [
   {
-    titleEn: translations.en.nav.experience,
-    titleEs: translations.es.nav.experience,
+    title: "Experience",
     label: "experience",
     url: "/mi-portfolio/#experience",
   },
   {
-    titleEn: translations.en.nav.projects,
-    titleEs: translations.es.nav.projects,
+    title: "Projects",
     label: "projects",
     url: "/mi-portfolio/#projects",
   },
   {
-    titleEn: translations.en.nav.skills,
-    titleEs: translations.es.nav.skills,
+    title: "Skills",
     label: "skills",
     url: "/mi-portfolio/#skills",
   },
   {
-    titleEn: translations.en.nav.aboutMe,
-    titleEs: translations.es.nav.aboutMe,
+    title: "About Me",
     label: "about-me",
     url: "/mi-portfolio/#about-me",
   },
   {
-    titleEn: translations.en.nav.contact,
-    titleEs: translations.es.nav.contact,
+    title: "Contact",
     label: "contact",
     url: `mailto:${basic_info.emails[0]}`,
   },
@@ -53,37 +43,17 @@ const navItems = [
           class="relative block px-2 py-2 transition hover:text-blue-500 dark:hover:text-blue-500"
           aria-label={link.label}
           href={link.url}
-          data-text-en={link.titleEn}
-          data-text-es={link.titleEs}
         >
-          <span class="nav-text">{link.titleEn}</span>
+          {link.title}
         </a>
       ))
     }
-    <LanguageSwitcher />
     <ThemeToggle />
   </nav>
 </header>
 
 <script>
-  import { getLanguage } from '@/utils/languageStore';
-  
-  function updateNavLanguage() {
-    const lang = getLanguage();
-    const navLinks = document.querySelectorAll("header nav a");
-    navLinks.forEach((link) => {
-      const textSpan = link.querySelector('.nav-text');
-      if (textSpan) {
-        const textEn = link.getAttribute('data-text-en');
-        const textEs = link.getAttribute('data-text-es');
-        textSpan.textContent = lang === 'es' ? textEs : textEn;
-      }
-    });
-  }
-
   document.addEventListener("astro:page-load", () => {
-    updateNavLanguage();
-    
     const sections = document.querySelectorAll("section")
     const navItems = document.querySelectorAll("header nav a")
 
