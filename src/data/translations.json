@@ -1,0 +1,76 @@
+{
+  "en": {
+    "nav": {
+      "experience": "Experience",
+      "projects": "Projects",
+      "skills": "Skills",
+      "aboutMe": "About Me",
+      "contact": "Contact"
+    },
+    "hero": {
+      "greeting": "Hey, I'm",
+      "contactMe": "Contact Me"
+    },
+    "sections": {
+      "workExperience": "Work Experience",
+      "featuredProjects": "Featured Projects",
+      "techStack": "Tech Stack",
+      "academicBackground": "Academic Background",
+      "aboutMe": "About Me"
+    },
+    "skills": {
+      "technicalSkills": "Technical Skills",
+      "professionalCompetencies": "Professional Competencies"
+    },
+    "projects": {
+      "inProgress": "In Progress",
+      "code": "Code",
+      "preview": "Preview"
+    },
+    "aboutMe": {
+      "keyValues": "Key Values"
+    },
+    "footer": {
+      "rightsReserved": "Almost all rights reserved",
+      "aboutMe": "About Me",
+      "contact": "Contact"
+    }
+  },
+  "es": {
+    "nav": {
+      "experience": "Experiencia",
+      "projects": "Proyectos",
+      "skills": "Habilidades",
+      "aboutMe": "Sobre mí",
+      "contact": "Contacto"
+    },
+    "hero": {
+      "greeting": "Hey, soy",
+      "contactMe": "Contáctame"
+    },
+    "sections": {
+      "workExperience": "Experiencia laboral",
+      "featuredProjects": "Proyectos destacados",
+      "techStack": "Stack Tecnológico",
+      "academicBackground": "Formación Académica",
+      "aboutMe": "Sobre mí"
+    },
+    "skills": {
+      "technicalSkills": "Habilidades Técnicas",
+      "professionalCompetencies": "Competencias Profesionales"
+    },
+    "projects": {
+      "inProgress": "En Construcción",
+      "code": "Código",
+      "preview": "Vista previa"
+    },
+    "aboutMe": {
+      "keyValues": "Valores clave"
+    },
+    "footer": {
+      "rightsReserved": "Casi todos los derechos reservados",
+      "aboutMe": "Sobre mí",
+      "contact": "Contacto"
+    }
+  }
+}
