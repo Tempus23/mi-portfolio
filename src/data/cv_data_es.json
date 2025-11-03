@@ -127,7 +127,7 @@
       "tags": ["Python", "PyTorch", "TensorFlow", "Computer Vision", "Healthcare AI"]
     },
     {
-      "title": "Neural Implicit Models for Robotics - TUM Research",
+      "title": "Modelos Neuronales Implícitos para Robótica - Investigación TUM",
       "description": "Investigación colaborativa en la Technical University of Munich (TUM) con KUKA Robotics. Desarrollo de modelos neuronales implícitos para detección de colisiones en tiempo real en manipuladores robóticos. Implementación en PyTorch de swept volume models y optimización para inferencia eficiente. Contribución a paper de investigación en intersección de Deep Learning y robótica industrial.",
       "link": "",
       "github": "https://github.com/Amrsaeed/FastCollisionDetection",
