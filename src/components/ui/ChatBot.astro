@@ -35,8 +35,14 @@
       class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 flex items-center justify-between"
     >
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
-          <img src="/me.jpg" alt="Carlos Hernández" class="w-full h-full object-cover" />
+        <div
+          class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white"
+        >
+          <img
+            src="/me.jpg"
+            alt="Carlos Hernández"
+            class="w-full h-full object-cover"
+          />
         </div>
         <div>
           <h3 class="font-semibold">Carlos's Assistant</h3>
@@ -71,19 +77,27 @@
     >
       <!-- Welcome Message -->
       <div class="flex gap-2">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-blue-500">
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-blue-500"
+        >
           <img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />
         </div>
-        <div class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-3 max-w-[80%] shadow-sm">
+        <div
+          class="bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-3 max-w-[80%] shadow-sm"
+        >
           <p class="text-sm text-gray-800 dark:text-gray-200">
-            👋 Hi! I'm Carlos's virtual assistant. I can help you learn more about his experience, skills, and projects. What would you like to know?
+            👋 Hi! I'm Carlos's virtual assistant. I can help you learn more
+            about his experience, skills, and projects. What would you like to
+            know?
           </p>
         </div>
       </div>
     </div>
 
     <!-- Input Area -->
-    <div class="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+    <div
+      class="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700"
+    >
       <form id="chat-form" class="flex gap-2">
         <input
           type="text"
@@ -182,20 +196,23 @@
   function addMessage(content: string, isUser: boolean) {
     const messageDiv = document.createElement("div");
     messageDiv.className = "flex gap-2 message-animate";
-    
+
     if (isUser) {
       messageDiv.classList.add("justify-end");
     }
 
     const avatar = document.createElement("div");
-    avatar.className = "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden";
-    
+    avatar.className =
+      "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden";
+
     if (isUser) {
-      avatar.className += " bg-gradient-to-r from-green-500 to-teal-600 order-2 border-2 border-green-500";
+      avatar.className +=
+        " bg-gradient-to-r from-green-500 to-teal-600 order-2 border-2 border-green-500";
       avatar.innerHTML = '<span class="text-white text-sm">👤</span>';
     } else {
       avatar.className += " border-2 border-blue-500";
-      avatar.innerHTML = '<img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />';
+      avatar.innerHTML =
+        '<img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />';
     }
 
     const bubble = document.createElement("div");
@@ -210,7 +227,7 @@
     text.textContent = content;
 
     bubble.appendChild(text);
-    
+
     if (isUser) {
       messageDiv.appendChild(bubble);
       messageDiv.appendChild(avatar);
@@ -233,12 +250,16 @@
     typingDiv.className = "flex gap-2 message-animate";
 
     const avatar = document.createElement("div");
-    avatar.className = "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-blue-500";
-    avatar.innerHTML = '<img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />';
+    avatar.className =
+      "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-blue-500";
+    avatar.innerHTML =
+      '<img src="/me.jpg" alt="Carlos" class="w-full h-full object-cover" />';
 
     const bubble = document.createElement("div");
-    bubble.className = "bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-3 shadow-sm";
-    bubble.innerHTML = '<div class="flex gap-1"><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span></div>';
+    bubble.className =
+      "bg-white dark:bg-gray-800 rounded-2xl rounded-tl-none p-3 shadow-sm";
+    bubble.innerHTML =
+      '<div class="flex gap-1"><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms"></span><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></span><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></span></div>';
 
     typingDiv.appendChild(avatar);
     typingDiv.appendChild(bubble);
@@ -289,7 +310,7 @@
       }
 
       const data = await response.json();
-      
+
       removeTypingIndicator();
       addMessage(data.response, false);
       conversationHistory.push({ role: "assistant", content: data.response });
