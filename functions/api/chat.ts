@@ -117,7 +117,7 @@ interface Env {
   GEMINI_API_KEY: string;
 }
 
-export const onRequestPost: PagesFunction<Env> = async (context) => {
+export const onRequestPost = async (context: any) => {
   try {
     const { request, env } = context;
     
@@ -237,7 +237,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 };
 
 // Handle OPTIONS for CORS
-export const onRequestOptions: PagesFunction = async () => {
+export const onRequestOptions = async () => {
   return new Response(null, {
     status: 204,
     headers: {
