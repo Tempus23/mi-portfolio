@@ -25,17 +25,17 @@ function formatParagraph(paragraph: string): string {
 <article class="flex flex-col items-center justify-center gap-8 text-gray-700 dark:text-gray-300">
   <div class="[&>p]:mb-6 [&>p]:text-lg [&>p]:leading-relaxed [&>p>strong]:text-blue-600 dark:[&>p>strong]:text-blue-400 [&>p>strong]:font-semibold text-pretty">
     {about_me.description_paragraphs.map((paragraph) => (
-      <p set:html={formatParagraph(paragraph)} />
+      <p set:html={formatParagraph(paragraph)} data-about-paragraph />
     ))}
   </div>
   
   <div class="w-full border-t border-gray-200 dark:border-gray-700 pt-6">
-    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Key Values</h3>
+    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100" data-i18n="aboutMe.keyValues">Key Values</h3>
     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
       {about_me.attributes.map(attribute => (
         <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
           <span class="text-green-500">✓</span>
-          <span>{attribute}</span>
+          <span data-attribute>{attribute}</span>
         </div>
       ))}
     </div>

@@ -1,5 +1,6 @@
 ---
 import ThemeToggle from "@/components/ui/ThemeToggle.astro"
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher.astro"
 import cvData from "@/data/cv_data.json"
 const { basic_info } = cvData;
 const navItems = [
@@ -48,6 +49,7 @@ const navItems = [
         </a>
       ))
     }
+    <LanguageSwitcher />
     <ThemeToggle />
   </nav>
 </header>

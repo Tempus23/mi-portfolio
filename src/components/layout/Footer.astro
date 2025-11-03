@@ -16,17 +16,17 @@ const aboutMeLink = footer_info.about_me_link;
   >
     <span class="text-sm sm:text-center text-zinc-800/90 dark:text-zinc-200/90"
       >© {currentYear}
-      <a href="https://linkedin.com/in/carl0shdez" target="_blank" rel="noopener" class="hover:underline">{copyrightName}</a>. Almost
-      all rights reserved
+      <a href="https://linkedin.com/in/carl0shdez" target="_blank" rel="noopener" class="hover:underline">{copyrightName}</a>. <span data-i18n="footer.rightsReserved">Almost
+      all rights reserved</span>
     </span>
     <ul
       class="flex flex-wrap items-center mt-3 text-sm font-medium dark:text-white/90 sm:mt-0"
     >
       <li>
-        <a href={aboutMeLink} class="hover:underline me-4 md:me-6">About Me</a>
+        <a href={aboutMeLink} class="hover:underline me-4 md:me-6" data-i18n="footer.aboutMe">About Me</a>
       </li>
       <li>
-        <a id="contact" href={`mailto:${contactEmail}`} class="hover:underline"
+        <a id="contact" href={`mailto:${contactEmail}`} class="hover:underline" data-i18n="footer.contact"
           >Contact</a
         >
       </li>
