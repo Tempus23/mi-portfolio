@@ -1,0 +1,143 @@
+{
+  "basic_info": {
+    "name": "Carlos Hernández Martínez",
+    "image_path": "me.jpg",
+    "personal_image_alt": "Carlos Hernández Martínez",
+    "availability": "AI QA Engineer & Backend Developer",
+    "emails": ["chermar.pro@gmail.com", "carlos.cbm32@gmail.com"],
+    "linkedin": "https://linkedin.com/in/carl0shdez",
+    "github": "https://github.com/Tempus23",
+    "location": "Valencia, Spain (remote available)",
+    "tagline": "Computer Engineer specialized in Artificial Intelligence and Backend Development. Experience developing AI agents, enterprise testing frameworks, and Machine Learning models. Mindset oriented towards technical leadership and process optimization through intelligent automation."
+  },
+  "about_me": {
+    "description_paragraphs": [
+      "Computer Engineer graduated from the Polytechnic University of Valencia with specialization in Artificial Intelligence and Machine Learning. Professional experience developing AI agents, enterprise testing automation, backend with Python/TypeScript, and Deep Learning models applied to real-world problems.",
+      "Currently at Mercadona IT leading the development of the proprietary testing framework for backend components, integrating quality analysis with SonarQube and advanced Python scripts. Soon to participate in code agent validation, ensuring the reliability of AI systems in production. Previously collaborated with frontend (Angular) and backend teams optimizing architectures and accelerating development cycles.",
+      "Versatile profile with international experience (TUM Munich, multinational teams), technical leadership mindset, and passion for building scalable solutions. Seeking to continue growing in AI/ML Engineering roles with projection towards technical management positions, where I can combine expertise in AI, software engineering, and strategic vision."
+  ],  
+    "attributes": [
+      "Technical leadership",
+      "Strategic vision",
+      "Complex problem solving",
+      "Cross-functional collaboration",
+      "Effective international communication",
+      "Continuous learning and adaptability"
+    ]
+  },
+  "professional_experience": [
+    {
+      "date": "Jul. 2025 - Present",
+      "title": "AI QA Engineer & Backend Developer",
+      "company": "Mercadona IT",
+     "description": "Development of Mercadona's proprietary testing framework for backend components, integrating quality analysis with SonarQube and automation through advanced Python scripts. Implementation of CI/CD pipelines in CloudBees with unit, integration, and mutation tests. Cross-functional collaboration with frontend (Angular) and backend (Python) teams to optimize architectures and accelerate development cycles for 2 months. Soon to be assigned to the AI code agent validation workflow, ensuring the reliability of generative AI systems in enterprise production."
+    },
+    {
+      "date": "Oct. 2024 - Jun. 2025",
+      "title": "Backend AI Engineer",
+      "company": "Urobora SL (AI Startup)",
+      "description": "Backend development in AI research startup focused on business automation through emerging technologies. Implementation of autonomous agents based on LLMs (GPT API, LM Studio), RAG systems (Retrieval-Augmented Generation), and Model Context Protocol (MCP). Microservices architecture in Python/FastAPI deployed on Google Cloud Platform with Kubernetes infrastructure and CI/CD pipelines. Collaboration in multicultural international team, contributing to cutting-edge technology stack in applied AI."
+    }
+  ],
+  "academic_formation": [
+    {
+      "date": "2021-2025",
+      "title": "Bachelor's Degree in Computer Engineering",
+      "company": "Polytechnic University of Valencia (UPV)",
+      "description": "Computing specialization. Training in programming, algorithms, databases, and software architectures."
+    },
+    {
+      "date": "6 months, 2024",
+      "title": "Erasmus in Computer Science",
+      "company": "Technical University of Munich (TUM)",
+      "description": "International exchange program focused on AI and robotics. Participation in applied research projects on implicit neural models."
+    },
+    {
+      "date": "2023",
+      "title": "Akademia Bankinter Innovation Foundation",
+      "company": "Bankinter Innovation Foundation",
+      "description": "Training program in innovation and technological entrepreneurship. Development of leadership skills and management of innovative projects."
+    },
+    {
+      "date": "2019-2020",
+      "title": "Diploma in Social Innovation",
+      "company": "CEU San Pablo Valencia",
+      "description": "Training in social innovation and corporate responsibility in collaboration with Edwards Lifesciences."
+    }
+  ],
+  "skills": {
+    "technical": [
+      "Python (Expert)",
+      "JavaScript / TypeScript",
+      "PyTorch & TensorFlow",
+      "LLMs & RAG Systems",
+      "GPT API & LM Studio",
+      "Model Context Protocol (MCP)",
+      "FastAPI & Microservices",
+      "Pytest & Testing Frameworks",
+      "Angular (Frontend Support)",
+      "SonarQube & Code Quality",
+      "Docker & Podman",
+      "Kubernetes & GKE",
+      "Google Cloud Platform",
+      "CI/CD (CloudBees, GitHub Actions, Jenkins)",
+      "Spinnaker",
+      "MySQL & MongoDB",
+      "Playwright & Postman",
+      "APIs REST",
+      "Prompt Engineering & Fine-tuning",
+      "Git & Version Control"
+    ],
+    "competencies": [
+      "Technical leadership and mentoring",
+      "Strategic product vision",
+      "Cross-functional collaboration (Frontend, Backend, QA)",
+      "International technical communication",
+      "Analytical thinking and complex problem solving",
+      "Project management and prioritization",
+      "Continuous learning of emerging technologies",
+      "Adaptability in agile and startup environments"
+    ]
+  },
+  "languages": [
+    {
+      "name": "Spanish · Español",
+      "level": "Native · Nativo"
+    },
+    {
+      "name": "English · Inglés",
+      "level": "B2 (Cambridge Certificate)"
+    }
+  ],
+  "projects": [
+    {
+      "title": "Sales Prediction System with Machine Learning",
+      "description": "Development of complete ML pipeline for retail sales prediction (Walmart/Kaggle dataset). Exploration of multiple algorithms (Random Forest, XGBoost, Gradient Boosting) with hyperparameter optimization. Advanced feature engineering and time series analysis. Ongoing project focused on real-world applicability and scalability.",
+      "github": "https://github.com/Tempus23/walmart-sales-kg",
+      "image": "projects/walmart-sales.png",
+      "tags": ["Python", "Scikit-learn", "XGBoost", "Machine Learning · Aprendizaje Automático"],
+      "inProgress": true
+    },
+    {
+      "title": "Medical Diagnosis System with Deep Learning - Bachelor's Thesis",
+      "description": "Bachelor's thesis project developing an automatic classification system for knee osteoarthritis using medical radiographs. Implementation of CNN architectures (ResNet, EfficientNet) with PyTorch and TensorFlow, achieving 80% accuracy in binary classification. Application of fine-tuning techniques, data augmentation, and cross-domain validation. Focus on real clinical utility and scalability of the assisted diagnosis system.",
+      "link": "",
+      "github": "https://github.com/Tempus23/Radiography_TFG",
+      "image": "projects/rodilla-artrosis.png",
+      "tags": ["Python", "PyTorch", "TensorFlow", "Computer Vision · Visión Artificial", "Healthcare AI · IA en Salud"]
+    },
+    {
+      "title": "Neural Implicit Models for Robotics - TUM Research",
+      "description": "Collaborative research at the Technical University of Munich (TUM) with KUKA Robotics. Development of implicit neural models for real-time collision detection in robotic manipulators. PyTorch implementation of swept volume models and optimization for efficient inference. Contribution to research paper at the intersection of Deep Learning and industrial robotics.",
+      "link": "",
+      "github": "https://github.com/Amrsaeed/FastCollisionDetection",
+      "image": "projects/sweept-volume.png",
+      "tags": ["Python", "PyTorch", "Robotics · Robótica", "Research · Investigación", "Neural Networks · Redes Neuronales"]
+    }
+  ],
+  "footer_info": {
+    "copyright_name": "Carlos Hernández Martínez",
+    "contact_email": "chermar.pro@gmail.com",
+    "about_me_link": "/mi-portfolio/#about-me"
+  }
+}

@@ -1,6 +1,6 @@
 // functions/api/chat.ts
-import cvDataEs from "../../src/data/cv_data_es.json";
-import cvDataEn from "../../src/data/cv_data.json";
+import cvDataEs from "./cv_data_es.json";
+import cvDataEn from "./cv_data_en.json";
 
 // Function to create a comprehensive context from CV data
 function getCvContextPrompt(data: any, language: string = "es"): string {
@@ -121,10 +121,21 @@ export const onRequestPost = async (context: any) => {
   try {
     const { request, env } = context;
     
-    const apiKey = env.GEMINI_API_KEY;
+    // Detailed debugging for environment
+    console.log("Environment keys:", Object.keys(env || {}));
+    console.log("Has GEMINI_API_KEY:", !!env?.GEMINI_API_KEY);
+    
+    const apiKey = env?.GEMINI_API_KEY;
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: "GEMINI_API_KEY is not set" }),
+        JSON.stringify({ 
+          error: "GEMINI_API_KEY is not set",
+          debug: {
+            hasEnv: !!env,
+            envKeys: Object.keys(env || {}),
+            message: "Please configure GEMINI_API_KEY in Cloudflare Pages Settings > Environment variables"
+          }
+        }),
         {
           status: 500,
           headers: { 
