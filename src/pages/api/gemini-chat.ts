@@ -123,9 +123,10 @@ function handleToolCall(toolName: string, args: any): string {
   }
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const apiKey = import.meta.env.GEMINI_API_KEY;
+    // Access Cloudflare environment variables through locals.runtime.env
+    const apiKey = (locals.runtime?.env?.GEMINI_API_KEY as string) || import.meta.env.GEMINI_API_KEY;
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "GEMINI_API_KEY is not set" }),

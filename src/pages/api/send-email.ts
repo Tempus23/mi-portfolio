@@ -7,8 +7,11 @@ import type { APIRoute } from "astro";
 // const resend = new Resend(import.meta.env.RESEND_API_KEY); // Will be uncommented later
 const myEmailAddress = "chermar.pro@gmail.com";
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
+    // Access Cloudflare environment variables through locals.runtime.env if needed
+    // const resendApiKey = (locals.runtime?.env?.RESEND_API_KEY as string) || import.meta.env.RESEND_API_KEY;
+    
     const body = await request.json();
     const { emailRemitente, mensaje } = body;
 
