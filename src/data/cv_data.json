@@ -101,11 +101,11 @@
   },
   "languages": [
     {
-      "name": "Spanish · Español",
-      "level": "Native · Nativo"
+      "name": "Spanish",
+      "level": "Native"
     },
     {
-      "name": "English · Inglés",
+      "name": "English",
       "level": "B2 (Cambridge Certificate)"
     }
   ],
