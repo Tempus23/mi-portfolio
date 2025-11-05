@@ -1,10 +1,12 @@
 ---
-import cvData from "@/data/cv_data.json";
+import cvDataEn from "@/data/cv_data.json";
+import cvDataEs from "@/data/cv_data_es.json";
 
-const { footer_info, basic_info } = cvData;
+// Default to English for server-side rendering
+const { footer_info, basic_info } = cvDataEn;
 const currentYear = new Date().getFullYear();
 const copyrightName = footer_info.copyright_name || basic_info.name;
-const contactEmail = footer_info.contact_email || basic_info.emails[1] || basic_info.emails[0]; // Fallback for email
+const contactEmail = footer_info.contact_email || basic_info.emails[1] || basic_info.emails[0];
 const aboutMeLink = footer_info.about_me_link;
 ---
 
@@ -14,8 +16,8 @@ const aboutMeLink = footer_info.about_me_link;
   <div
     class="rounded-lg w-full max-w-screen-xl mx-auto md:flex md:items-center md:justify-between py-4"
   >
-    <span class="text-sm sm:text-center text-zinc-800/90 dark:text-zinc-200/90"
-      >© {currentYear}
+    <span class="text-sm sm:text-center text-zinc-800/90 dark:text-zinc-200/90" id="copyright-text">
+      © {currentYear}
       <a href="https://linkedin.com/in/carl0shdez" target="_blank" rel="noopener" class="hover:underline">{copyrightName}</a>. <span data-i18n="footer.rightsReserved">Almost
       all rights reserved</span>
     </span>
@@ -33,3 +35,40 @@ const aboutMeLink = footer_info.about_me_link;
     </ul>
   </div>
 </footer>
+
+<script define:vars={{ cvDataEn, cvDataEs }}>
+  import { getLanguage } from '@/utils/languageStore';
+
+  function updateFooterContent() {
+    const lang = getLanguage();
+    const cvData = lang === 'es' ? cvDataEs : cvDataEn;
+    const { footer_info, basic_info } = cvData;
+    
+    const currentYear = new Date().getFullYear();
+    const copyrightName = footer_info.copyright_name || basic_info.name;
+    const contactEmail = footer_info.contact_email || basic_info.emails[1] || basic_info.emails[0];
+    const aboutMeLink = footer_info.about_me_link;
+
+    // Update copyright text
+    const copyrightEl = document.getElementById('copyright-text');
+    if (copyrightEl) {
+      copyrightEl.innerHTML = `© ${currentYear}
+        <a href="https://linkedin.com/in/carl0shdez" target="_blank" rel="noopener" class="hover:underline">${copyrightName}</a>. <span data-i18n="footer.rightsReserved">Almost all rights reserved</span>`;
+    }
+
+    // Update about me link
+    const aboutLink = document.querySelector('a[data-i18n="footer.aboutMe"]');
+    if (aboutLink) {
+      aboutLink.href = aboutMeLink;
+    }
+
+    // Update contact link
+    const contactLink = document.getElementById('contact');
+    if (contactLink) {
+      contactLink.href = `mailto:${contactEmail}`;
+    }
+  }
+
+  document.addEventListener('astro:page-load', updateFooterContent);
+  window.addEventListener('languagechange', updateFooterContent);
+</script>

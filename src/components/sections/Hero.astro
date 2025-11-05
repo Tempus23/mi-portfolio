@@ -1,12 +1,14 @@
 ---
-import cvData from "@/data/cv_data.json";
+import cvDataEn from "@/data/cv_data.json";
+import cvDataEs from "@/data/cv_data_es.json";
 import Badge from "@/components/ui/Badge.astro";
 import LinkedInIcon from "@/components/icons/LinkedIn.astro";
 import Mail from "@/components/icons/Mail.astro";
 import GitHubIcon from "@/components/icons/GitHub.astro";
 import SocialPill from "@/components/ui/SocialPill.astro";
 
-const { basic_info, languages } = cvData;
+// Default to English for server-side rendering
+const { basic_info, languages } = cvDataEn;
 const personalImageAlt = basic_info.personal_image_alt;
 ---
 
@@ -26,22 +28,16 @@ const personalImageAlt = basic_info.personal_image_alt;
           >{basic_info.name.split(" ")[0]}</span
         >
       </h1>
-      <Badge class="inline-block animate-pulse-slow"
+      <Badge class="inline-block animate-pulse-slow" data-availability
         >{basic_info.availability}</Badge
       >
     </div>
   </div>
   <p
     class="mt-6 text-xl text-gray-800 dark:[&>strong]:text-yellow-200 [&>strong]:text-yellow-500 [&>strong]:font-semibold dark:text-gray-300 leading-relaxed"
-    data-i18n="hero.tagline"
-    set:html={basic_info.tagline
-      .replace(
-        "Artificial Intelligence",
-        "<strong>Artificial Intelligence</strong>"
-      )
-      .replace("Backend Development", "<strong>Backend Development</strong>")}
+    data-tagline
   />
-  <div class="flex flex-wrap gap-2 mt-6">
+  <div class="flex flex-wrap gap-2 mt-6" id="languages-list">
     {
       languages.map((language) => (
         <Badge class="bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-700" data-lang-badge>
@@ -66,3 +62,43 @@ const personalImageAlt = basic_info.personal_image_alt;
     </SocialPill>
   </nav>
 </div>
+
+<script define:vars={{ cvDataEn, cvDataEs }}>
+  import { getLanguage } from '@/utils/languageStore';
+
+  function updateHeroContent() {
+    const lang = getLanguage();
+    const cvData = lang === 'es' ? cvDataEs : cvDataEn;
+    const { basic_info, languages } = cvData;
+
+    // Update availability
+    const availEl = document.querySelector('[data-availability]');
+    if (availEl) availEl.textContent = basic_info.availability;
+
+    // Update tagline
+    const taglineEl = document.querySelector('[data-tagline]');
+    if (taglineEl) {
+      let tagline = basic_info.tagline;
+      tagline = tagline.replace(
+        /(Artificial Intelligence|Inteligencia Artificial)/gi,
+        '<strong>$1</strong>'
+      );
+      tagline = tagline.replace(
+        /(Backend Development|Backend)/gi,
+        '<strong>$1</strong>'
+      );
+      taglineEl.innerHTML = tagline;
+    }
+
+    // Update languages
+    const langList = document.getElementById('languages-list');
+    if (langList) {
+      langList.innerHTML = languages.map(language => 
+        `<span class="bg-blue-50 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200 border border-blue-200 dark:border-blue-700 py-1 px-2 rounded-lg text-sm" data-lang-badge>${language.name} · ${language.level}</span>`
+      ).join('');
+    }
+  }
+
+  document.addEventListener('astro:page-load', updateHeroContent);
+  window.addEventListener('languagechange', updateHeroContent);
+</script>

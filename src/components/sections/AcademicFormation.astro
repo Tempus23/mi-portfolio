@@ -1,31 +1,51 @@
 ---
-import cvData from "@/data/cv_data.json";
+import cvDataEn from "@/data/cv_data.json";
+import cvDataEs from "@/data/cv_data_es.json";
 import LinkInline from "@/components/ui/LinkInline.astro";
 
-const { academic_formation } = cvData;
+// Default to English for server-side rendering
+const { academic_formation } = cvDataEn;
 ---
 
 <div class="flex flex-col gap-y-16">
-  <ol class="relative mt-8">
+  <ol class="relative mt-8" id="academic-list">
     {
-      academic_formation.map((formation) => (
-        <li class="">
+      academic_formation.map((formation, index) => (
+        <li class="" data-formation-index={index}>
           <div
             class="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]"
             data-formation
           >
             <div class="relative pb-12 md:col-span-2">
               <div class="sticky top-0">
-                <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl"
-                  >&bull;</span
-                >
+                <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl">
+                  &bull;
+                </span>
 
-                <h3 class="text-xl font-bold text-yellow-400" data-formation-title>{formation.title}</h3>
-                <h4 class="font-semibold text-xl text-gray-600 dark:text-white" data-formation-company>{formation.company}</h4>
-                <time class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80" data-formation-date>{formation.date}</time>
+                <h3
+                  class="text-xl font-bold text-yellow-400"
+                  data-formation-title
+                >
+                  {formation.title}
+                </h3>
+                <h4
+                  class="font-semibold text-xl text-gray-600 dark:text-white"
+                  data-formation-company
+                >
+                  {formation.company}
+                </h4>
+                <time
+                  class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80"
+                  data-formation-date
+                >
+                  {formation.date}
+                </time>
               </div>
             </div>
-            <div class="relative flex flex-col gap-2 pb-4 text-gray-600 dark:text-gray-300 md:col-span-3" data-formation-description>
+            <div
+              class="relative flex flex-col gap-2 pb-4 text-gray-600 dark:text-gray-300 md:col-span-3"
+              data-formation-description
+            >
               {formation.description}
             </div>
           </div>
@@ -34,3 +54,31 @@ const { academic_formation } = cvData;
     }
   </ol>
 </div>
+
+<script define:vars={{ cvDataEn, cvDataEs }}>
+  import { getLanguage } from "@/utils/languageStore";
+
+  function updateAcademicContent() {
+    const lang = getLanguage();
+    const cvData = lang === "es" ? cvDataEs : cvDataEn;
+    const { academic_formation } = cvData;
+
+    academic_formation.forEach((formation, index) => {
+      const item = document.querySelector(`[data-formation-index="${index}"]`);
+      if (item) {
+        const titleEl = item.querySelector("[data-formation-title]");
+        const companyEl = item.querySelector("[data-formation-company]");
+        const dateEl = item.querySelector("[data-formation-date]");
+        const descEl = item.querySelector("[data-formation-description]");
+
+        if (titleEl) titleEl.textContent = formation.title;
+        if (companyEl) companyEl.textContent = formation.company;
+        if (dateEl) dateEl.textContent = formation.date;
+        if (descEl) descEl.textContent = formation.description;
+      }
+    });
+  }
+
+  document.addEventListener("astro:page-load", updateAcademicContent);
+  window.addEventListener("languagechange", updateAcademicContent);
+</script>

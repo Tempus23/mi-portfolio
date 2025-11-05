@@ -1,46 +1,111 @@
 ---
-import cvData from "@/data/cv_data.json";
+import cvDataEn from "@/data/cv_data.json";
+import cvDataEs from "@/data/cv_data_es.json";
 
-const { about_me } = cvData;
-
-function formatParagraph(paragraph: string): string {
-  let formattedParagraph = paragraph;
-  const boldKeywords = [
-    "Artificial Intelligence",
-    "Machine Learning",
-    "Deep Learning",
-    "AI agents",
-    "backend",
-    "technical leadership",
-    "international experience",
-  ];
-  boldKeywords.forEach(keyword => {
-    const regex = new RegExp(keyword, 'gi');
-    formattedParagraph = formattedParagraph.replace(regex, `<strong>${keyword}</strong>`);
-  });
-  return formattedParagraph;
-}
+// Default to English for server-side rendering
+const { about_me } = cvDataEn;
 ---
 
-<article class="flex flex-col items-center justify-center gap-8 text-gray-700 dark:text-gray-300">
-  <div class="[&>p]:mb-6 [&>p]:text-lg [&>p]:leading-relaxed [&>p>strong]:text-blue-600 dark:[&>p>strong]:text-blue-400 [&>p>strong]:font-semibold text-pretty">
-    {about_me.description_paragraphs.map((paragraph) => (
-      <p set:html={formatParagraph(paragraph)} data-about-paragraph />
-    ))}
+<article
+  class="flex flex-col items-center justify-center gap-8 text-gray-700 dark:text-gray-300"
+>
+  <div
+    id="about-me-content"
+    class="[&>p]:mb-6 [&>p]:text-lg [&>p]:leading-relaxed [&>p>strong]:text-blue-600 dark:[&>p>strong]:text-blue-400 [&>p>strong]:font-semibold text-pretty"
+  >
+    {
+      about_me.description_paragraphs.map((paragraph) => (
+        <p data-about-paragraph />
+      ))
+    }
   </div>
-  
+
   <div class="w-full border-t border-gray-200 dark:border-gray-700 pt-6">
-    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100" data-i18n="aboutMe.keyValues">Key Values</h3>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {about_me.attributes.map(attribute => (
-        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-          <span class="text-green-500">✓</span>
-          <span data-attribute>{attribute}</span>
-        </div>
-      ))}
+    <h3
+      class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100"
+      data-i18n="aboutMe.keyValues"
+    >
+      Key Values
+    </h3>
+    <div id="about-me-attributes" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      {
+        about_me.attributes.map((attribute) => (
+          <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+            <span class="text-green-500">✓</span>
+            <span data-attribute>{attribute}</span>
+          </div>
+        ))
+      }
     </div>
   </div>
 </article>
+
+<script define:vars={{ cvDataEn, cvDataEs }}>
+  import { getLanguage } from "@/utils/languageStore";
+
+  function formatParagraph(paragraph) {
+    let formattedParagraph = paragraph;
+    const boldKeywords = [
+      "Artificial Intelligence",
+      "Machine Learning",
+      "Deep Learning",
+      "AI agents",
+      "backend",
+      "technical leadership",
+      "international experience",
+      "Inteligencia Artificial",
+      "Aprendizaje Automático",
+      "Deep Learning",
+      "agentes de IA",
+      "backend",
+      "liderazgo técnico",
+      "experiencia internacional",
+    ];
+    boldKeywords.forEach((keyword) => {
+      const regex = new RegExp(keyword, "gi");
+      formattedParagraph = formattedParagraph.replace(
+        regex,
+        `<strong>${keyword}</strong>`
+      );
+    });
+    return formattedParagraph;
+  }
+
+  function updateAboutMeContent() {
+    const lang = getLanguage();
+    const cvData = lang === "es" ? cvDataEs : cvDataEn;
+    const { about_me } = cvData;
+
+    // Update paragraphs
+    const paragraphs = document.querySelectorAll("[data-about-paragraph]");
+    paragraphs.forEach((p, index) => {
+      if (index < about_me.description_paragraphs.length) {
+        p.innerHTML = formatParagraph(about_me.description_paragraphs[index]);
+      }
+    });
+
+    // Update attributes
+    const attributesContainer = document.getElementById("about-me-attributes");
+    if (attributesContainer) {
+      attributesContainer.innerHTML = about_me.attributes
+        .map(
+          (attribute) => `
+        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+          <span class="text-green-500">✓</span>
+          <span data-attribute>${attribute}</span>
+        </div>
+      `
+        )
+        .join("");
+    }
+  }
+
+  // Update on page load
+  document.addEventListener("astro:page-load", updateAboutMeContent);
+
+  // Update when language changes
+  window.addEventListener("languagechange", updateAboutMeContent);
+</script>
 
 <!-- FRASES PROHIBIDAS EN VUESTRO PORTFOLIO
 

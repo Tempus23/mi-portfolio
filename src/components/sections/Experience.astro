@@ -1,30 +1,47 @@
 ---
-import cvData from "@/data/cv_data.json";
+import cvDataEn from "@/data/cv_data.json";
+import cvDataEs from "@/data/cv_data_es.json";
 import LinkInline from "@/components/ui/LinkInline.astro";
 
-const { professional_experience } = cvData;
+// Default to English for server-side rendering
+const { professional_experience } = cvDataEn;
 ---
 
-<ol class="relative mt-8">
+<ol class="relative mt-8" id="experience-list">
   {
-    professional_experience.map((experience) => (
-      <li class="">
+    professional_experience.map((experience, index) => (
+      <li class="" data-exp-index={index}>
         <div
           class="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]"
           data-experience
         >
           <div class="relative pb-12 md:col-span-2">
             <div class="sticky top-0">
-              <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl"
-                >&bull;</span
-              >
+              <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl">
+                &bull;
+              </span>
 
-              <h3 class="text-xl font-bold text-yellow-400" data-exp-title>{experience.title}</h3>
-              <h4 class="font-semibold text-xl text-gray-600 dark:text-white" data-exp-company>{experience.company}</h4>
-              <time class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80" data-exp-date>{experience.date}</time>
+              <h3 class="text-xl font-bold text-yellow-400" data-exp-title>
+                {experience.title}
+              </h3>
+              <h4
+                class="font-semibold text-xl text-gray-600 dark:text-white"
+                data-exp-company
+              >
+                {experience.company}
+              </h4>
+              <time
+                class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80"
+                data-exp-date
+              >
+                {experience.date}
+              </time>
             </div>
           </div>
-          <div class="relative flex flex-col gap-2 pb-4 text-gray-600 dark:text-gray-300 md:col-span-3" data-exp-description>
+          <div
+            class="relative flex flex-col gap-2 pb-4 text-gray-600 dark:text-gray-300 md:col-span-3"
+            data-exp-description
+          >
             {experience.description}
           </div>
         </div>
@@ -33,4 +50,30 @@ const { professional_experience } = cvData;
   }
 </ol>
 
+<script define:vars={{ cvDataEn, cvDataEs }}>
+  import { getLanguage } from "@/utils/languageStore";
 
+  function updateExperienceContent() {
+    const lang = getLanguage();
+    const cvData = lang === "es" ? cvDataEs : cvDataEn;
+    const { professional_experience } = cvData;
+
+    professional_experience.forEach((experience, index) => {
+      const item = document.querySelector(`[data-exp-index="${index}"]`);
+      if (item) {
+        const titleEl = item.querySelector("[data-exp-title]");
+        const companyEl = item.querySelector("[data-exp-company]");
+        const dateEl = item.querySelector("[data-exp-date]");
+        const descEl = item.querySelector("[data-exp-description]");
+
+        if (titleEl) titleEl.textContent = experience.title;
+        if (companyEl) companyEl.textContent = experience.company;
+        if (dateEl) dateEl.textContent = experience.date;
+        if (descEl) descEl.textContent = experience.description;
+      }
+    });
+  }
+
+  document.addEventListener("astro:page-load", updateExperienceContent);
+  window.addEventListener("languagechange", updateExperienceContent);
+</script>
