@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@astrojs/check": "0.5.6",
+    "@astrojs/cloudflare": "^10.4.2",
     "@astrojs/tailwind": "^5.1.0",
     "@fontsource-variable/onest": "5.0.2",
+    "@google/generative-ai": "^0.24.1",
     "astro": "4.4.5",
     "astro-robots-txt": "1.0.0",
     "dependencies": "^0.0.1",

@@ -1,4 +1,6 @@
 // src/pages/api/chat.ts
+export const prerender = false;
+
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
 import cvData from "@/data/cv_data.json";
@@ -132,9 +134,10 @@ function getCvContextPrompt(data: any): string {
   return context;
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
-    const apiKey = import.meta.env.OPENAI_API_KEY;
+    // Access Cloudflare environment variables through locals.runtime.env
+    const apiKey = (locals.runtime?.env?.OPENAI_API_KEY as string) || import.meta.env.OPENAI_API_KEY;
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "OPENAI_API_KEY is not set" }),
