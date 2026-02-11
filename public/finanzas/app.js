@@ -1573,8 +1573,10 @@ function updateSummary() {
             prevInvested = previousSnapshot ? previousSnapshot.totalPurchaseValue : null;
         }
 
-        document.getElementById('totalValue').textContent = formatCurrency(totalValue);
-        document.getElementById('totalInvested').textContent = formatCurrency(totalPurchase);
+        const totalValueEl = document.getElementById('totalValue');
+        if (totalValueEl) totalValueEl.textContent = formatCurrency(totalValue);
+        const totalInvestedEl = document.getElementById('totalInvested');
+        if (totalInvestedEl) totalInvestedEl.textContent = formatCurrency(totalPurchase);
 
         let roi = totalPurchase > 0 ? (variation / totalPurchase) * 100 : 0;
         let periodGain = variation;
@@ -1584,12 +1586,16 @@ function updateSummary() {
             roi = prevValue > 0 ? (periodGain / prevValue) * 100 : 0;
         }
         const roiEl = document.getElementById('totalROI');
-        roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(2) + '%';
-        roiEl.className = 'metric-value ' + (roi >= 0 ? 'positive' : 'negative');
+        if (roiEl) {
+            roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(2) + '%';
+            roiEl.className = 'metric-value ' + (roi >= 0 ? 'positive' : 'negative');
+        }
 
         const variationEl = document.getElementById('totalVariation');
-        variationEl.textContent = (periodGain >= 0 ? '+' : '') + formatCurrency(periodGain);
-        variationEl.className = 'metric-value ' + (periodGain >= 0 ? 'positive' : 'negative');
+        if (variationEl) {
+            variationEl.textContent = (periodGain >= 0 ? '+' : '') + formatCurrency(periodGain);
+            variationEl.className = 'metric-value ' + (periodGain >= 0 ? 'positive' : 'negative');
+        }
 
         const accumRoi = totalPurchase > 0 ? ((totalValue - totalPurchase) / totalPurchase) * 100 : 0;
         const totalRoiAccumEl = document.getElementById('totalRoiAccum');
@@ -1653,10 +1659,14 @@ function updateSummary() {
         setComparison(compareMonthEl, previousSnapshot);
         setComparison(compareYearEl, getSnapshotMonthsAgo(latestSnapshot, 12));
     } else {
-        document.getElementById('totalValue').textContent = '0,00 €';
-        document.getElementById('totalInvested').textContent = '0,00 €';
-        document.getElementById('totalROI').textContent = '0,00%';
-        document.getElementById('totalVariation').textContent = '0,00 €';
+        const totalValueEl = document.getElementById('totalValue');
+        if (totalValueEl) totalValueEl.textContent = '0,00 €';
+        const totalInvestedEl = document.getElementById('totalInvested');
+        if (totalInvestedEl) totalInvestedEl.textContent = '0,00 €';
+        const roiEl = document.getElementById('totalROI');
+        if (roiEl) roiEl.textContent = '0,00%';
+        const variationEl = document.getElementById('totalVariation');
+        if (variationEl) variationEl.textContent = '0,00 €';
         const totalRoiAccumEl = document.getElementById('totalRoiAccum');
         if (totalRoiAccumEl) totalRoiAccumEl.textContent = '0,00%';
         const lastMonthInvestedEl = document.getElementById('lastMonthInvested');
