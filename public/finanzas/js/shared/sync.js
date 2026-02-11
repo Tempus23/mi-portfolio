@@ -20,11 +20,15 @@ async function pullFromCloud() {
     const res = await fetch(SYNC_API);
 
     if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Error al descargar');
+        const text = await res.text();
+        let msg = 'Error al descargar';
+        try { msg = JSON.parse(text).error || msg; } catch {}
+        console.error('[Sync Pull] Error:', res.status, text.substring(0, 200));
+        throw new Error(msg);
     }
 
     const data = await res.json();
+    console.log('[Sync Pull] OK:', data);
 
     if (data.snapshots !== null && data.snapshots !== undefined) {
         localStorage.setItem(SYNC_KEYS.SNAPSHOTS, JSON.stringify(data.snapshots));
@@ -50,6 +54,8 @@ async function pushToCloud() {
     if (targets) body.targets = JSON.parse(targets);
     if (targetsMeta) body.targetsMeta = JSON.parse(targetsMeta);
 
+    console.log('[Sync Push] Sending:', Object.keys(body));
+
     const res = await fetch(SYNC_API, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -57,21 +63,28 @@ async function pushToCloud() {
     });
 
     if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Error al subir');
+        const text = await res.text();
+        let msg = 'Error al subir';
+        try { msg = JSON.parse(text).error || msg; } catch {}
+        console.error('[Sync Push] Error:', res.status, text.substring(0, 200));
+        throw new Error(msg);
     }
 
-    return await res.json();
+    const data = await res.json();
+    console.log('[Sync Push] OK:', data);
+    return data;
 }
 
 // High-level: pull and reload UI
 export async function syncPull(showToast) {
     try {
+        if (showToast) showToast('Descargando de la nube...', 'success');
         await pullFromCloud();
         if (showToast) showToast('Datos descargados de la nube ☁️↓', 'success');
         if (_onSyncComplete) _onSyncComplete();
     } catch (e) {
-        if (showToast) showToast(e.message, 'error');
+        console.error('[Sync Pull] Failed:', e);
+        if (showToast) showToast('Error sync: ' + e.message, 'error');
     }
 }
 
@@ -81,6 +94,7 @@ export async function syncPush(showToast) {
         await pushToCloud();
         if (showToast) showToast('Datos guardados en la nube ☁️↑', 'success');
     } catch (e) {
-        if (showToast) showToast(e.message, 'error');
+        console.error('[Sync Push] Failed:', e);
+        if (showToast) showToast('Error sync: ' + e.message, 'error');
     }
 }

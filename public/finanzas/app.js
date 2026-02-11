@@ -229,6 +229,19 @@ function setupEventListeners() {
 
     document.getElementById('modalCancel').addEventListener('click', hideModal);
 
+    // Snapshot action buttons (event delegation for ES module compatibility)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const id = Number(btn.dataset.id);
+        switch (btn.dataset.action) {
+            case 'view': viewSnapshot(id); break;
+            case 'copy': exportSnapshotToClipboard(snapshots.find(s => s.id === id)); break;
+            case 'edit': openEditSnapshot(id); break;
+            case 'delete': deleteSnapshot(id); break;
+        }
+    });
+
     // Cloud sync buttons
     const syncPullBtn = document.getElementById('syncPullBtn');
     if (syncPullBtn) syncPullBtn.addEventListener('click', () => syncPull(showToast));
@@ -1509,10 +1522,10 @@ function updateHistoryTable() {
                 <td>${snapshot.assets.length}</td>
                 <td>${meta}</td>
                 <td>
-                    <button class="action-btn" onclick="viewSnapshot(${snapshot.id})">👁️</button>
-                    <button class="action-btn" title="Copiar snapshot" onclick="exportSnapshotToClipboard(snapshots.find(s => s.id === ${snapshot.id}))">⎘</button>
-                    <button class="action-btn" onclick="openEditSnapshot(${snapshot.id})">✏️</button>
-                    <button class="action-btn delete" onclick="deleteSnapshot(${snapshot.id})">🗑️</button>
+                    <button class="action-btn" data-action="view" data-id="${snapshot.id}">👁️</button>
+                    <button class="action-btn" data-action="copy" data-id="${snapshot.id}" title="Copiar snapshot">⎘</button>
+                    <button class="action-btn" data-action="edit" data-id="${snapshot.id}">✏️</button>
+                    <button class="action-btn delete" data-action="delete" data-id="${snapshot.id}">🗑️</button>
                 </td>
             </tr>
         `;
