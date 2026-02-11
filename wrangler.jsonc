@@ -1,5 +1,11 @@
 {
   "name": "mi-portfolio",
   "compatibility_date": "2025-08-29",
-  "pages_build_output_dir": "./dist"
+  "pages_build_output_dir": "./dist",
+  "kv_namespaces": [
+    {
+      "binding": "FINANZAS_KV",
+      "id": "1e0c3c3c75b746b3abb467c263b51c55",
+    },
+  ],
 }

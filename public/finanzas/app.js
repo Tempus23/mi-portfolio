@@ -1,6 +1,7 @@
 import { STORAGE_KEYS, AssetIndex, CATEGORY_COLORS, TERM_COLORS } from './js/shared/constants.js';
 import { formatCurrency } from './js/shared/format.js';
 import { showToast } from './js/shared/toast.js';
+import { syncPull, syncPush, setSyncCallback } from './js/shared/sync.js';
 
 const {
     SNAPSHOTS: STORAGE_KEY,
@@ -38,6 +39,17 @@ function init() {
     initCharts();
     updateUI();
     showHoldingsChangesIfAny();
+
+    // Cloud sync: set reload callback
+    setSyncCallback(() => {
+        loadSnapshots();
+        loadTargets();
+        loadTargetsMeta();
+        updateUI();
+    });
+
+    // Auto-pull from cloud on load (Cloudflare Access handles auth)
+    syncPull(showToast);
 }
 
 function loadSnapshots() {
@@ -144,6 +156,8 @@ function saveSnapshots() {
         note: s.note || ''
     }));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    // Auto-push to cloud
+    syncPush(null);
 }
 
 function updateCurrentDate() {
@@ -215,6 +229,12 @@ function setupEventListeners() {
 
     document.getElementById('modalCancel').addEventListener('click', hideModal);
 
+    // Cloud sync buttons
+    const syncPullBtn = document.getElementById('syncPullBtn');
+    if (syncPullBtn) syncPullBtn.addEventListener('click', () => syncPull(showToast));
+    const syncPushBtn = document.getElementById('syncPushBtn');
+    if (syncPushBtn) syncPushBtn.addEventListener('click', () => syncPush(showToast));
+
     document.getElementById('exportBtn').addEventListener('click', exportToJson);
     const exportLatestBtn = document.getElementById('exportLatestBtn');
     if (exportLatestBtn) {
@@ -283,6 +303,7 @@ function loadTargets() {
 
 function saveTargets() {
     localStorage.setItem(TARGETS_KEY, JSON.stringify(categoryTargets));
+    syncPush(null);
 }
 
 function loadTargetsMeta() {
@@ -292,6 +313,7 @@ function loadTargetsMeta() {
 
 function saveTargetsMeta() {
     localStorage.setItem(TARGETS_META_KEY, JSON.stringify(targetsMeta));
+    syncPush(null);
 }
 
 function exportToJson() {
