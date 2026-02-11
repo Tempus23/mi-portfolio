@@ -21,4 +21,4 @@ pnpm-debug.log*
 .DS_Store
 bun.*
 
-pnpm-lock.yaml
+pnpm-lock.yamlpackage-lock.json
