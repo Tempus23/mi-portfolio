@@ -7,7 +7,8 @@ const {
     SNAPSHOTS: STORAGE_KEY,
     TARGETS: TARGETS_KEY,
     TARGETS_META: TARGETS_META_KEY,
-    HOLDINGS_CHANGES: HOLDINGS_CHANGES_KEY
+    HOLDINGS_CHANGES: HOLDINGS_CHANGES_KEY,
+    SELECTED_CATEGORY: SELECTED_CATEGORY_KEY
 } = STORAGE_KEYS;
 
 let snapshots = [];
@@ -15,10 +16,12 @@ let evolutionChart = null;
 let roiEvolutionChart = null;
 let categoryChart = null;
 let termChart = null;
+let targetsChart = null;
 let currentChartMode = 'total';
 let currentRoiMode = 'cumulative';
 let selectedCategory = null;
 let evolutionScaleMode = 'linear';
+let evolutionMinMode = 'zero';
 let currentRange = 'all';
 let categoryTargets = {};
 let targetsMeta = { monthlyBudget: 0 };
@@ -38,6 +41,7 @@ function init() {
     loadSnapshots();
     loadTargets();
     loadTargetsMeta();
+    loadSelectedCategory();
     updateCurrentDate();
     setupEventListeners();
     initCharts();
@@ -231,6 +235,14 @@ function setupEventListeners() {
         });
     }
 
+    const evolutionMinScale = document.getElementById('evolutionMinScale');
+    if (evolutionMinScale) {
+        evolutionMinScale.addEventListener('change', (e) => {
+            evolutionMinMode = e.target.checked ? 'min' : 'zero';
+            updateEvolutionChart();
+        });
+    }
+
     document.getElementById('modalCancel').addEventListener('click', hideModal);
 
     // Snapshot action buttons (event delegation for ES module compatibility)
@@ -262,6 +274,7 @@ function setupEventListeners() {
 
     document.getElementById('categorySelector').addEventListener('change', (e) => {
         selectedCategory = e.target.value || null;
+        persistSelectedCategory();
         updateViewMode();
     });
 
@@ -552,7 +565,30 @@ function captureSnapshot() {
 function selectCategory(category) {
     selectedCategory = category;
     document.getElementById('categorySelector').value = category || '';
+    persistSelectedCategory();
     updateViewMode();
+}
+
+function loadSelectedCategory() {
+    const stored = localStorage.getItem(SELECTED_CATEGORY_KEY);
+    if (!stored) return;
+
+    if (snapshots.length === 0) {
+        selectedCategory = null;
+        return;
+    }
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    const categories = Object.keys(latestSnapshot.categoryTotals || {});
+    selectedCategory = categories.includes(stored) ? stored : null;
+}
+
+function persistSelectedCategory() {
+    if (selectedCategory) {
+        localStorage.setItem(SELECTED_CATEGORY_KEY, selectedCategory);
+    } else {
+        localStorage.removeItem(SELECTED_CATEGORY_KEY);
+    }
 }
 
 function updateViewMode() {
@@ -710,7 +746,7 @@ function updateUI() {
 
 function populateCategorySelector() {
     const selector = document.getElementById('categorySelector');
-    const currentValue = selector.value;
+    const currentValue = selectedCategory || selector.value;
 
     let options = '<option value="">Portfolio Global</option>';
 
@@ -724,6 +760,7 @@ function populateCategorySelector() {
     }
 
     selector.innerHTML = options;
+    selector.value = currentValue || '';
 }
 
 function updateAnalytics() {
@@ -1132,15 +1169,127 @@ function updateTargetsTable() {
     const tbody = document.getElementById('targetsBody');
     const monthlyTotalEl = document.getElementById('monthlyTotal');
     const targetsTotalIndicator = document.getElementById('targetsTotalIndicator');
+    const targetsHead = document.querySelector('.targets-section thead');
     if (!tbody || !monthlyTotalEl) return;
 
     if (snapshots.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin datos</td></tr>';
         monthlyTotalEl.textContent = formatCurrency(0);
+        if (targetsHead) {
+            targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th><th>Aporte mensual</th><th>Impacto</th></tr>';
+        }
+        if (targetsChart) {
+            targetsChart.data = { labels: [], datasets: [] };
+            targetsChart.update();
+        }
         return;
     }
 
     const latestSnapshot = snapshots[snapshots.length - 1];
+
+    if (selectedCategory) {
+        const assets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+        const totalValue = assets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0) || 1;
+        const assetTargets = categoryTargets[selectedCategory]?.assets || {};
+
+        const rows = assets.map(asset => {
+            const name = asset[AssetIndex.NAME];
+            const currentValue = asset[AssetIndex.CURRENT_VALUE] || 0;
+            const currentPct = (currentValue / totalValue) * 100;
+            const target = assetTargets[name]?.target ?? 0;
+            const diff = target - currentPct;
+            return {
+                name,
+                currentPct,
+                target,
+                diff,
+                gapAbs: Math.abs(diff)
+            };
+        });
+
+        rows.sort((a, b) => {
+            if (b.gapAbs !== a.gapAbs) return b.gapAbs - a.gapAbs;
+            return a.name.localeCompare(b.name, 'es');
+        });
+
+        if (targetsHead) {
+            targetsHead.innerHTML = '<tr><th>Activo</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th></tr>';
+        }
+
+        const sumTargets = rows.reduce((sum, row) => sum + row.target, 0);
+        const deltaTo100 = 100 - sumTargets;
+        if (targetsTotalIndicator) {
+            const sign = deltaTo100 >= 0 ? 'Falta' : 'Sobra';
+            targetsTotalIndicator.textContent = `Objetivos activos: ${sumTargets.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}%`;
+            targetsTotalIndicator.className = `targets-indicator ${Math.abs(deltaTo100) < 0.1 ? 'ok' : 'warn'}`;
+        }
+        monthlyTotalEl.textContent = formatCurrency(0);
+
+        tbody.innerHTML = rows.map(row => {
+            const diffClass = row.diff >= 0 ? 'positive' : 'negative';
+            return `
+                <tr>
+                    <td><strong>${row.name.length > 22 ? row.name.substring(0, 19) + '...' : row.name}</strong></td>
+                    <td>${row.currentPct.toFixed(1)}%</td>
+                    <td>
+                        <input class="table-input asset-target-input" type="number" min="0" max="100" step="0.1" data-asset="${row.name}" value="${row.target}">
+                    </td>
+                    <td class="${diffClass}">${row.diff >= 0 ? '+' : ''}${row.diff.toFixed(1)}%</td>
+                </tr>
+            `;
+        }).join('');
+
+        if (targetsChart) {
+            const labels = rows.map(row => row.name);
+            const currentData = rows.map(row => Number(row.currentPct.toFixed(1)));
+            const targetData = rows.map(row => Number(row.target.toFixed(1)));
+
+            targetsChart.data = {
+                labels,
+                datasets: [
+                    {
+                        label: 'Actual %',
+                        data: currentData,
+                        backgroundColor: 'rgba(0, 113, 227, 0.35)',
+                        borderColor: '#0071e3',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        barThickness: 14
+                    },
+                    {
+                        label: 'Objetivo %',
+                        type: 'line',
+                        data: targetData,
+                        borderColor: '#ff9f0a',
+                        pointBackgroundColor: '#ff9f0a',
+                        pointRadius: 4,
+                        pointHoverRadius: 5,
+                        showLine: false
+                    }
+                ]
+            };
+            targetsChart.update();
+        }
+
+        tbody.querySelectorAll('.asset-target-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const assetName = e.target.dataset.asset;
+                const value = Number.parseFloat(e.target.value) || 0;
+                categoryTargets[selectedCategory] = {
+                    ...(categoryTargets[selectedCategory] || {}),
+                    assets: {
+                        ...((categoryTargets[selectedCategory] || {}).assets || {}),
+                        [assetName]: { target: Math.max(0, Math.min(100, value)) }
+                    }
+                };
+                saveTargets();
+                updateTargetsTable();
+            });
+        });
+
+        return;
+    }
+
     const categories = Object.keys(latestSnapshot.categoryTotals);
     const totalValue = categories.reduce((sum, cat) => sum + (latestSnapshot.categoryTotals[cat] || 0), 0);
     const sumTargets = categories.reduce((sum, cat) => sum + (categoryTargets[cat]?.target ?? 0), 0) || 1;
@@ -1195,6 +1344,9 @@ function updateTargetsTable() {
 
     const targetsSum = rows.reduce((sum, row) => sum + row.target, 0);
     const deltaTo100 = 100 - targetsSum;
+    if (targetsHead) {
+        targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th><th>Aporte mensual</th><th>Impacto</th></tr>';
+    }
     if (targetsTotalIndicator) {
         const sign = deltaTo100 >= 0 ? 'Falta' : 'Sobra';
         targetsTotalIndicator.textContent = `Objetivos: ${targetsSum.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}%`;
@@ -1205,6 +1357,39 @@ function updateTargetsTable() {
         if (b.currentPct !== a.currentPct) return b.currentPct - a.currentPct;
         return a.cat.localeCompare(b.cat, 'es');
     });
+
+    if (targetsChart) {
+        const rowsByGap = [...rows].sort((a, b) => b.gapAbs - a.gapAbs);
+        const labels = rowsByGap.map(row => row.cat);
+        const currentData = rowsByGap.map(row => Number(row.currentPct.toFixed(1)));
+        const targetData = rowsByGap.map(row => Number(row.target.toFixed(1)));
+
+        targetsChart.data = {
+            labels,
+            datasets: [
+                {
+                    label: 'Actual %',
+                    data: currentData,
+                    backgroundColor: 'rgba(0, 113, 227, 0.35)',
+                    borderColor: '#0071e3',
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    barThickness: 14
+                },
+                {
+                    label: 'Objetivo %',
+                    type: 'line',
+                    data: targetData,
+                    borderColor: '#ff9f0a',
+                    pointBackgroundColor: '#ff9f0a',
+                    pointRadius: 4,
+                    pointHoverRadius: 5,
+                    showLine: false
+                }
+            ]
+        };
+        targetsChart.update();
+    }
 
     tbody.innerHTML = rows.map(row => {
         monthlyTotal += row.monthly;
@@ -1628,6 +1813,15 @@ function initCharts() {
         data: { labels: [], datasets: [] },
         options: getDoughnutOptions()
     });
+
+    const targetsCtx = document.getElementById('targetsChart')?.getContext('2d');
+    if (targetsCtx) {
+        targetsChart = new Chart(targetsCtx, {
+            type: 'bar',
+            data: { labels: [], datasets: [] },
+            options: getTargetsChartOptions()
+        });
+    }
 }
 
 function getLineChartOptions() {
@@ -1733,6 +1927,58 @@ function getDoughnutOptions() {
             }
         },
         cutout: '55%'
+    };
+}
+
+function getTargetsChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    color: '#a1a1a6',
+                    font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 11 },
+                    usePointStyle: true,
+                    padding: 12
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(45, 45, 47, 0.95)',
+                titleColor: '#f5f5f7',
+                bodyColor: '#a1a1a6',
+                borderColor: 'rgba(255, 255, 255, 0.12)',
+                borderWidth: 1,
+                padding: 10,
+                cornerRadius: 10,
+                callbacks: {
+                    label: function (context) {
+                        const value = context.parsed.x;
+                        return `${context.dataset.label}: ${value.toFixed(1)}%`;
+                    }
+                }
+            },
+            datalabels: { display: false }
+        },
+        scales: {
+            x: {
+                min: 0,
+                max: 100,
+                grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                ticks: {
+                    color: '#6e6e73',
+                    font: { size: 11 },
+                    callback: value => `${value}%`
+                }
+            },
+            y: {
+                grid: { display: false },
+                ticks: { color: '#6e6e73', font: { size: 11 } }
+            }
+        }
     };
 }
 
@@ -1961,8 +2207,9 @@ function updateEvolutionChart() {
     evolutionChart.data.labels = [];
     evolutionChart.data.datasets = datasets;
 
+    const allValues = datasets.flatMap(ds => (ds.data || []).map(point => point.y));
+
     if (evolutionScaleMode === 'logarithmic') {
-        const allValues = datasets.flatMap(ds => ds.data || []);
         const positiveValues = allValues.filter(v => v > 0);
         const minPositive = positiveValues.length ? Math.min(...positiveValues) : 1;
 
@@ -1971,8 +2218,15 @@ function updateEvolutionChart() {
         evolutionChart.options.scales.y.beginAtZero = false;
     } else {
         evolutionChart.options.scales.y.type = 'linear';
-        evolutionChart.options.scales.y.min = undefined;
-        evolutionChart.options.scales.y.beginAtZero = true;
+        if (evolutionMinMode === 'min' && allValues.length) {
+            const minValue = Math.min(...allValues);
+            const padding = Math.abs(minValue) * 0.05;
+            evolutionChart.options.scales.y.min = minValue - padding;
+            evolutionChart.options.scales.y.beginAtZero = false;
+        } else {
+            evolutionChart.options.scales.y.min = undefined;
+            evolutionChart.options.scales.y.beginAtZero = true;
+        }
     }
     evolutionChart.update();
 
@@ -2172,15 +2426,32 @@ function updateDistributionCharts() {
         const assetLabels = categoryAssets.map(a => a[AssetIndex.NAME].length > 15 ? a[AssetIndex.NAME].substring(0, 12) + '...' : a[AssetIndex.NAME]);
         const assetData = categoryAssets.map(a => a[AssetIndex.CURRENT_VALUE]);
         const assetColors = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+        const totalValue = assetData.reduce((sum, v) => sum + v, 0) || 0;
+        const assetTargets = categoryTargets[selectedCategory]?.assets || {};
+        const targetData = categoryAssets.map(a => {
+            const targetPct = assetTargets[a[AssetIndex.NAME]]?.target ?? 0;
+            return totalValue > 0 ? (totalValue * targetPct) / 100 : 0;
+        });
 
         categoryChart.data = {
             labels: assetLabels,
-            datasets: [{
-                data: assetData,
-                backgroundColor: assetColors.slice(0, assetData.length),
-                borderColor: 'transparent',
-                hoverOffset: 10
-            }]
+            datasets: [
+                {
+                    data: assetData,
+                    backgroundColor: assetColors.slice(0, assetData.length),
+                    borderColor: 'transparent',
+                    hoverOffset: 10,
+                    weight: 1
+                },
+                {
+                    data: targetData,
+                    backgroundColor: assetColors.slice(0, assetData.length).map(color => `${color}2A`),
+                    borderColor: assetColors.slice(0, assetData.length),
+                    borderWidth: 2,
+                    hoverOffset: 0,
+                    weight: 0.5
+                }
+            ]
         };
 
         categoryChart.options.onClick = null;
@@ -2188,15 +2459,31 @@ function updateDistributionCharts() {
         const categoryLabels = Object.keys(latestSnapshot.categoryTotals);
         const categoryData = Object.values(latestSnapshot.categoryTotals);
         const catColors = categoryLabels.map(cat => (categoryColors && categoryColors[cat]) || '#888');
+        const totalValue = categoryData.reduce((sum, v) => sum + v, 0) || 0;
+        const targetData = categoryLabels.map(cat => {
+            const targetPct = categoryTargets[cat]?.target ?? 0;
+            return totalValue > 0 ? (totalValue * targetPct) / 100 : 0;
+        });
 
         categoryChart.data = {
             labels: categoryLabels,
-            datasets: [{
-                data: categoryData,
-                backgroundColor: catColors,
-                borderColor: 'transparent',
-                hoverOffset: 10
-            }]
+            datasets: [
+                {
+                    data: categoryData,
+                    backgroundColor: catColors,
+                    borderColor: 'transparent',
+                    hoverOffset: 10,
+                    weight: 1
+                },
+                {
+                    data: targetData,
+                    backgroundColor: catColors.map(color => `${color}2A`),
+                    borderColor: catColors,
+                    borderWidth: 2,
+                    hoverOffset: 0,
+                    weight: 0.5
+                }
+            ]
         };
 
         categoryChart.options.onClick = (evt, elements) => {

@@ -476,6 +476,16 @@ body {
     position: relative;
 }
 
+.chart-wrapper.targets-chart {
+    height: 220px;
+    margin: 8px 0 6px;
+}
+
+.chart-wrapper.targets-chart {
+    height: 220px;
+    margin: 8px 0 6px;
+}
+
 .chart-wrapper-sm {
     height: 200px;
     position: relative;

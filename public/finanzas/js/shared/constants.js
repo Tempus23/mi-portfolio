@@ -2,7 +2,8 @@ export const STORAGE_KEYS = {
     SNAPSHOTS: 'portfolio_snapshots',
     TARGETS: 'portfolio_targets',
     TARGETS_META: 'portfolio_targets_meta',
-    HOLDINGS_CHANGES: 'portfolio_holdings_changes'
+    HOLDINGS_CHANGES: 'portfolio_holdings_changes',
+    SELECTED_CATEGORY: 'portfolio_selected_category'
 };
 
 export const AssetIndex = {

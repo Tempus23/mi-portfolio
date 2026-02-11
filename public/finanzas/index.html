@@ -100,10 +100,10 @@
                         <span class="metric-label">Rentabilidad</span>
                     </div>
                     <div class="metric-divider"></div>
-                    <div class="metric">
-                        <span class="metric-value" id="totalVariation">0,00 €</span>
-                        <span class="metric-label">Ganancia</span>
                     </div>
+                            <div class="chart-wrapper targets-chart">
+                                <canvas id="targetsChart"></canvas>
+                            </div>
                 </div>
             </section>
 
@@ -120,6 +120,10 @@
                             <label class="scale-toggle" for="evolutionLogScale">
                                 <input type="checkbox" id="evolutionLogScale">
                                 <span>Log</span>
+                            </label>
+                            <label class="scale-toggle" for="evolutionMinScale">
+                                <input type="checkbox" id="evolutionMinScale">
+                                <span>Min</span>
                             </label>
                         </div>
                     </div>
@@ -285,6 +289,9 @@
                             </label>
                             <button class="btn secondary" id="autoBalanceBtn">Auto-balancear</button>
                         </div>
+                    </div>
+                    <div class="chart-wrapper targets-chart">
+                        <canvas id="targetsChart"></canvas>
                     </div>
                     <div class="table-wrapper">
                         <table class="data-table">
