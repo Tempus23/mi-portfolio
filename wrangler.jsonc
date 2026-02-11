@@ -1,6 +1,10 @@
 {
   "name": "mi-portfolio",
   "compatibility_date": "2025-08-29",
+  "build": {
+    "command": "npm run build",
+    "cwd": "."
+  },
   "pages_build_output_dir": "./dist",
   "kv_namespaces": [
     {
