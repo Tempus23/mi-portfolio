@@ -16,6 +16,10 @@ export const GET: APIRoute = async (context) => {
   const runtime = (context.locals as any)?.runtime;
   const env = runtime?.env ?? (context as any)?.platform?.env;
 
+  console.log("[KV Sync] GET", {
+    hasKV: Boolean(env?.FINANZAS_KV),
+  });
+
   if (!env?.FINANZAS_KV) {
     return jsonResponse({ error: "KV not configured" }, 500);
   }
@@ -41,6 +45,10 @@ export const GET: APIRoute = async (context) => {
 export const PUT: APIRoute = async (context) => {
   const runtime = (context.locals as any)?.runtime;
   const env = runtime?.env ?? (context as any)?.platform?.env;
+
+  console.log("[KV Sync] PUT", {
+    hasKV: Boolean(env?.FINANZAS_KV),
+  });
 
   if (!env?.FINANZAS_KV) {
     return jsonResponse({ error: "KV not configured" }, 500);

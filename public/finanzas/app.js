@@ -28,7 +28,11 @@ let opportunityRangeMonths = 1;
 const categoryColors = CATEGORY_COLORS;
 const termColors = TERM_COLORS;
 
-Chart.register(ChartDataLabels);
+if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+} else {
+    console.warn('[Charts] Chart.js or ChartDataLabels not available. Charts may not render.');
+}
 
 function init() {
     loadSnapshots();

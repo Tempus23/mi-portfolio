@@ -2,7 +2,7 @@
 // Uses Cloudflare KV via /api/finanzas/sync endpoint
 // Security handled by Cloudflare Access (no PIN needed)
 
-const SYNC_API = '/api/finanzas/sync';
+const SYNC_API = new URL('/api/finanzas/sync', window.location.origin).toString();
 const SYNC_KEYS = {
     SNAPSHOTS: 'portfolio_snapshots',
     TARGETS: 'portfolio_targets',
@@ -17,14 +17,27 @@ export function setSyncCallback(callback) {
 
 // Download data from cloud → localStorage
 async function pullFromCloud() {
-    const res = await fetch(SYNC_API);
+    console.info('[Sync Pull] GET', SYNC_API);
+    const res = await fetch(SYNC_API, {
+        credentials: 'include',
+        cache: 'no-store'
+    });
 
     if (!res.ok) {
         const text = await res.text();
         let msg = 'Error al descargar';
-        try { msg = JSON.parse(text).error || msg; } catch {}
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            try { msg = JSON.parse(text).error || msg; } catch {}
+        } else if (res.status === 401 || res.status === 403) {
+            msg = 'Acceso denegado (Cloudflare Access)';
+        } else if (res.status === 404) {
+            msg = 'API no encontrada';
+        } else if (res.status >= 500) {
+            msg = 'Error del servidor';
+        }
         console.error('[Sync Pull] Error:', res.status, text.substring(0, 200));
-        throw new Error(msg);
+        throw new Error(`${msg} (HTTP ${res.status})`);
     }
 
     const data = await res.json();
@@ -56,18 +69,30 @@ async function pushToCloud() {
 
     console.log('[Sync Push] Sending:', Object.keys(body));
 
+    console.info('[Sync Push] PUT', SYNC_API);
     const res = await fetch(SYNC_API, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        credentials: 'include',
+        cache: 'no-store'
     });
 
     if (!res.ok) {
         const text = await res.text();
         let msg = 'Error al subir';
-        try { msg = JSON.parse(text).error || msg; } catch {}
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            try { msg = JSON.parse(text).error || msg; } catch {}
+        } else if (res.status === 401 || res.status === 403) {
+            msg = 'Acceso denegado (Cloudflare Access)';
+        } else if (res.status === 404) {
+            msg = 'API no encontrada';
+        } else if (res.status >= 500) {
+            msg = 'Error del servidor';
+        }
         console.error('[Sync Push] Error:', res.status, text.substring(0, 200));
-        throw new Error(msg);
+        throw new Error(`${msg} (HTTP ${res.status})`);
     }
 
     const data = await res.json();
