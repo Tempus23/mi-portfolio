@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estado actual · Patrimony</title>
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%230071e3'/><circle cx='50' cy='50' r='15' fill='white'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/finanzas/styles.css">
+</head>
+
+<body>
+    <div class="app">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="brand">
+                    <span class="brand-icon">◉</span>
+                    <span class="brand-name">Patrimony</span>
+                </div>
+                <div class="header-center">
+                    <span class="meta">Estado actual de tus inversiones</span>
+                </div>
+                <nav class="header-actions">
+                    <a class="header-btn" href="/finanzas/">Volver</a>
+                </nav>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <section class="assets-overview">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Inversiones actuales</h2>
+                        <div class="header-actions">
+                            <button class="header-btn primary" id="saveHoldings">Guardar cambios</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Activo</th>
+                                    <th>Categoría</th>
+                                    <th>Plazo</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio compra</th>
+                                    <th>Precio actual</th>
+                                    <th>Valor compra</th>
+                                    <th>Valor actual</th>
+                                    <th>ROI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="holdingsBody"></tbody>
+                        </table>
+                        <p class="empty-state" id="holdingsEmpty">Sin datos. Crea un snapshot primero.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <div class="modal-overlay" id="saveModal">
+        <div class="modal detailed">
+            <div class="modal-icon">✓</div>
+            <h3 id="saveModalTitle">Confirmar cambios</h3>
+            <p id="saveModalMessage"></p>
+            <div class="modal-actions">
+                <button class="btn secondary" id="saveModalCancel">Cancelar</button>
+                <button class="btn primary" id="saveModalConfirm">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/finanzas/investments.js"></script>
+</body>
+
+</html>

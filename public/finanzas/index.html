@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patrimony</title>
+    <meta name="description" content="Tu patrimonio, bajo control.">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%230071e3'/><circle cx='50' cy='50' r='15' fill='white'/></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/finanzas/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+
+<body>
+    <div class="app">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="brand">
+                    <span class="brand-icon">◉</span>
+                    <span class="brand-name">Patrimony</span>
+                </div>
+                <div class="header-center">
+                    <div class="header-filters">
+                        <select id="categorySelector" class="category-selector">
+                            <option value="">Portfolio Global</option>
+                        </select>
+                        <div class="range-control" id="rangeControl">
+                            <button class="range-btn" data-range="6m">6M</button>
+                            <button class="range-btn" data-range="1y">1A</button>
+                            <button class="range-btn" data-range="3y">3A</button>
+                            <button class="range-btn active" data-range="all">Todo</button>
+                        </div>
+                    </div>
+                </div>
+                <nav class="header-actions">
+                    <button class="header-btn" id="openHoldingsBtn" title="Estado actual">
+                        <span class="icon">↗</span>
+                        <span>Estado actual</span>
+                    </button>
+                    <button class="header-btn" id="importBtn" title="Importar" aria-label="Importar datos">
+                        <span class="icon">↓</span>
+                    </button>
+                    <button class="header-btn" id="exportBtn" title="Exportar" aria-label="Exportar datos">
+                        <span class="icon">↑</span>
+                    </button>
+                    <button class="header-btn" id="exportLatestBtn" title="Copiar último snapshot" aria-label="Copiar último snapshot para Excel">
+                        <span class="icon">⎘</span>
+                    </button>
+                    <button class="header-btn primary" id="captureBtn">
+                        <span class="icon">+</span>
+                        <span>Nuevo Snapshot</span>
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                </nav>
+            </div>
+        </header>
+
+        <main class="app-main">
+            <!-- Hero Stats -->
+            <section class="hero-section">
+                <div class="hero-primary">
+                    <div class="hero-label-row">
+                        <span class="hero-label" id="heroLabel">Valor Total</span>
+                        <span class="info-icon" data-tooltip="Ganancia/pérdida actual sin contar nuevas inversiones." tabindex="0">i</span>
+                    </div>
+                    <div class="hero-value-container">
+                        <span class="hero-value" id="totalValue">0,00 €</span>
+                        <span class="hero-change" id="valueChangeIndicator"></span>
+                    </div>
+                    <div class="hero-comparisons">
+                        <div class="comparison-item">
+                            <span class="comparison-label">YTD</span>
+                            <span class="comparison-value" id="compareStart">—</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span class="comparison-label">Último mes</span>
+                            <span class="comparison-value" id="compareMonth">—</span>
+                        </div>
+                        <div class="comparison-item">
+                            <span class="comparison-label">Último año</span>
+                            <span class="comparison-value" id="compareYear">—</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-metrics">
+                    <div class="metric">
+                        <span class="metric-value" id="totalInvested">0,00 €</span>
+                        <span class="metric-change" id="lastMonthInvested">—</span>
+                        <span class="metric-label">Invertido</span>
+                    </div>
+                    <div class="metric-divider"></div>
+                    <div class="metric">
+                        <span class="metric-value" id="totalROI">0,00%</span>
+                        <span class="metric-label">Rentabilidad</span>
+                    </div>
+                    <div class="metric-divider"></div>
+                    <div class="metric">
+                        <span class="metric-value" id="totalVariation">0,00 €</span>
+                        <span class="metric-label">Ganancia</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Row -->
+            <section class="charts-row">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h2 id="evolutionTitle">Evolución</h2>
+                        <div class="header-controls">
+                            <div class="segmented-control">
+                                <button class="segment active" data-filter="total">Total</button>
+                                <button class="segment" data-filter="category">Categorías</button>
+                            </div>
+                            <label class="scale-toggle" for="evolutionLogScale">
+                                <input type="checkbox" id="evolutionLogScale">
+                                <span>Log</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="evolutionChart"></canvas>
+                    </div>
+                </div>
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h2>Rentabilidad</h2>
+                        <div class="segmented-control">
+                            <button class="segment-roi active" data-roi="cumulative">Acumulada</button>
+                            <button class="segment-roi" data-roi="period">Por Periodo</button>
+                            <button class="segment-roi" data-roi="annualized">Anualizada</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="roiEvolutionChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Distribution Row -->
+            <section class="distribution-row">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Distribución</h2>
+                    </div>
+                    <div class="distribution-charts">
+                        <div class="distribution-item">
+                            <span class="distribution-label">Por Categoría</span>
+                            <div class="chart-wrapper-sm">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="distribution-item">
+                            <span class="distribution-label">Por Plazo</span>
+                            <div class="chart-wrapper-sm">
+                                <canvas id="termChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 id="categoryRoiTitle">Rendimiento por Categoría</h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead id="categoryRoiHead">
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Invertido</th>
+                                    <th>Valor</th>
+                                    <th>ROI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoryRoiBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics -->
+            <section class="analytics-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Análisis</h2>
+                    </div>
+                    <div class="analytics-grid">
+                        <div class="analytic-item">
+                            <span class="analytic-icon red">↘</span>
+                            <div class="analytic-content">
+                                <span class="analytic-value" id="maxDrawdown">0.00%</span>
+                                <span class="analytic-label">Max Drawdown</span>
+                            </div>
+                        </div>
+                        <div class="analytic-item">
+                            <span class="analytic-icon green">★</span>
+                            <div class="analytic-content">
+                                <span class="analytic-value" id="bestAsset">-</span>
+                                <span class="analytic-label" id="bestAssetRoi">Mejor activo</span>
+                            </div>
+                        </div>
+                        <div class="analytic-item">
+                            <span class="analytic-icon orange">▼</span>
+                            <div class="analytic-content">
+                                <span class="analytic-value" id="worstAsset">-</span>
+                                <span class="analytic-label" id="worstAssetRoi">Peor activo</span>
+                            </div>
+                        </div>
+                        <div class="analytic-item">
+                            <span class="analytic-icon purple">◐</span>
+                            <div class="analytic-content">
+                                <span class="analytic-value" id="winRate">0%</span>
+                                <span class="analytic-label">Win Rate</span>
+                            </div>
+                        </div>
+                        <div class="analytic-item">
+                            <span class="analytic-icon blue">↗</span>
+                            <div class="analytic-content">
+                                <span class="analytic-value" id="projectedValue">-</span>
+                                <span class="analytic-label" id="projectedCagr">Proyección anual</span>
+                            </div>
+                        </div>
+                        <div class="analytic-item">
+                            <span class="analytic-icon orange">≈</span>
+                            <div class="analytic-content">
+                                <span class="analytic-value" id="volatility">0.0%</span>
+                                <span class="analytic-label">Volatilidad anual</span>
+                            </div>
+                        </div>
+                        <div class="analytic-item">
+                            <span class="analytic-icon green">▲</span>
+                            <div class="analytic-content">
+                                <span class="analytic-value" id="bestMonth">-</span>
+                                <span class="analytic-label" id="bestMonthReturn">Mejor mes</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="diversification-section">
+                        <div class="composition-header">
+                            <h3 id="diversificationTitle">Composición del Portfolio</h3>
+                            <label class="composition-compare">
+                                <span>Comparar con</span>
+                                <select id="compositionCompare">
+                                    <option value="1">1 mes</option>
+                                    <option value="3">3 meses</option>
+                                    <option value="6">6 meses</option>
+                                    <option value="12">12 meses</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="composition-list" id="compositionList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                    <div class="opportunities-section">
+                        <div class="opportunities-header">
+                            <h3>Oportunidades recientes</h3>
+                            <label class="opportunities-compare">
+                                <span>Comparar con</span>
+                                <select id="opportunityRange">
+                                    <option value="1">1 mes</option>
+                                    <option value="3">3 meses</option>
+                                    <option value="6">6 meses</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="opportunity-list" id="opportunityList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="targets-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Objetivos por Categoría</h2>
+                        <div class="targets-controls">
+                            <label class="budget-input">
+                                <span>Presupuesto mensual</span>
+                                <input type="number" id="monthlyBudget" min="0" step="1" value="0">
+                            </label>
+                            <button class="btn secondary" id="autoBalanceBtn">Auto-balancear</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Actual %</th>
+                                    <th>Objetivo %</th>
+                                    <th>Diferencia</th>
+                                    <th>Aporte mensual</th>
+                                    <th>Impacto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="targetsBody"></tbody>
+                        </table>
+                        <div class="targets-summary">
+                            <span id="targetsTotalIndicator">Objetivos: 0%</span>
+                            <span>Total aporte mensual:</span>
+                            <strong id="monthlyTotal">0,00 €</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Top Items -->
+            <section class="assets-overview">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 id="topItemsTitle">Top 5 Categorías</h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead id="topItemsHead">
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Valor</th>
+                                    <th>Invertido</th>
+                                    <th>ROI</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topAssetsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History -->
+            <section class="history-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Historial</h2>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Valor Total</th>
+                                    <th>Variación</th>
+                                    <th>Activos</th>
+                                    <th>Notas</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyBody"></tbody>
+                        </table>
+                        <p class="empty-state" id="emptyState">Sin datos. Captura tu primer snapshot.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Assets Detail (hidden by default) -->
+            <section class="assets-detail" id="assetsSection" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Detalle de Activos</h2>
+                        <span class="meta" id="assetsDate"></span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="assetsTable">
+                            <thead>
+                                <tr>
+                                    <th>Activo</th>
+                                    <th>Categoría</th>
+                                    <th>Plazo</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Compra</th>
+                                    <th>Precio Actual</th>
+                                    <th>Valor Compra</th>
+                                    <th>Valor Actual</th>
+                                    <th>Variación</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assetsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>Patrimony · Tu patrimonio, bajo control</p>
+        </footer>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-icon" id="modalIcon">✓</div>
+            <h3 id="modalTitle">Confirmar</h3>
+            <p id="modalMessage"></p>
+            <div class="modal-actions">
+                <button class="btn secondary" id="modalCancel">Cancelar</button>
+                <button class="btn primary" id="modalConfirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Capture Modal -->
+    <div class="modal-overlay" id="captureModal">
+        <div class="modal large">
+            <div class="modal-header">
+                <h3>Nuevo Snapshot</h3>
+                <button class="close-btn" id="closeCaptureModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-field">
+                    <label>Fecha</label>
+                    <input type="date" id="snapshotDate" class="input">
+                </div>
+                <div class="form-field">
+                    <label>Etiqueta</label>
+                    <input type="text" id="snapshotTag" class="input" placeholder="Ej: Aporte extra">
+                </div>
+                <div class="form-field">
+                    <label>Nota</label>
+                    <textarea id="snapshotNote" class="textarea" placeholder="Describe el contexto del snapshot..."></textarea>
+                </div>
+                <div class="form-field">
+                    <label>
+                        Datos del Portfolio
+                        <span class="hint">Formato: Nombre, Plazo, Categoría, PrecioCompra, Cantidad,
+                            PrecioActual</span>
+                    </label>
+                    <textarea id="snapshotData" class="textarea"
+                        placeholder="XRP, Largo, Criptomonedas, 2.33, 40.21, 1.36"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="cancelCapture">Cancelar</button>
+                <button class="btn primary" id="saveCapture">Guardar Snapshot</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal large">
+            <div class="modal-header">
+                <h3>Editar Snapshot</h3>
+                <button class="close-btn" id="closeEditModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-field">
+                    <label>Fecha</label>
+                    <input type="date" id="editSnapshotDate" class="input">
+                </div>
+                <div class="form-field">
+                    <label>Etiqueta</label>
+                    <input type="text" id="editSnapshotTag" class="input" placeholder="Ej: Ajuste manual">
+                </div>
+                <div class="form-field">
+                    <label>Nota</label>
+                    <textarea id="editSnapshotNote" class="textarea" placeholder="Actualiza el contexto del snapshot..."></textarea>
+                </div>
+                <div class="form-field">
+                    <label>
+                        Datos del Portfolio
+                        <span class="hint">Formato: Nombre, Plazo, Categoría, PrecioCompra, Cantidad,
+                            PrecioActual</span>
+                    </label>
+                    <textarea id="editSnapshotData" class="textarea"></textarea>
+                </div>
+                <div class="edit-preview">
+                    <div class="edit-preview-header">
+                        <span>Vista previa</span>
+                        <span id="editPreviewCount" class="edit-preview-count">0 filas</span>
+                    </div>
+                    <div class="table-wrapper edit-preview-table">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Activo</th>
+                                    <th>Plazo</th>
+                                    <th>Categoría</th>
+                                    <th>Precio compra</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio actual</th>
+                                </tr>
+                            </thead>
+                            <tbody id="editPreviewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn secondary" id="cancelEdit">Cancelar</button>
+                <button class="btn primary" id="saveEdit">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="editSnapshotId">
+
+    <script type="module" src="/finanzas/app.js"></script>
+</body>
+
+</html>
