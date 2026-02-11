@@ -12,9 +12,9 @@ function jsonResponse(data: object, status = 200) {
 }
 
 // GET - Download data from KV
-export const GET: APIRoute = async ({ locals }) => {
-  const runtime = (locals as any).runtime;
-  const env = runtime?.env;
+export const GET: APIRoute = async (context) => {
+  const runtime = (context.locals as any)?.runtime;
+  const env = runtime?.env ?? (context as any)?.platform?.env;
 
   if (!env?.FINANZAS_KV) {
     return jsonResponse({ error: "KV not configured" }, 500);
@@ -38,16 +38,16 @@ export const GET: APIRoute = async ({ locals }) => {
 };
 
 // PUT - Upload data to KV
-export const PUT: APIRoute = async ({ request, locals }) => {
-  const runtime = (locals as any).runtime;
-  const env = runtime?.env;
+export const PUT: APIRoute = async (context) => {
+  const runtime = (context.locals as any)?.runtime;
+  const env = runtime?.env ?? (context as any)?.platform?.env;
 
   if (!env?.FINANZAS_KV) {
     return jsonResponse({ error: "KV not configured" }, 500);
   }
 
   try {
-    const body = await request.json();
+    const body = await context.request.json();
     const { snapshots, targets, targetsMeta } = body as any;
 
     if (snapshots !== undefined) {
