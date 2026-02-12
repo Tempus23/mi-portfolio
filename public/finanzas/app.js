@@ -2311,6 +2311,81 @@ function updateRoiEvolutionChart(snapshotData) {
         ];
 
         delete roiEvolutionChart.options.scales.y1;
+    } else if (currentRoiMode === 'breakdown') {
+        const palette = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+
+        if (selectedCategory) {
+            const latestSnapshot = snapshotData.at(-1);
+            const topAssets = (latestSnapshot?.assets || [])
+                .filter(a => a[AssetIndex.CATEGORY] === selectedCategory)
+                .sort((a, b) => (b[AssetIndex.CURRENT_VALUE] || 0) - (a[AssetIndex.CURRENT_VALUE] || 0))
+                .slice(0, 6)
+                .map(a => ({
+                    name: a[AssetIndex.NAME] || 'Sin nombre',
+                    category: a[AssetIndex.CATEGORY] || 'Sin categoría'
+                }));
+
+            datasets = topAssets.map((asset, index) => {
+                const data = snapshotData.map(s => {
+                    const assetValue = (s.assets || []).reduce((acc, item) => {
+                        const sameName = (item[AssetIndex.NAME] || '') === asset.name;
+                        const sameCategory = (item[AssetIndex.CATEGORY] || '') === asset.category;
+                        if (!sameName || !sameCategory) return acc;
+                        return {
+                            current: acc.current + (item[AssetIndex.CURRENT_VALUE] || 0),
+                            invested: acc.invested + (item[AssetIndex.PURCHASE_VALUE] || 0)
+                        };
+                    }, { current: 0, invested: 0 });
+
+                    const roi = assetValue.invested > 0
+                        ? ((assetValue.current - assetValue.invested) / assetValue.invested) * 100
+                        : 0;
+                    return { x: new Date(s.date), y: roi };
+                });
+
+                return {
+                    label: asset.name.length > 22 ? asset.name.substring(0, 19) + '...' : asset.name,
+                    data,
+                    borderColor: palette[index % palette.length],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    yAxisID: 'y'
+                };
+            });
+        } else {
+            const latestSnapshot = snapshotData.at(-1);
+            const categories = Object.entries(latestSnapshot?.categoryTotals || {})
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6)
+                .map(([cat]) => cat);
+
+            datasets = categories.map((cat, index) => {
+                const data = snapshotData.map(s => {
+                    const catAssets = (s.assets || []).filter(a => a[AssetIndex.CATEGORY] === cat);
+                    const current = catAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0);
+                    const invested = catAssets.reduce((sum, a) => sum + (a[AssetIndex.PURCHASE_VALUE] || 0), 0);
+                    const roi = invested > 0 ? ((current - invested) / invested) * 100 : 0;
+                    return { x: new Date(s.date), y: roi };
+                });
+
+                return {
+                    label: cat,
+                    data,
+                    borderColor: categoryColors[cat] || palette[index % palette.length],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    yAxisID: 'y'
+                };
+            });
+        }
+
+        delete roiEvolutionChart.options.scales.y1;
     } else {
         const periodSource = monthlyData.length ? monthlyData : snapshotData;
 
