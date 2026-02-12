@@ -2313,6 +2313,59 @@ function updateRoiEvolutionChart(snapshotData) {
         delete roiEvolutionChart.options.scales.y1;
     } else if (currentRoiMode === 'breakdown') {
         const palette = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+        const buildRangeRelativeRoiData = (valueSelector) => {
+            const series = snapshotData.map(s => valueSelector(s));
+            const firstActiveIndex = series.findIndex(point => (point.value || 0) > 0 || (point.invested || 0) > 0);
+
+            if (firstActiveIndex === -1) {
+                return snapshotData.map(s => ({ x: new Date(s.date), y: null }));
+            }
+
+            const result = [];
+            let cumulativeFactor = 1;
+
+            for (let i = 0; i < snapshotData.length; i++) {
+                const x = new Date(snapshotData[i].date);
+
+                if (i < firstActiveIndex) {
+                    result.push({ x, y: null });
+                    continue;
+                }
+
+                if (i === firstActiveIndex) {
+                    cumulativeFactor = 1;
+                    result.push({ x, y: 0 });
+                    continue;
+                }
+
+                const prev = series[i - 1] || { value: 0, invested: 0 };
+                const curr = series[i] || { value: 0, invested: 0 };
+
+                if ((prev.value || 0) <= 0) {
+                    if ((curr.value || 0) > 0) {
+                        cumulativeFactor = 1;
+                        result.push({ x, y: 0 });
+                    } else {
+                        result.push({ x, y: null });
+                    }
+                    continue;
+                }
+
+                const newInvestment = (curr.invested || 0) - (prev.invested || 0);
+                const actualGain = (curr.value || 0) - (prev.value || 0) - newInvestment;
+                const periodReturn = actualGain / (prev.value || 1);
+
+                if (!Number.isFinite(periodReturn) || periodReturn <= -1) {
+                    result.push({ x, y: (cumulativeFactor - 1) * 100 });
+                    continue;
+                }
+
+                cumulativeFactor *= (1 + periodReturn);
+                result.push({ x, y: (cumulativeFactor - 1) * 100 });
+            }
+
+            return result;
+        };
 
         if (selectedCategory) {
             const latestSnapshot = snapshotData.at(-1);
@@ -2326,21 +2379,16 @@ function updateRoiEvolutionChart(snapshotData) {
                 }));
 
             datasets = topAssets.map((asset, index) => {
-                const data = snapshotData.map(s => {
-                    const assetValue = (s.assets || []).reduce((acc, item) => {
+                const data = buildRangeRelativeRoiData((s) => {
+                    return (s.assets || []).reduce((acc, item) => {
                         const sameName = (item[AssetIndex.NAME] || '') === asset.name;
                         const sameCategory = (item[AssetIndex.CATEGORY] || '') === asset.category;
                         if (!sameName || !sameCategory) return acc;
                         return {
-                            current: acc.current + (item[AssetIndex.CURRENT_VALUE] || 0),
+                            value: acc.value + (item[AssetIndex.CURRENT_VALUE] || 0),
                             invested: acc.invested + (item[AssetIndex.PURCHASE_VALUE] || 0)
                         };
-                    }, { current: 0, invested: 0 });
-
-                    const roi = assetValue.invested > 0
-                        ? ((assetValue.current - assetValue.invested) / assetValue.invested) * 100
-                        : 0;
-                    return { x: new Date(s.date), y: roi };
+                    }, { value: 0, invested: 0 });
                 });
 
                 return {
@@ -2354,7 +2402,7 @@ function updateRoiEvolutionChart(snapshotData) {
                     pointHoverRadius: 3,
                     yAxisID: 'y'
                 };
-            });
+            }).filter(ds => ds.data.some(point => Number.isFinite(point.y)));
         } else {
             const latestSnapshot = snapshotData.at(-1);
             const categories = Object.entries(latestSnapshot?.categoryTotals || {})
@@ -2363,12 +2411,12 @@ function updateRoiEvolutionChart(snapshotData) {
                 .map(([cat]) => cat);
 
             datasets = categories.map((cat, index) => {
-                const data = snapshotData.map(s => {
+                const data = buildRangeRelativeRoiData((s) => {
                     const catAssets = (s.assets || []).filter(a => a[AssetIndex.CATEGORY] === cat);
-                    const current = catAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0);
-                    const invested = catAssets.reduce((sum, a) => sum + (a[AssetIndex.PURCHASE_VALUE] || 0), 0);
-                    const roi = invested > 0 ? ((current - invested) / invested) * 100 : 0;
-                    return { x: new Date(s.date), y: roi };
+                    return {
+                        value: catAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0),
+                        invested: catAssets.reduce((sum, a) => sum + (a[AssetIndex.PURCHASE_VALUE] || 0), 0)
+                    };
                 });
 
                 return {
@@ -2382,7 +2430,7 @@ function updateRoiEvolutionChart(snapshotData) {
                     pointHoverRadius: 3,
                     yAxisID: 'y'
                 };
-            });
+            }).filter(ds => ds.data.some(point => Number.isFinite(point.y)));
         }
 
         delete roiEvolutionChart.options.scales.y1;
