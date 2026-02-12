@@ -26,6 +26,8 @@ let categoryTargets = {};
 let targetsMeta = { monthlyBudget: 0 };
 let compositionCompareMonths = 1;
 let opportunityRangeMonths = 1;
+let profitabilityViewMode = 'category';
+const PROFITABILITY_VIEW_KEY = 'portfolio_profitability_view';
 
 const categoryColors = CATEGORY_COLORS;
 const termColors = TERM_COLORS;
@@ -41,6 +43,7 @@ function init() {
     loadTargets();
     loadTargetsMeta();
     loadSelectedCategory();
+    loadProfitabilityViewMode();
     updateCurrentDate();
     setupEventListeners();
     initCharts();
@@ -213,6 +216,16 @@ function setupEventListeners() {
             e.target.classList.add('active');
             currentRoiMode = e.target.dataset.roi;
             updateRoiEvolutionChart();
+        });
+    });
+
+    document.querySelectorAll('.segment-profitability').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.segment-profitability').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            profitabilityViewMode = e.target.dataset.profitability === 'asset' ? 'asset' : 'category';
+            persistProfitabilityViewMode();
+            updateCategoryRoiTable();
         });
     });
 
@@ -582,6 +595,21 @@ function loadSelectedCategory() {
     selectedCategory = categories.includes(stored) ? stored : null;
 }
 
+function loadProfitabilityViewMode() {
+    const stored = localStorage.getItem(PROFITABILITY_VIEW_KEY);
+    profitabilityViewMode = stored === 'asset' ? 'asset' : 'category';
+}
+
+function persistProfitabilityViewMode() {
+    localStorage.setItem(PROFITABILITY_VIEW_KEY, profitabilityViewMode);
+}
+
+function updateProfitabilityModeControls() {
+    document.querySelectorAll('.segment-profitability').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.profitability === profitabilityViewMode);
+    });
+}
+
 function persistSelectedCategory() {
     if (selectedCategory) {
         localStorage.setItem(SELECTED_CATEGORY_KEY, selectedCategory);
@@ -733,6 +761,7 @@ function saveEditedSnapshot() {
 
 function updateUI() {
     populateCategorySelector();
+    updateProfitabilityModeControls();
     updateSummary();
     updateHistoryTable();
     updateEvolutionChart();
@@ -1092,76 +1121,119 @@ function updateCategoryRoiTable() {
         return;
     }
 
-    if (selectedCategory) {
-        title.textContent = 'Rendimiento por Activo';
-        thead.innerHTML = '<tr><th>Activo</th><th>Invertido</th><th>Valor</th><th>ROI</th></tr>';
+    if (profitabilityViewMode === 'asset') {
+        const scopedAssets = selectedCategory
+            ? latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory)
+            : latestSnapshot.assets;
 
-        const assets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
-        const assetData = assets.map(a => {
-            const invested = a[AssetIndex.PURCHASE_VALUE];
-            const current = a[AssetIndex.CURRENT_VALUE];
-            const roi = invested > 0 ? ((current - invested) / invested * 100) : 0;
-            return { name: a[AssetIndex.NAME], invested, current, roi };
+        title.textContent = selectedCategory
+            ? `Rentabilidad por Activo · ${selectedCategory}`
+            : 'Rentabilidad por Activo';
+
+        thead.innerHTML = selectedCategory
+            ? '<tr><th>Activo</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>'
+            : '<tr><th>Activo</th><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>';
+
+        const groupedAssets = new Map();
+        const scopeTotal = scopedAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0) || 1;
+
+        scopedAssets.forEach(asset => {
+            const name = asset[AssetIndex.NAME] || 'Sin nombre';
+            const category = asset[AssetIndex.CATEGORY] || 'Sin categoría';
+            const key = `${name}::${category}`;
+            const invested = asset[AssetIndex.PURCHASE_VALUE] || 0;
+            const current = asset[AssetIndex.CURRENT_VALUE] || 0;
+
+            if (!groupedAssets.has(key)) {
+                groupedAssets.set(key, { name, category, invested: 0, current: 0 });
+            }
+
+            const row = groupedAssets.get(key);
+            row.invested += invested;
+            row.current += current;
         });
 
-        assetData.sort((a, b) => b.roi - a.roi);
+        const assetData = Array.from(groupedAssets.values()).map(row => {
+            const roi = row.invested > 0 ? ((row.current - row.invested) / row.invested) * 100 : 0;
+            const allocation = (row.current / scopeTotal) * 100;
+            return { ...row, roi, allocation };
+        });
 
-        tbody.innerHTML = assetData.map(({ name, invested, current, roi }) => {
+        assetData.sort((a, b) => {
+            if (b.roi !== a.roi) return b.roi - a.roi;
+            return b.current - a.current;
+        });
+
+        tbody.innerHTML = assetData.map(({ name, category, invested, current, roi, allocation }) => {
             const roiClass = roi >= 0 ? 'positive' : 'negative';
+            const categoryClass = (category || 'Sin categoría').replaceAll(/\s+/g, '');
+            if (selectedCategory) {
+                return `
+                    <tr>
+                        <td><strong>${name.length > 28 ? name.substring(0, 25) + '...' : name}</strong></td>
+                        <td>${formatCurrency(invested)}</td>
+                        <td>${formatCurrency(current)}</td>
+                        <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
+                        <td class="metric-muted">${allocation.toFixed(1)}%</td>
+                    </tr>
+                `;
+            }
             return `
                 <tr>
-                    <td><strong>${name.length > 20 ? name.substring(0, 17) + '...' : name}</strong></td>
+                    <td><strong>${name.length > 26 ? name.substring(0, 23) + '...' : name}</strong></td>
+                    <td><span class="category-badge category-${categoryClass}">${category}</span></td>
                     <td>${formatCurrency(invested)}</td>
                     <td>${formatCurrency(current)}</td>
                     <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
+                    <td class="metric-muted">${allocation.toFixed(1)}%</td>
                 </tr>
             `;
         }).join('');
-    } else {
-        title.textContent = 'Rendimiento por Categoría';
-        thead.innerHTML = '<tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Volatilidad</th><th>Drawdown</th></tr>';
-
-        const monthlySnapshots = getMonthlySnapshotsForRange();
-
-        const categories = Object.keys(latestSnapshot.categoryTotals);
-        const categoryData = categories.map(cat => {
-            const invested = latestSnapshot.categoryInvested[cat] || 0;
-            const current = latestSnapshot.categoryTotals[cat] || 0;
-            const roi = invested > 0 ? ((current - invested) / invested * 100) : 0;
-            const values = monthlySnapshots.map(s => {
-                const catAssets = s.assets.filter(a => a[AssetIndex.CATEGORY] === cat);
-                return catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
-            });
-            const returns = values.slice(1).map((value, i) => {
-                const prev = values[i];
-                return prev > 0 ? (value - prev) / prev : 0;
-            });
-            const volatility = calculateVolatility(returns);
-            const drawdown = calculateMaxDrawdown(values);
-
-            return { cat, invested, current, roi, volatility, drawdown };
-        });
-
-        categoryData.sort((a, b) => b.roi - a.roi);
-
-        tbody.innerHTML = categoryData.map(({ cat, invested, current, roi, volatility, drawdown }) => {
-            const roiClass = roi >= 0 ? 'positive' : 'negative';
-            const categoryClass = cat.replace(/\s+/g, '');
-            const volatilityText = Number.isFinite(volatility) ? `${volatility.toFixed(1)}%` : '—';
-            const drawdownText = Number.isFinite(drawdown) ? `${drawdown.toFixed(1)}%` : '—';
-            const drawdownClass = Number.isFinite(drawdown) && drawdown < 0 ? 'negative' : 'positive';
-            return `
-                <tr>
-                    <td><span class="category-badge category-${categoryClass}">${cat}</span></td>
-                    <td>${formatCurrency(invested)}</td>
-                    <td>${formatCurrency(current)}</td>
-                    <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
-                    <td class="metric-muted">${volatilityText}</td>
-                    <td class="${drawdownClass}">${drawdownText}</td>
-                </tr>
-            `;
-        }).join('');
+        return;
     }
+
+    title.textContent = 'Rentabilidad por Categoría';
+    thead.innerHTML = '<tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Volatilidad</th><th>Drawdown</th></tr>';
+
+    const monthlySnapshots = getMonthlySnapshotsForRange();
+    const categories = Object.keys(latestSnapshot.categoryTotals || {});
+    const categoryData = categories.map(cat => {
+        const invested = latestSnapshot.categoryInvested[cat] || 0;
+        const current = latestSnapshot.categoryTotals[cat] || 0;
+        const roi = invested > 0 ? ((current - invested) / invested * 100) : 0;
+        const values = monthlySnapshots.map(s => {
+            const catAssets = s.assets.filter(a => a[AssetIndex.CATEGORY] === cat);
+            return catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+        });
+        const returns = values.slice(1).map((value, i) => {
+            const prev = values[i];
+            return prev > 0 ? (value - prev) / prev : 0;
+        });
+        const volatility = calculateVolatility(returns);
+        const drawdown = calculateMaxDrawdown(values);
+
+        return { cat, invested, current, roi, volatility, drawdown };
+    });
+
+    categoryData.sort((a, b) => b.roi - a.roi);
+
+    tbody.innerHTML = categoryData.map(({ cat, invested, current, roi, volatility, drawdown }) => {
+        const roiClass = roi >= 0 ? 'positive' : 'negative';
+        const categoryClass = cat.replaceAll(/\s+/g, '');
+        const volatilityText = Number.isFinite(volatility) ? `${volatility.toFixed(1)}%` : '—';
+        const drawdownText = Number.isFinite(drawdown) ? `${drawdown.toFixed(1)}%` : '—';
+        const drawdownClass = Number.isFinite(drawdown) && drawdown < 0 ? 'negative' : 'positive';
+        return `
+            <tr>
+                <td><span class="category-badge category-${categoryClass}">${cat}</span></td>
+                <td>${formatCurrency(invested)}</td>
+                <td>${formatCurrency(current)}</td>
+                <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
+                <td class="metric-muted">${volatilityText}</td>
+                <td class="${drawdownClass}">${drawdownText}</td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function updateTargetsTable() {

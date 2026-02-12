@@ -11,6 +11,7 @@ let snapshots = [];
 let originalAssets = [];
 let editedAssets = [];
 let baseSnapshotDate = null;
+let holdingsProfitabilityMode = 'category';
 
 init();
 
@@ -18,8 +19,18 @@ function init() {
     loadSnapshots();
     loadBaseAssets();
     renderHoldingsTable();
+    renderHoldingsProfitability();
     const saveBtn = document.getElementById('saveHoldings');
     if (saveBtn) saveBtn.addEventListener('click', openSaveModal);
+
+    document.querySelectorAll('.segment-holdings-roi').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.segment-holdings-roi').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            holdingsProfitabilityMode = e.target.dataset.mode === 'asset' ? 'asset' : 'category';
+            renderHoldingsProfitability();
+        });
+    });
 
     const cancelBtn = document.getElementById('saveModalCancel');
     const confirmBtn = document.getElementById('saveModalConfirm');
@@ -161,6 +172,118 @@ function handleRowUpdate(e) {
     roiCell.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(2)}%`;
     roiCell.classList.toggle('positive', roi >= 0);
     roiCell.classList.toggle('negative', roi < 0);
+
+    renderHoldingsProfitability();
+}
+
+function renderHoldingsProfitability() {
+    const tbody = document.getElementById('holdingsProfitabilityBody');
+    const thead = document.getElementById('holdingsProfitabilityHead');
+    const title = document.getElementById('holdingsProfitabilityTitle');
+    const empty = document.getElementById('holdingsProfitabilityEmpty');
+    if (!tbody || !thead || !title || !empty) return;
+
+    if (!editedAssets.length) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+
+    empty.style.display = 'none';
+    const totalCurrent = editedAssets.reduce((sum, asset) => sum + (asset[AssetIndex.CURRENT_VALUE] || 0), 0) || 1;
+
+    if (holdingsProfitabilityMode === 'asset') {
+        title.textContent = 'Rentabilidad por activo';
+        thead.innerHTML = '<tr><th>Activo</th><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>';
+
+        const grouped = new Map();
+        editedAssets.forEach(asset => {
+            const name = asset[AssetIndex.NAME] || 'Sin nombre';
+            const category = asset[AssetIndex.CATEGORY] || 'Sin categoría';
+            const key = `${name}::${category}`;
+            const invested = asset[AssetIndex.PURCHASE_VALUE] || 0;
+            const current = asset[AssetIndex.CURRENT_VALUE] || 0;
+
+            if (!grouped.has(key)) {
+                grouped.set(key, { name, category, invested: 0, current: 0 });
+            }
+
+            const row = grouped.get(key);
+            row.invested += invested;
+            row.current += current;
+        });
+
+        const rows = Array.from(grouped.values())
+            .map(row => {
+                const roi = row.invested > 0 ? ((row.current - row.invested) / row.invested) * 100 : 0;
+                const allocation = (row.current / totalCurrent) * 100;
+                return { ...row, roi, allocation };
+            })
+            .sort((a, b) => {
+                if (b.roi !== a.roi) return b.roi - a.roi;
+                return b.current - a.current;
+            });
+
+        tbody.innerHTML = rows.map(row => {
+            const roiClass = row.roi >= 0 ? 'positive' : 'negative';
+            return `
+                <tr>
+                    <td><strong>${truncate(row.name, 34)}</strong></td>
+                    <td>${row.category}</td>
+                    <td>${formatCurrency(row.invested)}</td>
+                    <td>${formatCurrency(row.current)}</td>
+                    <td class="${roiClass}"><strong>${row.roi >= 0 ? '+' : ''}${row.roi.toFixed(2)}%</strong></td>
+                    <td class="metric-muted">${row.allocation.toFixed(1)}%</td>
+                </tr>
+            `;
+        }).join('');
+        return;
+    }
+
+    title.textContent = 'Rentabilidad por categoría';
+    thead.innerHTML = '<tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>';
+
+    const groupedByCategory = new Map();
+    editedAssets.forEach(asset => {
+        const category = asset[AssetIndex.CATEGORY] || 'Sin categoría';
+        const invested = asset[AssetIndex.PURCHASE_VALUE] || 0;
+        const current = asset[AssetIndex.CURRENT_VALUE] || 0;
+        if (!groupedByCategory.has(category)) {
+            groupedByCategory.set(category, { category, invested: 0, current: 0 });
+        }
+        const row = groupedByCategory.get(category);
+        row.invested += invested;
+        row.current += current;
+    });
+
+    const categoryRows = Array.from(groupedByCategory.values())
+        .map(row => {
+            const roi = row.invested > 0 ? ((row.current - row.invested) / row.invested) * 100 : 0;
+            const allocation = (row.current / totalCurrent) * 100;
+            return { ...row, roi, allocation };
+        })
+        .sort((a, b) => {
+            if (b.roi !== a.roi) return b.roi - a.roi;
+            return b.current - a.current;
+        });
+
+    tbody.innerHTML = categoryRows.map(row => {
+        const roiClass = row.roi >= 0 ? 'positive' : 'negative';
+        return `
+            <tr>
+                <td><strong>${row.category}</strong></td>
+                <td>${formatCurrency(row.invested)}</td>
+                <td>${formatCurrency(row.current)}</td>
+                <td class="${roiClass}"><strong>${row.roi >= 0 ? '+' : ''}${row.roi.toFixed(2)}%</strong></td>
+                <td class="metric-muted">${row.allocation.toFixed(1)}%</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function truncate(value, max) {
+    if (!value) return '';
+    return value.length > max ? `${value.substring(0, max - 3)}...` : value;
 }
 
 function openSaveModal() {

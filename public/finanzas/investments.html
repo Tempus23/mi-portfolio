@@ -60,6 +60,33 @@
                     </div>
                 </div>
             </section>
+
+            <section class="assets-overview">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 id="holdingsProfitabilityTitle">Rentabilidad por categoría</h2>
+                        <div class="segmented-control" id="holdingsProfitabilityControl" aria-label="Vista rentabilidad holdings">
+                            <button class="segment-holdings-roi active" data-mode="category">Categorías</button>
+                            <button class="segment-holdings-roi" data-mode="asset">Activos</button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead id="holdingsProfitabilityHead">
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Invertido</th>
+                                    <th>Valor</th>
+                                    <th>ROI</th>
+                                    <th>Peso</th>
+                                </tr>
+                            </thead>
+                            <tbody id="holdingsProfitabilityBody"></tbody>
+                        </table>
+                        <p class="empty-state" id="holdingsProfitabilityEmpty">Sin datos para calcular rentabilidad.</p>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 

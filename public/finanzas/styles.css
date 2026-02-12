@@ -507,17 +507,23 @@ body {
 }
 
 .segment.active,
-.segment-roi.active {
+.segment-roi.active,
+.segment-profitability.active,
+.segment-holdings-roi.active {
     background: rgba(255, 255, 255, 0.12);
     color: var(--text);
 }
 
 .segment:hover:not(.active),
-.segment-roi:hover:not(.active) {
+.segment-roi:hover:not(.active),
+.segment-profitability:hover:not(.active),
+.segment-holdings-roi:hover:not(.active) {
     color: var(--text);
 }
 
-.segment-roi {
+.segment-roi,
+.segment-profitability,
+.segment-holdings-roi {
     padding: 6px 12px;
     background: transparent;
     border: none;
@@ -1525,6 +1531,8 @@ button:focus-visible,
 .range-btn:focus-visible,
 .segment:focus-visible,
 .segment-roi:focus-visible,
+.segment-profitability:focus-visible,
+.segment-holdings-roi:focus-visible,
 .action-btn:focus-visible,
 .category-selector:focus-visible,
 .input:focus-visible,
