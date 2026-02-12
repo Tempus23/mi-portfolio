@@ -2047,6 +2047,16 @@ function getMonthlySnapshotsForRange() {
     return Array.from(map.values()).sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
+function shouldAggregateRangeByMonth() {
+    return currentRange === '1y' || currentRange === '3y' || currentRange === 'all';
+}
+
+function getSnapshotsForChartRange() {
+    return shouldAggregateRangeByMonth()
+        ? getMonthlySnapshotsForRange()
+        : getSnapshotsForRange();
+}
+
 function calculateAnnualizedRoi(value, invested, startDate, currentDate) {
     if (invested <= 0) return 0;
     const ratio = value / invested;
@@ -2059,7 +2069,7 @@ function calculateAnnualizedRoi(value, invested, startDate, currentDate) {
 function updateEvolutionChart() {
     if (!evolutionChart) return;
 
-    const snapshotData = getSnapshotsForRange();
+    const snapshotData = getSnapshotsForChartRange();
 
     if (snapshotData.length === 0) {
         evolutionChart.data.labels = [];
@@ -2212,7 +2222,7 @@ function updateEvolutionChart() {
 function updateRoiEvolutionChart(snapshotData) {
     if (!roiEvolutionChart) return;
 
-    if (!snapshotData) snapshotData = getSnapshotsForRange();
+    if (!snapshotData) snapshotData = getSnapshotsForChartRange();
     const monthlyData = getMonthlySnapshotsForRange();
 
     if (snapshotData.length === 0) {
@@ -2311,21 +2321,26 @@ function updateRoiEvolutionChart(snapshotData) {
         ];
 
         delete roiEvolutionChart.options.scales.y1;
-    } else if (currentRoiMode === 'breakdown') {
+    } else if (currentRoiMode === 'breakdown' || currentRoiMode === 'breakdown-period') {
         const palette = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+        const isBreakdownPeriod = currentRoiMode === 'breakdown-period';
+        const breakdownSource = isBreakdownPeriod
+            ? (monthlyData.length ? monthlyData : snapshotData)
+            : snapshotData;
+
         const buildRangeRelativeRoiData = (valueSelector) => {
-            const series = snapshotData.map(s => valueSelector(s));
+            const series = breakdownSource.map(s => valueSelector(s));
             const firstActiveIndex = series.findIndex(point => (point.value || 0) > 0 || (point.invested || 0) > 0);
 
             if (firstActiveIndex === -1) {
-                return snapshotData.map(s => ({ x: new Date(s.date), y: null }));
+                return breakdownSource.map(s => ({ x: new Date(s.date), y: null }));
             }
 
             const result = [];
             let cumulativeFactor = 1;
 
-            for (let i = 0; i < snapshotData.length; i++) {
-                const x = new Date(snapshotData[i].date);
+            for (let i = 0; i < breakdownSource.length; i++) {
+                const x = new Date(breakdownSource[i].date);
 
                 if (i < firstActiveIndex) {
                     result.push({ x, y: null });
@@ -2354,6 +2369,11 @@ function updateRoiEvolutionChart(snapshotData) {
                 const newInvestment = (curr.invested || 0) - (prev.invested || 0);
                 const actualGain = (curr.value || 0) - (prev.value || 0) - newInvestment;
                 const periodReturn = actualGain / (prev.value || 1);
+
+                if (isBreakdownPeriod) {
+                    result.push({ x, y: Number.isFinite(periodReturn) ? periodReturn * 100 : null });
+                    continue;
+                }
 
                 if (!Number.isFinite(periodReturn) || periodReturn <= -1) {
                     result.push({ x, y: (cumulativeFactor - 1) * 100 });
