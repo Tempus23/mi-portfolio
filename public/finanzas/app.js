@@ -2094,7 +2094,16 @@ function updateEvolutionChart() {
                 });
             });
         }
-        evolutionChart.options.scales.y.stacked = true;
+        const categoryMinZoom = evolutionMinMode === 'min';
+        evolutionChart.options.scales.y.stacked = !categoryMinZoom;
+        if (categoryMinZoom) {
+            datasets = datasets.map(ds => ({
+                ...ds,
+                fill: false,
+                pointRadius: 1,
+                pointHoverRadius: 3
+            }));
+        }
     }
 
     evolutionChart.data.labels = [];
