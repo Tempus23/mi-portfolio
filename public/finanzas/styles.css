@@ -1047,6 +1047,16 @@ body {
     z-index: 3;
 }
 
+.composition-target-marker {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    width: 1px;
+    background: rgba(255, 159, 10, 0.5);
+    transform: translateX(-0.5px);
+    z-index: 2;
+}
+
 
 .composition-percent {
     font-size: 12px;

@@ -752,6 +752,10 @@ function populateCategorySelector() {
     if (snapshots.length > 0) {
         const latestSnapshot = snapshots[snapshots.length - 1];
         const categories = Object.keys(latestSnapshot.categoryTotals).sort();
+        categories.forEach(cat => {
+            const selected = cat === currentValue ? 'selected' : '';
+            options += `<option value="${cat}" ${selected}>${cat}</option>`;
+        });
     }
 
     selector.innerHTML = options;
@@ -2018,15 +2022,6 @@ function updateEvolutionChart() {
     evolutionChart.data.datasets = datasets;
 
     const allValues = datasets.flatMap(ds => (ds.data || []).map(point => point.y));
-    const stackedTotals = currentChartMode === 'category'
-        ? snapshotData.map(s => {
-            if (selectedCategory) {
-                const assets = s.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
-                return assets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
-            }
-            return Object.values(s.categoryTotals || {}).reduce((sum, v) => sum + (v || 0), 0);
-        })
-        : null;
 
     if (evolutionScaleMode === 'logarithmic') {
         const positiveValues = allValues.filter(v => v > 0);
@@ -2037,9 +2032,10 @@ function updateEvolutionChart() {
         evolutionChart.options.scales.y.beginAtZero = false;
     } else {
         evolutionChart.options.scales.y.type = 'linear';
-        if (evolutionMinMode === 'min' && (allValues.length || stackedTotals?.length)) {
-            const baseValues = stackedTotals?.length ? stackedTotals : allValues;
-            const minValue = Math.min(...baseValues);
+        if (evolutionMinMode === 'min' && allValues.length) {
+            const positiveValues = allValues.filter(v => Number.isFinite(v) && v > 0);
+            const baseValues = positiveValues.length ? positiveValues : allValues.filter(v => Number.isFinite(v));
+            const minValue = baseValues.length ? Math.min(...baseValues) : 0;
             const padding = Math.abs(minValue) * 0.05;
             evolutionChart.options.scales.y.min = minValue - padding;
             evolutionChart.options.scales.y.beginAtZero = false;
@@ -2433,6 +2429,10 @@ function updateCompositionList() {
         const changeClass = item.change > 0.05 ? 'positive' : item.change < -0.05 ? 'negative' : 'neutral';
         const arrow = item.change > 0.05 ? '↑' : item.change < -0.05 ? '↓' : '';
         const changeText = !hasChange ? '—' : (Math.abs(item.change) < 0.05 ? '=' : `${item.change > 0 ? '+' : ''}${item.change.toFixed(1)}%`);
+        const target = Number.isFinite(item.targetPercent) ? item.targetPercent : null;
+        const targetMarker = target !== null
+            ? `<span class="composition-target-marker" style="left: ${Math.min(Math.max(target, 0), 100)}%"></span>`
+            : '';
         return `
             <div class="composition-item">
                 <span class="composition-label">${item.label}</span>
@@ -2442,6 +2442,7 @@ function updateCompositionList() {
                         <span class="composition-percent">${item.percent.toFixed(1)}%</span>
                     </div>
                     ${item.prevPercent ? `<span class="composition-bar-marker" style="left: ${Math.min(item.prevPercent, 100)}%"></span>` : ''}
+                    ${targetMarker}
                 </div>
                 <span class="composition-change ${changeClass}">
                     <span>${arrow} ${changeText}</span>
