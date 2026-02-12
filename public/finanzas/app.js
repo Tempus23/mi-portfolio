@@ -2018,6 +2018,15 @@ function updateEvolutionChart() {
     evolutionChart.data.datasets = datasets;
 
     const allValues = datasets.flatMap(ds => (ds.data || []).map(point => point.y));
+    const stackedTotals = currentChartMode === 'category'
+        ? snapshotData.map(s => {
+            if (selectedCategory) {
+                const assets = s.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+                return assets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+            }
+            return Object.values(s.categoryTotals || {}).reduce((sum, v) => sum + (v || 0), 0);
+        })
+        : null;
 
     if (evolutionScaleMode === 'logarithmic') {
         const positiveValues = allValues.filter(v => v > 0);
@@ -2028,8 +2037,9 @@ function updateEvolutionChart() {
         evolutionChart.options.scales.y.beginAtZero = false;
     } else {
         evolutionChart.options.scales.y.type = 'linear';
-        if (evolutionMinMode === 'min' && allValues.length) {
-            const minValue = Math.min(...allValues);
+        if (evolutionMinMode === 'min' && (allValues.length || stackedTotals?.length)) {
+            const baseValues = stackedTotals?.length ? stackedTotals : allValues;
+            const minValue = Math.min(...baseValues);
             const padding = Math.abs(minValue) * 0.05;
             evolutionChart.options.scales.y.min = minValue - padding;
             evolutionChart.options.scales.y.beginAtZero = false;
