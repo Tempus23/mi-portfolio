@@ -1169,24 +1169,103 @@ function updateTargetsTable() {
     const monthlyTotalEl = document.getElementById('monthlyTotal');
     const targetsTotalIndicator = document.getElementById('targetsTotalIndicator');
     const targetsHead = document.querySelector('.targets-section thead');
+    const targetsSectionTitle = document.getElementById('targetsSectionTitle');
     if (!tbody || !monthlyTotalEl) return;
 
     if (snapshots.length === 0) {
+        if (targetsSectionTitle) targetsSectionTitle.textContent = 'Objetivos por Categoría';
         tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin datos</td></tr>';
         monthlyTotalEl.textContent = formatCurrency(0);
         if (targetsHead) {
             targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th><th>Aporte mensual</th><th>Impacto</th></tr>';
         }
-        if (targetsChart) {
-            targetsChart.data = { labels: [], datasets: [] };
-            targetsChart.update();
+        if (targetsTotalIndicator) {
+            targetsTotalIndicator.textContent = 'Objetivos: 0%';
+            targetsTotalIndicator.className = 'targets-indicator warn';
         }
         return;
     }
 
     const latestSnapshot = snapshots[snapshots.length - 1];
 
+    // Asset mode when a category is selected
+    if (selectedCategory) {
+        if (targetsSectionTitle) targetsSectionTitle.textContent = `Objetivos por Activo · ${selectedCategory}`;
+        const assets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+        const totalCategoryValue = assets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0) || 1;
+        const assetTargets = categoryTargets[selectedCategory]?.assets || {};
+
+        if (targetsHead) {
+            targetsHead.innerHTML = '<tr><th>Activo</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th></tr>';
+        }
+
+        const rows = assets.map(asset => {
+            const assetName = asset[AssetIndex.NAME];
+            const currentValue = asset[AssetIndex.CURRENT_VALUE] || 0;
+            const currentPct = (currentValue / totalCategoryValue) * 100;
+            const target = assetTargets[assetName]?.target ?? 0;
+            const diff = target - currentPct;
+            return {
+                assetName,
+                currentPct,
+                target,
+                diff,
+                gapAbs: Math.abs(diff)
+            };
+        });
+
+        rows.sort((a, b) => {
+            if (b.gapAbs !== a.gapAbs) return b.gapAbs - a.gapAbs;
+            return b.currentPct - a.currentPct;
+        });
+
+        const sumTargets = rows.reduce((sum, row) => sum + row.target, 0);
+        const deltaTo100 = 100 - sumTargets;
+        if (targetsTotalIndicator) {
+            const sign = deltaTo100 >= 0 ? 'Falta' : 'Sobra';
+            targetsTotalIndicator.textContent = `Objetivos de ${selectedCategory}: ${sumTargets.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}%`;
+            targetsTotalIndicator.className = `targets-indicator ${Math.abs(deltaTo100) < 0.1 ? 'ok' : 'warn'}`;
+        }
+        monthlyTotalEl.textContent = '—';
+
+        tbody.innerHTML = rows.map(row => {
+            const diffClass = row.diff >= 0 ? 'positive' : 'negative';
+            return `
+                <tr>
+                    <td><strong>${row.assetName.length > 30 ? row.assetName.substring(0, 27) + '...' : row.assetName}</strong></td>
+                    <td>${row.currentPct.toFixed(1)}%</td>
+                    <td>
+                        <input class="table-input asset-target-input" type="number" min="0" max="100" step="0.1" data-asset="${row.assetName}" value="${row.target}">
+                    </td>
+                    <td class="${diffClass}">${row.diff >= 0 ? '+' : ''}${row.diff.toFixed(1)}%</td>
+                </tr>
+            `;
+        }).join('');
+
+        tbody.querySelectorAll('.asset-target-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const assetName = e.target.dataset.asset;
+                const value = Number.parseFloat(e.target.value) || 0;
+                categoryTargets[selectedCategory] = {
+                    ...(categoryTargets[selectedCategory] || {}),
+                    assets: {
+                        ...((categoryTargets[selectedCategory] || {}).assets || {}),
+                        [assetName]: {
+                            target: Math.max(0, Math.min(100, value))
+                        }
+                    }
+                };
+                saveTargets();
+                updateTargetsTable();
+                updateCompositionList();
+            });
+        });
+
+        return;
+    }
+
     const categories = Object.keys(latestSnapshot.categoryTotals);
+    if (targetsSectionTitle) targetsSectionTitle.textContent = 'Objetivos por Categoría';
     const totalValue = categories.reduce((sum, cat) => sum + (latestSnapshot.categoryTotals[cat] || 0), 0);
     const sumTargets = categories.reduce((sum, cat) => sum + (categoryTargets[cat]?.target ?? 0), 0) || 1;
     const totalMonthlyAll = categories.reduce((sum, cat) => sum + (categoryTargets[cat]?.monthly ?? 0), 0);
