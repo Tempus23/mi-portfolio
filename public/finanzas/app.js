@@ -16,7 +16,6 @@ let evolutionChart = null;
 let roiEvolutionChart = null;
 let categoryChart = null;
 let termChart = null;
-let targetsChart = null;
 let currentChartMode = 'total';
 let currentRoiMode = 'cumulative';
 let selectedCategory = null;
@@ -753,10 +752,6 @@ function populateCategorySelector() {
     if (snapshots.length > 0) {
         const latestSnapshot = snapshots[snapshots.length - 1];
         const categories = Object.keys(latestSnapshot.categoryTotals).sort();
-        categories.forEach(cat => {
-            const selected = cat === currentValue ? 'selected' : '';
-            options += `<option value="${cat}" ${selected}>${cat}</option>`;
-        });
     }
 
     selector.innerHTML = options;
@@ -1255,38 +1250,6 @@ function updateTargetsTable() {
         return a.cat.localeCompare(b.cat, 'es');
     });
 
-    if (targetsChart) {
-        const rowsByGap = [...rows].sort((a, b) => b.gapAbs - a.gapAbs);
-        const labels = rowsByGap.map(row => row.cat);
-        const currentData = rowsByGap.map(row => Number(row.currentPct.toFixed(1)));
-        const targetData = rowsByGap.map(row => Number(row.target.toFixed(1)));
-
-        targetsChart.data = {
-            labels,
-            datasets: [
-                {
-                    label: 'Actual %',
-                    data: currentData,
-                    backgroundColor: 'rgba(0, 113, 227, 0.35)',
-                    borderColor: '#0071e3',
-                    borderWidth: 1,
-                    borderRadius: 8,
-                    barThickness: 14
-                },
-                {
-                    label: 'Objetivo %',
-                    type: 'line',
-                    data: targetData,
-                    borderColor: '#ff9f0a',
-                    pointBackgroundColor: '#ff9f0a',
-                    pointRadius: 4,
-                    pointHoverRadius: 5,
-                    showLine: false
-                }
-            ]
-        };
-        targetsChart.update();
-    }
 
     tbody.innerHTML = rows.map(row => {
         monthlyTotal += row.monthly;
@@ -1720,15 +1683,6 @@ function initCharts() {
         data: { labels: [], datasets: [] },
         options: getDoughnutOptions()
     });
-
-    const targetsCtx = document.getElementById('targetsChart')?.getContext('2d');
-    if (targetsCtx) {
-        targetsChart = new Chart(targetsCtx, {
-            type: 'bar',
-            data: { labels: [], datasets: [] },
-            options: getTargetsChartOptions()
-        });
-    }
 }
 
 function getLineChartOptions() {
@@ -1837,57 +1791,6 @@ function getDoughnutOptions() {
     };
 }
 
-function getTargetsChartOptions() {
-    return {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: 'y',
-        plugins: {
-            legend: {
-                display: true,
-                position: 'top',
-                labels: {
-                    color: '#a1a1a6',
-                    font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 11 },
-                    usePointStyle: true,
-                    padding: 12
-                }
-            },
-            tooltip: {
-                backgroundColor: 'rgba(45, 45, 47, 0.95)',
-                titleColor: '#f5f5f7',
-                bodyColor: '#a1a1a6',
-                borderColor: 'rgba(255, 255, 255, 0.12)',
-                borderWidth: 1,
-                padding: 10,
-                cornerRadius: 10,
-                callbacks: {
-                    label: function (context) {
-                        const value = context.parsed.x;
-                        return `${context.dataset.label}: ${value.toFixed(1)}%`;
-                    }
-                }
-            },
-            datalabels: { display: false }
-        },
-        scales: {
-            x: {
-                min: 0,
-                max: 100,
-                grid: { color: 'rgba(255, 255, 255, 0.04)' },
-                ticks: {
-                    color: '#6e6e73',
-                    font: { size: 11 },
-                    callback: value => `${value}%`
-                }
-            },
-            y: {
-                grid: { display: false },
-                ticks: { color: '#6e6e73', font: { size: 11 } }
-            }
-        }
-    };
-}
 
 function getRoiChartOptions() {
     return {
@@ -2333,32 +2236,15 @@ function updateDistributionCharts() {
         const assetLabels = categoryAssets.map(a => a[AssetIndex.NAME].length > 15 ? a[AssetIndex.NAME].substring(0, 12) + '...' : a[AssetIndex.NAME]);
         const assetData = categoryAssets.map(a => a[AssetIndex.CURRENT_VALUE]);
         const assetColors = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
-        const totalValue = assetData.reduce((sum, v) => sum + v, 0) || 0;
-        const assetTargets = categoryTargets[selectedCategory]?.assets || {};
-        const targetData = categoryAssets.map(a => {
-            const targetPct = assetTargets[a[AssetIndex.NAME]]?.target ?? 0;
-            return totalValue > 0 ? (totalValue * targetPct) / 100 : 0;
-        });
 
         categoryChart.data = {
             labels: assetLabels,
-            datasets: [
-                {
-                    data: assetData,
-                    backgroundColor: assetColors.slice(0, assetData.length),
-                    borderColor: 'transparent',
-                    hoverOffset: 10,
-                    weight: 1
-                },
-                {
-                    data: targetData,
-                    backgroundColor: assetColors.slice(0, assetData.length).map(color => `${color}2A`),
-                    borderColor: assetColors.slice(0, assetData.length),
-                    borderWidth: 2,
-                    hoverOffset: 0,
-                    weight: 0.5
-                }
-            ]
+            datasets: [{
+                data: assetData,
+                backgroundColor: assetColors.slice(0, assetData.length),
+                borderColor: 'transparent',
+                hoverOffset: 10
+            }]
         };
 
         categoryChart.options.onClick = null;
@@ -2366,31 +2252,15 @@ function updateDistributionCharts() {
         const categoryLabels = Object.keys(latestSnapshot.categoryTotals);
         const categoryData = Object.values(latestSnapshot.categoryTotals);
         const catColors = categoryLabels.map(cat => (categoryColors && categoryColors[cat]) || '#888');
-        const totalValue = categoryData.reduce((sum, v) => sum + v, 0) || 0;
-        const targetData = categoryLabels.map(cat => {
-            const targetPct = categoryTargets[cat]?.target ?? 0;
-            return totalValue > 0 ? (totalValue * targetPct) / 100 : 0;
-        });
 
         categoryChart.data = {
             labels: categoryLabels,
-            datasets: [
-                {
-                    data: categoryData,
-                    backgroundColor: catColors,
-                    borderColor: 'transparent',
-                    hoverOffset: 10,
-                    weight: 1
-                },
-                {
-                    data: targetData,
-                    backgroundColor: catColors.map(color => `${color}2A`),
-                    borderColor: catColors,
-                    borderWidth: 2,
-                    hoverOffset: 0,
-                    weight: 0.5
-                }
-            ]
+            datasets: [{
+                data: categoryData,
+                backgroundColor: catColors,
+                borderColor: 'transparent',
+                hoverOffset: 10
+            }]
         };
 
         categoryChart.options.onClick = (evt, elements) => {
