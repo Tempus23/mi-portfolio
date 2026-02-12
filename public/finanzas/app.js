@@ -2243,6 +2243,7 @@ function updateRoiEvolutionChart(snapshotData) {
     };
 
     let datasets = [];
+    const isBreakdownMode = currentRoiMode === 'breakdown' || currentRoiMode === 'breakdown-period';
 
     if (currentRoiMode === 'cumulative') {
         const roiPercent = snapshotData.map(s => {
@@ -2321,7 +2322,7 @@ function updateRoiEvolutionChart(snapshotData) {
         ];
 
         delete roiEvolutionChart.options.scales.y1;
-    } else if (currentRoiMode === 'breakdown' || currentRoiMode === 'breakdown-period') {
+    } else if (isBreakdownMode) {
         const palette = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
         const isBreakdownPeriod = currentRoiMode === 'breakdown-period';
         const breakdownSource = isBreakdownPeriod
@@ -2521,6 +2522,41 @@ function updateRoiEvolutionChart(snapshotData) {
             },
             beginAtZero: true
         };
+    }
+
+    const primaryValues = datasets
+        .filter(ds => ds.yAxisID !== 'y1')
+        .flatMap(ds => (ds.data || []).map(point => point.y))
+        .filter(v => Number.isFinite(v));
+
+    if (isBreakdownMode && primaryValues.length > 0) {
+        const minVal = Math.min(...primaryValues);
+        const maxVal = Math.max(...primaryValues);
+        const absMax = Math.max(Math.abs(minVal), Math.abs(maxVal));
+        const dynamicPadding = Math.max(absMax * 0.08, 1.5);
+        const isFlat = Math.abs(maxVal - minVal) < 1;
+
+        if (currentRoiMode === 'breakdown-period') {
+            const symmetric = Math.max(absMax + dynamicPadding, 3);
+            roiEvolutionChart.options.scales.y.min = -symmetric;
+            roiEvolutionChart.options.scales.y.max = symmetric;
+        } else if (isFlat) {
+            roiEvolutionChart.options.scales.y.min = minVal - 3;
+            roiEvolutionChart.options.scales.y.max = maxVal + 3;
+        } else {
+            roiEvolutionChart.options.scales.y.min = minVal - dynamicPadding;
+            roiEvolutionChart.options.scales.y.max = maxVal + dynamicPadding;
+        }
+
+        roiEvolutionChart.options.scales.y.beginAtZero = false;
+        roiEvolutionChart.options.plugins.tooltip.itemSort = (a, b) => Math.abs(b.parsed.y) - Math.abs(a.parsed.y);
+        roiEvolutionChart.options.plugins.tooltip.filter = (ctx) => Math.abs(ctx.parsed.y) >= 0.05;
+    } else {
+        roiEvolutionChart.options.scales.y.min = undefined;
+        roiEvolutionChart.options.scales.y.max = undefined;
+        roiEvolutionChart.options.scales.y.beginAtZero = true;
+        roiEvolutionChart.options.plugins.tooltip.itemSort = undefined;
+        roiEvolutionChart.options.plugins.tooltip.filter = undefined;
     }
 
     roiEvolutionChart.data = { labels: [], datasets };
