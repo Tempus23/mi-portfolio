@@ -2242,8 +2242,20 @@ function updateRoiEvolutionChart(snapshotData) {
         return { value: snapshot.totalCurrentValue, invested: snapshot.totalPurchaseValue };
     };
 
+    const percentTickFormatter = (value) => (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+    const currencyTickFormatter = (value) => formatCurrency(value);
+    const percentTooltipLabel = (context) => {
+        const value = context.parsed.y;
+        if (context.dataset.yAxisID === 'y1') {
+            return context.dataset.label + ': ' + formatCurrency(value);
+        }
+        return context.dataset.label + ': ' + (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+    };
+    const currencyTooltipLabel = (context) => context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+
     let datasets = [];
     const isBreakdownMode = currentRoiMode === 'breakdown' || currentRoiMode === 'breakdown-period';
+    const isCashflowMode = currentRoiMode === 'cashflow';
 
     if (currentRoiMode === 'cumulative') {
         const roiPercent = snapshotData.map(s => {
@@ -2455,6 +2467,68 @@ function updateRoiEvolutionChart(snapshotData) {
         }
 
         delete roiEvolutionChart.options.scales.y1;
+    } else if (isCashflowMode) {
+        const periodSource = monthlyData.length ? monthlyData : snapshotData;
+        const flowPoints = periodSource.map((s, i) => {
+            const { value, invested } = getValues(s);
+            if (i === 0) {
+                return { x: new Date(s.date), netInvestment: 0, realGain: 0, cumulativeGain: 0 };
+            }
+
+            const prev = periodSource[i - 1];
+            const { value: prevValue, invested: prevInvested } = getValues(prev);
+            const netInvestment = invested - prevInvested;
+            const realGain = value - prevValue - netInvestment;
+            return { x: new Date(s.date), netInvestment, realGain, cumulativeGain: 0 };
+        });
+
+        let runningGain = 0;
+        flowPoints.forEach((point, index) => {
+            if (index === 0) {
+                point.cumulativeGain = 0;
+                return;
+            }
+            runningGain += point.realGain;
+            point.cumulativeGain = runningGain;
+        });
+
+        datasets = [
+            {
+                type: 'bar',
+                label: 'Aporte neto €',
+                data: flowPoints.map(p => ({ x: p.x, y: p.netInvestment })),
+                backgroundColor: flowPoints.map(p => p.netInvestment >= 0 ? 'rgba(0, 113, 227, 0.45)' : 'rgba(255, 159, 10, 0.45)'),
+                borderColor: flowPoints.map(p => p.netInvestment >= 0 ? '#0071e3' : '#ff9f0a'),
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: 'y'
+            },
+            {
+                type: 'bar',
+                label: 'Ganancia real €',
+                data: flowPoints.map(p => ({ x: p.x, y: p.realGain })),
+                backgroundColor: flowPoints.map(p => p.realGain >= 0 ? 'rgba(50, 215, 75, 0.45)' : 'rgba(255, 69, 58, 0.45)'),
+                borderColor: flowPoints.map(p => p.realGain >= 0 ? '#32d74b' : '#ff453a'),
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: 'y'
+            },
+            {
+                type: 'line',
+                label: 'Ganancia acumulada €',
+                data: flowPoints.map(p => ({ x: p.x, y: p.cumulativeGain })),
+                borderColor: '#bf5af2',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                yAxisID: 'y'
+            }
+        ];
+
+        delete roiEvolutionChart.options.scales.y1;
     } else {
         const periodSource = monthlyData.length ? monthlyData : snapshotData;
 
@@ -2529,7 +2603,15 @@ function updateRoiEvolutionChart(snapshotData) {
         .flatMap(ds => (ds.data || []).map(point => point.y))
         .filter(v => Number.isFinite(v));
 
-    if (isBreakdownMode && primaryValues.length > 0) {
+    if (isCashflowMode) {
+        roiEvolutionChart.options.scales.y.min = undefined;
+        roiEvolutionChart.options.scales.y.max = undefined;
+        roiEvolutionChart.options.scales.y.beginAtZero = true;
+        roiEvolutionChart.options.scales.y.ticks.callback = currencyTickFormatter;
+        roiEvolutionChart.options.plugins.tooltip.callbacks.label = currencyTooltipLabel;
+        roiEvolutionChart.options.plugins.tooltip.itemSort = (a, b) => Math.abs(b.parsed.y) - Math.abs(a.parsed.y);
+        roiEvolutionChart.options.plugins.tooltip.filter = undefined;
+    } else if (isBreakdownMode && primaryValues.length > 0) {
         const minVal = Math.min(...primaryValues);
         const maxVal = Math.max(...primaryValues);
         const absMax = Math.max(Math.abs(minVal), Math.abs(maxVal));
@@ -2549,12 +2631,16 @@ function updateRoiEvolutionChart(snapshotData) {
         }
 
         roiEvolutionChart.options.scales.y.beginAtZero = false;
+        roiEvolutionChart.options.scales.y.ticks.callback = percentTickFormatter;
+        roiEvolutionChart.options.plugins.tooltip.callbacks.label = percentTooltipLabel;
         roiEvolutionChart.options.plugins.tooltip.itemSort = (a, b) => Math.abs(b.parsed.y) - Math.abs(a.parsed.y);
         roiEvolutionChart.options.plugins.tooltip.filter = (ctx) => Math.abs(ctx.parsed.y) >= 0.05;
     } else {
         roiEvolutionChart.options.scales.y.min = undefined;
         roiEvolutionChart.options.scales.y.max = undefined;
         roiEvolutionChart.options.scales.y.beginAtZero = true;
+        roiEvolutionChart.options.scales.y.ticks.callback = percentTickFormatter;
+        roiEvolutionChart.options.plugins.tooltip.callbacks.label = percentTooltipLabel;
         roiEvolutionChart.options.plugins.tooltip.itemSort = undefined;
         roiEvolutionChart.options.plugins.tooltip.filter = undefined;
     }
