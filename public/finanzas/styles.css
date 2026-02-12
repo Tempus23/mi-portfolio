@@ -1047,16 +1047,6 @@ body {
     z-index: 3;
 }
 
-.composition-target-marker {
-    position: absolute;
-    top: 2px;
-    bottom: 2px;
-    width: 2px;
-    background: rgba(255, 159, 10, 0.85);
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
-    transform: translateX(-1px);
-    z-index: 4;
-}
 
 .composition-percent {
     font-size: 12px;
@@ -1078,28 +1068,6 @@ body {
     gap: 4px;
 }
 
-.composition-target-label {
-    color: var(--text-tertiary);
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.composition-target-input {
-    width: 60px;
-    padding: 4px 6px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 11px;
-    font-family: inherit;
-}
-
-.composition-target-input:focus {
-    outline: none;
-    border-color: var(--orange);
-    box-shadow: 0 0 0 2px rgba(255, 159, 10, 0.2);
-}
 
 .composition-change.positive {
     color: var(--green);

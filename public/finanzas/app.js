@@ -2423,13 +2423,6 @@ function updateCompositionList() {
         const changeClass = item.change > 0.05 ? 'positive' : item.change < -0.05 ? 'negative' : 'neutral';
         const arrow = item.change > 0.05 ? '↑' : item.change < -0.05 ? '↓' : '';
         const changeText = !hasChange ? '—' : (Math.abs(item.change) < 0.05 ? '=' : `${item.change > 0 ? '+' : ''}${item.change.toFixed(1)}%`);
-        const target = Number.isFinite(item.targetPercent) ? item.targetPercent : null;
-        const targetText = target !== null ? `Obj ${target.toFixed(1)}%` : 'Obj —';
-        const targetMarker = target !== null ? `<span class="composition-target-marker" style="left: ${Math.min(Math.max(target, 0), 100)}%"></span>` : '';
-        const targetInput = selectedCategory ? `
-                <input class="composition-target-input" type="number" min="0" max="100" step="0.1" data-asset="${item.fullLabel}" value="${target ?? ''}" placeholder="%">
-            ` : '';
-
         return `
             <div class="composition-item">
                 <span class="composition-label">${item.label}</span>
@@ -2439,35 +2432,13 @@ function updateCompositionList() {
                         <span class="composition-percent">${item.percent.toFixed(1)}%</span>
                     </div>
                     ${item.prevPercent ? `<span class="composition-bar-marker" style="left: ${Math.min(item.prevPercent, 100)}%"></span>` : ''}
-                    ${targetMarker}
                 </div>
                 <span class="composition-change ${changeClass}">
                     <span>${arrow} ${changeText}</span>
-                    <span class="composition-target-label">${targetText}</span>
-                    ${targetInput}
                 </span>
             </div>
         `;
     }).join('');
-
-    if (selectedCategory) {
-        container.querySelectorAll('.composition-target-input').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const assetName = e.target.dataset.asset;
-                const value = Number.parseFloat(e.target.value) || 0;
-                categoryTargets[selectedCategory] = {
-                    ...(categoryTargets[selectedCategory] || {}),
-                    assets: {
-                        ...((categoryTargets[selectedCategory] || {}).assets || {}),
-                        [assetName]: { target: Math.max(0, Math.min(100, value)) }
-                    }
-                };
-                saveTargets();
-                updateCompositionList();
-                updateDistributionCharts();
-            });
-        });
-    }
 }
 
 function showModal(message, onConfirm) {
