@@ -801,7 +801,8 @@ body {
 }
 
 .targets-section.is-readonly .data-table input.table-input,
-.targets-section.is-readonly .budget-input input {
+.targets-section.is-readonly .budget-input input,
+.targets-section.is-readonly .hardness-input input {
     background: rgba(255, 255, 255, 0.02);
     border-color: rgba(255, 255, 255, 0.08);
     color: var(--text-secondary);
@@ -851,6 +852,33 @@ body {
     outline: none;
     border-color: var(--blue);
     box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+}
+
+.hardness-input {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.hardness-input-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 150px;
+}
+
+.hardness-input-control input[type="range"] {
+    width: 96px;
+    accent-color: var(--blue);
+}
+
+#adjustmentHardnessValue {
+    min-width: 38px;
+    text-align: right;
+    color: var(--text);
+    font-weight: 600;
 }
 
 .diversification-section h3 {

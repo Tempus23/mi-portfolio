@@ -1,0 +1,2752 @@
+import { STORAGE_KEYS, AssetIndex, CATEGORY_COLORS, TERM_COLORS } from './shared/constants.js';
+import { formatCurrency } from './shared/format.js';
+import { showToast } from './shared/toast.js';
+import { syncPull, syncPush, setSyncCallback } from './shared/sync.js';
+import {
+    createLineChartOptions,
+    createDoughnutOptions,
+    createRoiChartOptions
+} from './shared/chart-options.js';
+import {
+    calculateSnapshotMetrics,
+    migrateToArrays,
+    cloneDeep,
+    hasObjectiveChanges,
+    buildTargetEditPolicy,
+    formatNumberForExport,
+    parseData,
+    calculateVolatility,
+    calculateMaxDrawdown,
+    totalMonthlyAllocationForTarget,
+    calculateAnnualizedRoi,
+    getSnapshotsForRange as getSnapshotsForRangeUtil,
+    getMonthlySnapshotsForRange as getMonthlySnapshotsForRangeUtil,
+    getSnapshotsForChartRange as getSnapshotsForChartRangeUtil,
+    getPreviousMonthSnapshot as getPreviousMonthSnapshotUtil,
+    getSnapshotMonthsAgo as getSnapshotMonthsAgoUtil,
+    getYearStartSnapshot as getYearStartSnapshotUtil
+} from './shared/portfolio-utils.js';
+
+const {
+    SNAPSHOTS: STORAGE_KEY,
+    TARGETS: TARGETS_KEY,
+    TARGETS_META: TARGETS_META_KEY,
+    HOLDINGS_CHANGES: HOLDINGS_CHANGES_KEY,
+    SELECTED_CATEGORY: SELECTED_CATEGORY_KEY
+} = STORAGE_KEYS;
+
+let snapshots = [];
+let evolutionChart = null;
+let roiEvolutionChart = null;
+let categoryChart = null;
+let termChart = null;
+let currentChartMode = 'total';
+let currentRoiMode = 'cumulative';
+let roiCumulativeByCategory = false;
+let selectedCategory = null;
+let evolutionScaleMode = 'linear';
+let evolutionMinMode = 'zero';
+let currentRange = 'all';
+let categoryTargets = {};
+let targetsMeta = { monthlyBudget: 0, adjustmentHardness: 0.5 };
+let compositionCompareMonths = 1;
+let opportunityRangeMonths = 1;
+let targetsEditMode = false;
+let targetsDraft = null;
+let targetsMetaDraft = null;
+
+const TARGET_EDIT_LOCK_MONTHS = 3;
+const TARGET_EDIT_WINDOW_HOURS = 24;
+const TARGET_ADJUSTMENT_HARDNESS_DEFAULT = 0.5;
+
+const categoryColors = CATEGORY_COLORS;
+const termColors = TERM_COLORS;
+
+function clampAdjustmentHardness(value) {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isFinite(parsed)) return TARGET_ADJUSTMENT_HARDNESS_DEFAULT;
+    return Math.max(0, Math.min(1, parsed));
+}
+
+function normalizeTargetsMeta(meta) {
+    return {
+        monthlyBudget: Math.max(0, Number.parseFloat(meta?.monthlyBudget) || 0),
+        adjustmentHardness: clampAdjustmentHardness(meta?.adjustmentHardness),
+        ...(meta?.lastObjectiveUpdateAt ? { lastObjectiveUpdateAt: meta.lastObjectiveUpdateAt } : {})
+    };
+}
+
+if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+} else {
+    console.warn('[Charts] Chart.js or ChartDataLabels not available. Charts may not render.');
+}
+
+function init() {
+    loadSnapshots();
+    loadTargets();
+    loadTargetsMeta();
+    loadSelectedCategory();
+    updateCurrentDate();
+    setupEventListeners();
+    initCharts();
+    updateUI();
+    showHoldingsChangesIfAny();
+
+    // Cloud sync: set reload callback
+    setSyncCallback(() => {
+        loadSnapshots();
+        loadTargets();
+        loadTargetsMeta();
+        updateUI();
+    });
+
+    // Auto-pull from cloud on load (Cloudflare Access handles auth)
+    syncPull(showToast);
+}
+
+function loadSnapshots() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+        let loadedData;
+        try {
+            loadedData = JSON.parse(stored);
+        } catch (error) {
+            localStorage.removeItem(STORAGE_KEY);
+            snapshots = [];
+            showToast('Datos corruptos en almacenamiento local. Se reinició el historial.', 'error');
+            return;
+        }
+
+        // 1. Array Migration (if older version)
+        if (loadedData.length > 0 && loadedData[0].assets.length > 0 && !Array.isArray(loadedData[0].assets[0])) {
+            console.log("Migrating data to compact format...");
+            loadedData = migrateToArrays(loadedData);
+        }
+
+        // 2. Data Compression (Runtime Calculation)
+        // Ensure we strip old aggregated data if present to save space on next save
+        snapshots = loadedData.map(s => {
+            // Delete old aggregated keys if they exist
+            // (We don't delete them from the object reference here to avoid side effects during map, 
+            // but we will recalculate everything freshly)
+            const cleanSnapshot = {
+                id: s.id,
+                date: s.date,
+                assets: s.assets,
+                tag: s.tag || '',
+                note: s.note || ''
+            };
+            return calculateSnapshotMetrics(cleanSnapshot);
+        });
+
+        // Save cleaned version immediately to compress storage
+        saveSnapshots();
+    } else {
+        snapshots = [];
+    }
+}
+
+function saveSnapshots() {
+    // Only save essential data (id, date, assets)
+    const dataToSave = snapshots.map(s => ({
+        id: s.id,
+        date: s.date,
+        assets: s.assets,
+        tag: s.tag || '',
+        note: s.note || ''
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    // Auto-push to cloud
+    syncPush(null);
+}
+
+function updateCurrentDate() {
+    const now = new Date();
+    const dateInput = document.getElementById('snapshotDate');
+    if (dateInput) {
+        dateInput.value = now.toISOString().split('T')[0];
+    }
+}
+
+function toggleCaptureModal(show) {
+    const modal = document.getElementById('captureModal');
+    if (show) {
+        modal.classList.add('show');
+        updateCurrentDate();
+    } else {
+        modal.classList.remove('show');
+    }
+}
+
+function setupEventListeners() {
+    const openHoldingsBtn = document.getElementById('openHoldingsBtn');
+    if (openHoldingsBtn) {
+        openHoldingsBtn.addEventListener('click', () => {
+            window.location.href = '/finanzas/investments.html';
+        });
+    }
+
+    document.getElementById('captureBtn').addEventListener('click', () => toggleCaptureModal(true));
+    document.getElementById('closeCaptureModal').addEventListener('click', () => toggleCaptureModal(false));
+    document.getElementById('cancelCapture').addEventListener('click', () => toggleCaptureModal(false));
+    document.getElementById('saveCapture').addEventListener('click', captureSnapshot);
+
+    document.querySelectorAll('.segment').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.segment').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentChartMode = e.target.dataset.filter;
+            updateEvolutionChart();
+        });
+    });
+
+    document.querySelectorAll('.segment-roi').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.segment-roi').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentRoiMode = e.target.dataset.roi;
+            updateRoiEvolutionChart();
+        });
+    });
+
+    const roiCumulativeByCategoryInput = document.getElementById('roiCumulativeByCategory');
+    if (roiCumulativeByCategoryInput) {
+        roiCumulativeByCategoryInput.checked = roiCumulativeByCategory;
+        roiCumulativeByCategoryInput.addEventListener('change', (e) => {
+            roiCumulativeByCategory = !!e.target.checked;
+            updateRoiEvolutionChart();
+        });
+    }
+
+    document.querySelectorAll('.range-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentRange = e.target.dataset.range;
+            updateEvolutionChart();
+            updateAnalytics();
+        });
+    });
+
+    const evolutionLogScale = document.getElementById('evolutionLogScale');
+    if (evolutionLogScale) {
+        evolutionLogScale.addEventListener('change', (e) => {
+            evolutionScaleMode = e.target.checked ? 'logarithmic' : 'linear';
+            updateEvolutionChart();
+        });
+    }
+
+    const evolutionMinScale = document.getElementById('evolutionMinScale');
+    if (evolutionMinScale) {
+        evolutionMinScale.addEventListener('change', (e) => {
+            evolutionMinMode = e.target.checked ? 'min' : 'zero';
+            updateEvolutionChart();
+        });
+    }
+
+    document.getElementById('modalCancel').addEventListener('click', hideModal);
+
+    // Snapshot action buttons (event delegation for ES module compatibility)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const id = Number(btn.dataset.id);
+        switch (btn.dataset.action) {
+            case 'view': viewSnapshot(id); break;
+            case 'copy': exportSnapshotToClipboard(snapshots.find(s => s.id === id)); break;
+            case 'edit': openEditSnapshot(id); break;
+            case 'delete': deleteSnapshot(id); break;
+        }
+    });
+
+    // Cloud sync buttons
+    const syncPullBtn = document.getElementById('syncPullBtn');
+    if (syncPullBtn) syncPullBtn.addEventListener('click', () => syncPull(showToast));
+    const syncPushBtn = document.getElementById('syncPushBtn');
+    if (syncPushBtn) syncPushBtn.addEventListener('click', () => syncPush(showToast));
+
+    document.getElementById('exportBtn').addEventListener('click', exportToJson);
+    const exportLatestBtn = document.getElementById('exportLatestBtn');
+    if (exportLatestBtn) {
+        exportLatestBtn.addEventListener('click', exportLatestSnapshotToClipboard);
+    }
+    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', importFromJson);
+
+    document.getElementById('categorySelector').addEventListener('change', (e) => {
+        selectedCategory = e.target.value || null;
+        persistSelectedCategory();
+        updateViewMode();
+    });
+
+    document.getElementById('closeEditModal').addEventListener('click', () => toggleEditModal(false));
+    document.getElementById('cancelEdit').addEventListener('click', () => toggleEditModal(false));
+    document.getElementById('saveEdit').addEventListener('click', saveEditedSnapshot);
+
+    const monthlyBudgetInput = document.getElementById('monthlyBudget');
+    if (monthlyBudgetInput) {
+        monthlyBudgetInput.value = targetsMeta.monthlyBudget || 0;
+        monthlyBudgetInput.addEventListener('input', (e) => {
+            if (!targetsEditMode || !targetsMetaDraft) {
+                updateTargetsTable();
+                return;
+            }
+            const value = Number.parseFloat(e.target.value) || 0;
+            targetsMetaDraft.monthlyBudget = Math.max(0, value);
+            updateTargetsTable();
+        });
+    }
+
+    const adjustmentHardnessInput = document.getElementById('adjustmentHardness');
+    if (adjustmentHardnessInput) {
+        adjustmentHardnessInput.value = String(Math.round(clampAdjustmentHardness(targetsMeta.adjustmentHardness) * 100));
+        adjustmentHardnessInput.addEventListener('input', (e) => {
+            if (!targetsEditMode || !targetsMetaDraft) {
+                updateTargetsTable();
+                return;
+            }
+            const value = Number.parseFloat(e.target.value) || 0;
+            targetsMetaDraft.adjustmentHardness = clampAdjustmentHardness(value / 100);
+            updateTargetsTable();
+        });
+    }
+
+    const autoBalanceBtn = document.getElementById('autoBalanceBtn');
+    if (autoBalanceBtn) {
+        autoBalanceBtn.addEventListener('click', () => {
+            if (!targetsEditMode) {
+                showToast('Pulsa el lápiz para editar objetivos', 'error');
+                return;
+            }
+            autoBalanceTargets();
+        });
+    }
+
+    const toggleTargetsEditBtn = document.getElementById('toggleTargetsEditBtn');
+    if (toggleTargetsEditBtn) {
+        toggleTargetsEditBtn.addEventListener('click', () => {
+            if (targetsEditMode) {
+                cancelTargetsEditMode();
+            } else {
+                enterTargetsEditMode();
+            }
+        });
+    }
+
+    const saveTargetsBtn = document.getElementById('saveTargetsBtn');
+    if (saveTargetsBtn) {
+        saveTargetsBtn.addEventListener('click', saveTargetsEditMode);
+    }
+
+    const cancelTargetsEditBtn = document.getElementById('cancelTargetsEditBtn');
+    if (cancelTargetsEditBtn) {
+        cancelTargetsEditBtn.addEventListener('click', cancelTargetsEditMode);
+    }
+
+    const compositionCompare = document.getElementById('compositionCompare');
+    if (compositionCompare) {
+        compositionCompare.value = String(compositionCompareMonths);
+        compositionCompare.addEventListener('change', (e) => {
+            const value = Number.parseInt(e.target.value, 10);
+            compositionCompareMonths = Number.isFinite(value) ? value : 1;
+            updateCompositionList();
+        });
+    }
+
+    const opportunityRange = document.getElementById('opportunityRange');
+    if (opportunityRange) {
+        opportunityRange.value = String(opportunityRangeMonths);
+        opportunityRange.addEventListener('change', (e) => {
+            const value = Number.parseInt(e.target.value, 10);
+            opportunityRangeMonths = Number.isFinite(value) ? value : 1;
+            updateOpportunities();
+        });
+    }
+
+    const toggleOpportunitiesBtn = document.getElementById('toggleOpportunitiesBtn');
+    const opportunitiesContent = document.getElementById('opportunitiesContent');
+    if (toggleOpportunitiesBtn && opportunitiesContent) {
+        toggleOpportunitiesBtn.addEventListener('click', () => {
+            const isCollapsed = opportunitiesContent.classList.toggle('collapsed');
+            toggleOpportunitiesBtn.setAttribute('aria-expanded', String(!isCollapsed));
+            toggleOpportunitiesBtn.textContent = isCollapsed ? 'Mostrar' : 'Ocultar';
+        });
+    }
+
+    const editSnapshotData = document.getElementById('editSnapshotData');
+    if (editSnapshotData) {
+        editSnapshotData.addEventListener('input', renderEditPreview);
+    }
+}
+
+function loadTargets() {
+    const stored = localStorage.getItem(TARGETS_KEY);
+    categoryTargets = stored ? JSON.parse(stored) : {};
+}
+
+function saveTargets() {
+    localStorage.setItem(TARGETS_KEY, JSON.stringify(categoryTargets));
+    syncPush(null);
+}
+
+function loadTargetsMeta() {
+    const stored = localStorage.getItem(TARGETS_META_KEY);
+    targetsMeta = stored ? normalizeTargetsMeta(JSON.parse(stored)) : normalizeTargetsMeta({});
+}
+
+function saveTargetsMeta() {
+    localStorage.setItem(TARGETS_META_KEY, JSON.stringify(targetsMeta));
+    syncPush(null);
+}
+
+function getWorkingTargets() {
+    return targetsEditMode && targetsDraft ? targetsDraft : categoryTargets;
+}
+
+function getWorkingTargetsMeta() {
+    return targetsEditMode && targetsMetaDraft ? targetsMetaDraft : targetsMeta;
+}
+
+function enterTargetsEditMode() {
+    targetsEditMode = true;
+    targetsDraft = cloneDeep(categoryTargets);
+    targetsMetaDraft = cloneDeep(targetsMeta);
+    updateTargetsTable();
+}
+
+function cancelTargetsEditMode() {
+    targetsEditMode = false;
+    targetsDraft = null;
+    targetsMetaDraft = null;
+    updateTargetsTable();
+}
+
+function saveTargetsEditMode() {
+    if (!targetsEditMode || !targetsDraft || !targetsMetaDraft) return;
+
+    const objectiveChanged = hasObjectiveChanges(categoryTargets, targetsDraft);
+    const targetEditPolicy = getTargetEditPolicy();
+
+    if (objectiveChanged && !targetEditPolicy.canEdit) {
+        showToast(targetEditPolicy.lockMessage, 'error');
+        updateTargetsTable();
+        return;
+    }
+
+    if (objectiveChanged && targetEditPolicy.shouldStartNewWindow) {
+        targetsMetaDraft.lastObjectiveUpdateAt = new Date().toISOString();
+    }
+
+    categoryTargets = cloneDeep(targetsDraft);
+    targetsMeta = cloneDeep(targetsMetaDraft);
+    saveTargets();
+    saveTargetsMeta();
+
+    targetsEditMode = false;
+    targetsDraft = null;
+    targetsMetaDraft = null;
+
+    updateTargetsTable();
+    showToast('Cambios de objetivos guardados', 'success');
+}
+
+function getTargetEditPolicy(now = new Date()) {
+    return buildTargetEditPolicy({
+        lastObjectiveUpdateAt: targetsMeta.lastObjectiveUpdateAt,
+        now,
+        lockMonths: TARGET_EDIT_LOCK_MONTHS,
+        windowHours: TARGET_EDIT_WINDOW_HOURS
+    });
+}
+
+function exportToJson() {
+    if (snapshots.length === 0) {
+        showToast('No hay datos para exportar', 'error');
+        return;
+    }
+    // Export computed metrics? No, keep it clean as requested to compress "disaster"
+    // Only export raw data
+    const dataToExport = snapshots.map(s => ({
+        id: s.id,
+        date: s.date,
+        assets: s.assets,
+        tag: s.tag || '',
+        note: s.note || ''
+    }));
+
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `portfolio_backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast('Archivo exportado correctamente', 'success');
+}
+
+function exportLatestSnapshotToClipboard() {
+    if (snapshots.length === 0) {
+        showToast('No hay snapshots para exportar', 'error');
+        return;
+    }
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    exportSnapshotToClipboard(latestSnapshot);
+}
+
+function exportSnapshotToClipboard(snapshot) {
+    if (!snapshot) {
+        showToast('Snapshot no encontrado', 'error');
+        return;
+    }
+
+    const lines = snapshot.assets.map(asset => {
+        const name = asset[AssetIndex.NAME];
+        const term = asset[AssetIndex.TERM];
+        const category = asset[AssetIndex.CATEGORY];
+        const purchasePrice = asset[AssetIndex.PURCHASE_PRICE];
+        const quantity = asset[AssetIndex.QUANTITY];
+        const currentPrice = asset[AssetIndex.CURRENT_PRICE];
+        return [
+            name,
+            term,
+            category,
+            formatNumberForExport(purchasePrice),
+            formatNumberForExport(quantity),
+            formatNumberForExport(currentPrice)
+        ].join('\t');
+    });
+
+    const tsv = [...lines].join('\n');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(tsv)
+            .then(() => showToast('Snapshot copiado al portapapeles', 'success'))
+            .catch(() => fallbackCopyText(tsv));
+    } else {
+        fallbackCopyText(tsv);
+    }
+}
+
+function fallbackCopyText(text) {
+    const temp = document.createElement('textarea');
+    temp.value = text;
+    temp.setAttribute('readonly', '');
+    temp.style.position = 'absolute';
+    temp.style.left = '-9999px';
+    document.body.appendChild(temp);
+    temp.select();
+    const success = document.execCommand('copy');
+    document.body.removeChild(temp);
+    showToast(success ? 'Snapshot copiado al portapapeles' : 'No se pudo copiar el snapshot', success ? 'success' : 'error');
+}
+
+function importFromJson(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const imported = JSON.parse(e.target.result);
+            if (Array.isArray(imported)) {
+                // Determine if we need migration or calculation
+                const processed = imported.map(s => {
+                    // Migration check
+                    let assets = s.assets;
+                    if (assets.length > 0 && !Array.isArray(assets[0])) {
+                        assets = s.assets.map(asset => [
+                            asset.name, asset.term, asset.category,
+                            asset.purchasePrice, asset.quantity, asset.currentPrice,
+                            asset.purchaseValue, asset.currentValue
+                        ]);
+                    }
+
+                    return calculateSnapshotMetrics({
+                        id: s.id || Date.now(),
+                        date: s.date,
+                        assets: assets,
+                        tag: s.tag || '',
+                        note: s.note || ''
+                    });
+                });
+
+                snapshots = processed;
+                saveSnapshots();
+                updateUI();
+                showToast('Datos importados y optimizados', 'success');
+            } else {
+                throw new Error('Formato inválido');
+            }
+        } catch (err) {
+            showToast('Error al importar el archivo JSON', 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function captureSnapshot() {
+    const input = document.getElementById('snapshotData').value;
+    const dateValue = document.getElementById('snapshotDate').value;
+    const tagValue = document.getElementById('snapshotTag')?.value || '';
+    const noteValue = document.getElementById('snapshotNote')?.value || '';
+
+    if (!input.trim()) {
+        showToast('Por favor, pega los datos de tu cartera', 'error');
+        return;
+    }
+
+    if (!dateValue) {
+        showToast('Por favor, selecciona una fecha', 'error');
+        return;
+    }
+
+    const assets = parseData(input);
+    if (assets.length === 0) {
+        showToast('No se pudieron parsear los datos. Verifica el formato.', 'error');
+        return;
+    }
+
+    const snapshotRaw = {
+        id: Date.now(),
+        date: new Date(dateValue).toISOString(),
+        assets,
+        tag: tagValue.trim(),
+        note: noteValue.trim()
+    };
+
+    const snapshot = calculateSnapshotMetrics(snapshotRaw);
+
+    snapshots.push(snapshot);
+    snapshots.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    saveSnapshots();
+    updateUI();
+    document.getElementById('snapshotData').value = '';
+    const tagInput = document.getElementById('snapshotTag');
+    const noteInput = document.getElementById('snapshotNote');
+    if (tagInput) tagInput.value = '';
+    if (noteInput) noteInput.value = '';
+    toggleCaptureModal(false);
+    showToast('Snapshot guardado', 'success');
+}
+
+function selectCategory(category) {
+    selectedCategory = category;
+    document.getElementById('categorySelector').value = category || '';
+    persistSelectedCategory();
+    updateViewMode();
+}
+
+function loadSelectedCategory() {
+    const stored = localStorage.getItem(SELECTED_CATEGORY_KEY);
+    if (!stored) return;
+
+    if (snapshots.length === 0) {
+        selectedCategory = null;
+        return;
+    }
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    const categories = Object.keys(latestSnapshot.categoryTotals || {});
+    selectedCategory = categories.includes(stored) ? stored : null;
+}
+
+function persistSelectedCategory() {
+    if (selectedCategory) {
+        localStorage.setItem(SELECTED_CATEGORY_KEY, selectedCategory);
+    } else {
+        localStorage.removeItem(SELECTED_CATEGORY_KEY);
+    }
+}
+
+function updateViewMode() {
+    const heroLabel = document.getElementById('heroLabel');
+    const evolutionTitle = document.getElementById('evolutionTitle');
+    const topItemsTitle = document.getElementById('topItemsTitle');
+    const topItemsHead = document.getElementById('topItemsHead');
+    const diversificationTitle = document.getElementById('diversificationTitle');
+
+    if (selectedCategory) {
+        heroLabel.textContent = selectedCategory;
+        evolutionTitle.textContent = 'Evolución de ' + selectedCategory;
+        topItemsTitle.textContent = 'Top 5 Activos';
+        topItemsHead.innerHTML = `<tr><th>Activo</th><th>Valor</th><th>Invertido</th><th>ROI</th></tr>`;
+        diversificationTitle.textContent = 'Composición de ' + selectedCategory;
+    } else {
+        heroLabel.textContent = 'Valor Total';
+        evolutionTitle.textContent = 'Evolución';
+        topItemsTitle.textContent = 'Top 5 Categorías';
+        topItemsHead.innerHTML = `<tr><th>Categoría</th><th>Valor</th><th>Invertido</th><th>ROI</th></tr>`;
+        diversificationTitle.textContent = 'Diversificación Histórica';
+    }
+
+    updateSummary();
+    updateEvolutionChart();
+    updateDistributionCharts();
+    updateCategoryRoiTable();
+    updateTopAssetsTable();
+    updateAnalytics();
+    updateCompositionList();
+}
+
+function toggleEditModal(show) {
+    document.getElementById('editModal').classList.toggle('show', show);
+}
+
+function openEditSnapshot(snapshotId) {
+    const snapshot = snapshots.find(s => s.id === snapshotId);
+    if (!snapshot) return;
+
+    document.getElementById('editSnapshotId').value = snapshotId;
+    document.getElementById('editSnapshotDate').value = snapshot.date.split('T')[0];
+    const editTag = document.getElementById('editSnapshotTag');
+    const editNote = document.getElementById('editSnapshotNote');
+    if (editTag) editTag.value = snapshot.tag || '';
+    if (editNote) editNote.value = snapshot.note || '';
+
+    const lines = snapshot.assets.map(a => {
+        return [
+            a[AssetIndex.NAME],
+            a[AssetIndex.TERM],
+            a[AssetIndex.CATEGORY],
+            a[AssetIndex.PURCHASE_PRICE].toFixed(2).replace('.', ',') + ' €',
+            a[AssetIndex.QUANTITY].toString().replace('.', ','),
+            a[AssetIndex.CURRENT_PRICE].toFixed(2).replace('.', ',') + ' €',
+            a[AssetIndex.PURCHASE_VALUE].toFixed(2).replace('.', ',') + ' €',
+            a[AssetIndex.CURRENT_VALUE].toFixed(2).replace('.', ',') + ' €'
+        ].join('\t');
+    }).join('\n');
+
+    document.getElementById('editSnapshotData').value = lines;
+    renderEditPreview();
+    toggleEditModal(true);
+}
+
+function renderEditPreview() {
+    const tbody = document.getElementById('editPreviewBody');
+    const countEl = document.getElementById('editPreviewCount');
+    const textarea = document.getElementById('editSnapshotData');
+    if (!tbody || !textarea) return;
+
+    const raw = textarea.value.trim();
+    if (!raw) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin datos</td></tr>';
+        if (countEl) countEl.textContent = '0 filas';
+        return;
+    }
+
+    const lines = raw.split('\n').filter(line => line.trim());
+    if (countEl) countEl.textContent = `${lines.length} fila${lines.length === 1 ? '' : 's'}`;
+
+    const rows = lines.map(line => {
+        const parts = line.split('\t');
+        return {
+            name: parts[0] ? parts[0].trim() : '- ',
+            term: parts[1] ? parts[1].trim() : '- ',
+            category: parts[2] ? parts[2].trim() : '- ',
+            purchasePrice: parts[3] ? parts[3].trim() : '- ',
+            quantity: parts[4] ? parts[4].trim() : '- ',
+            currentPrice: parts[5] ? parts[5].trim() : '- '
+        };
+    });
+
+    tbody.innerHTML = rows.map(row => `
+        <tr>
+            <td>${row.name}</td>
+            <td>${row.term}</td>
+            <td>${row.category}</td>
+            <td>${row.purchasePrice}</td>
+            <td>${row.quantity}</td>
+            <td>${row.currentPrice}</td>
+        </tr>
+    `).join('');
+}
+
+function saveEditedSnapshot() {
+    const snapshotId = parseInt(document.getElementById('editSnapshotId').value);
+    const dateValue = document.getElementById('editSnapshotDate').value;
+    const input = document.getElementById('editSnapshotData').value;
+    const tagValue = document.getElementById('editSnapshotTag')?.value || '';
+    const noteValue = document.getElementById('editSnapshotNote')?.value || '';
+
+    if (!input.trim() || !dateValue) {
+        showToast('Los campos no pueden estar vacíos', 'error');
+        return;
+    }
+
+    const assets = parseData(input);
+    if (assets.length === 0) {
+        showToast('No se pudieron parsear los datos. Verifica el formato.', 'error');
+        return;
+    }
+
+    const index = snapshots.findIndex(s => s.id === snapshotId);
+    if (index === -1) return;
+
+    const snapshotRaw = {
+        id: snapshotId,
+        date: new Date(dateValue).toISOString(),
+        assets,
+        tag: tagValue.trim(),
+        note: noteValue.trim()
+    };
+
+    snapshots[index] = calculateSnapshotMetrics(snapshotRaw);
+    snapshots.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    saveSnapshots();
+    updateUI();
+    toggleEditModal(false);
+    showToast('Snapshot actualizado', 'success');
+}
+
+function updateUI() {
+    populateCategorySelector();
+    updateSummary();
+    updateHistoryTable();
+    updateEvolutionChart();
+    updateDistributionCharts();
+    updateCategoryRoiTable();
+    updateTopAssetsTable();
+    updateAnalytics();
+    updateTargetsTable();
+}
+
+function populateCategorySelector() {
+    const selector = document.getElementById('categorySelector');
+    const currentValue = selectedCategory || selector.value;
+
+    let options = '<option value="">Portfolio Global</option>';
+
+    if (snapshots.length > 0) {
+        const latestSnapshot = snapshots[snapshots.length - 1];
+        const categories = Object.keys(latestSnapshot.categoryTotals).sort((a, b) => a.localeCompare(b, 'es'));
+        categories.forEach(cat => {
+            const selected = cat === currentValue ? 'selected' : '';
+            options += `<option value="${cat}" ${selected}>${cat}</option>`;
+        });
+    }
+
+    selector.innerHTML = options;
+    selector.value = currentValue || '';
+}
+
+function updateAnalytics() {
+    if (snapshots.length === 0) return;
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    const rangeSnapshots = getSnapshotsForRange();
+    const monthlyData = getMonthlySnapshotsForRange();
+
+    let assetsToAnalyze, totalValue, totalPurchase;
+
+    if (selectedCategory) {
+        assetsToAnalyze = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+        totalValue = assetsToAnalyze.reduce((s, a) => s + a[AssetIndex.CURRENT_VALUE], 0);
+        totalPurchase = assetsToAnalyze.reduce((s, a) => s + a[AssetIndex.PURCHASE_VALUE], 0);
+    } else {
+        assetsToAnalyze = null;
+        totalValue = latestSnapshot.totalCurrentValue;
+        totalPurchase = latestSnapshot.totalPurchaseValue;
+    }
+
+    // 1. Max Drawdown (basado en ROI acumulado de cierres mensuales)
+    let peakRoi = -Infinity;
+    let maxDrawdown = 0;
+    monthlyData.forEach(s => {
+        let val, invested;
+        if (selectedCategory) {
+            const catAssets = s.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+            val = catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+            invested = catAssets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+        } else {
+            val = s.totalCurrentValue;
+            invested = s.totalPurchaseValue;
+        }
+        const roi = invested > 0 ? ((val - invested) / invested) * 100 : 0;
+        if (roi > peakRoi) peakRoi = roi;
+        const drawdown = roi - peakRoi;
+        if (drawdown < maxDrawdown) maxDrawdown = drawdown;
+    });
+    document.getElementById('maxDrawdown').textContent = maxDrawdown.toFixed(2) + '%';
+    document.getElementById('maxDrawdown').className = 'kpi-value ' + (maxDrawdown < -5 ? 'negative' : '');
+
+    // 2. Best/Worst Item & Win Rate (siempre sobre la foto actual)
+    let bestItem = { name: '-', roi: -Infinity };
+    let worstItem = { name: '-', roi: Infinity };
+    let profitableCount = 0;
+    let totalItems = 0;
+
+    if (selectedCategory) {
+        assetsToAnalyze.forEach(a => {
+            const invested = a[AssetIndex.PURCHASE_VALUE];
+            const current = a[AssetIndex.CURRENT_VALUE];
+            const roi = invested > 0 ? (current - invested) / invested : 0;
+            if (roi > bestItem.roi) bestItem = { name: a[AssetIndex.NAME], roi };
+            if (roi < worstItem.roi) worstItem = { name: a[AssetIndex.NAME], roi };
+            if (roi >= 0) profitableCount++;
+            totalItems++;
+        });
+    } else {
+        const categories = Object.keys(latestSnapshot.categoryTotals);
+        categories.forEach(cat => {
+            const catAssets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === cat);
+            const value = catAssets.reduce((s, a) => s + a[AssetIndex.CURRENT_VALUE], 0);
+            const invested = catAssets.reduce((s, a) => s + a[AssetIndex.PURCHASE_VALUE], 0);
+            const roi = invested > 0 ? (value - invested) / invested : 0;
+            if (roi > bestItem.roi) bestItem = { name: cat, roi };
+            if (roi < worstItem.roi) worstItem = { name: cat, roi };
+            if (roi >= 0) profitableCount++;
+            totalItems++;
+        });
+    }
+
+    const winRate = totalItems > 0 ? (profitableCount / totalItems) * 100 : 0;
+
+    document.getElementById('bestAsset').textContent = bestItem.name.length > 15 ? bestItem.name.substring(0, 12) + '...' : bestItem.name;
+    document.getElementById('bestAssetRoi').textContent = (bestItem.roi * 100).toFixed(1) + '% ROI';
+    document.getElementById('bestAssetRoi').className = 'kpi-desc ' + (bestItem.roi >= 0 ? 'positive' : 'negative');
+
+    const worstAssetEl = document.getElementById('worstAsset');
+    if (worstAssetEl) {
+        worstAssetEl.textContent = worstItem.name.length > 15 ? worstItem.name.substring(0, 12) + '...' : worstItem.name;
+        document.getElementById('worstAssetRoi').textContent = (worstItem.roi * 100).toFixed(1) + '% ROI';
+        document.getElementById('worstAssetRoi').className = 'kpi-desc ' + (worstItem.roi >= 0 ? 'positive' : 'negative');
+    }
+
+    document.getElementById('winRate').textContent = winRate.toFixed(0) + '%';
+    document.getElementById('winRate').className = 'kpi-value ' + (winRate >= 50 ? 'positive' : 'negative');
+
+    // 3. Projected Annual Value using real CAGR (basado en primer y último snapshot del rango)
+    let cagr = 0.07;
+    if (rangeSnapshots.length >= 2) {
+        const firstSnapshot = rangeSnapshots[0];
+        const firstDate = new Date(firstSnapshot.date);
+        const lastDate = new Date(latestSnapshot.date);
+        const years = (lastDate - firstDate) / (1000 * 60 * 60 * 24 * 365);
+
+        if (years > 0.01 && firstSnapshot.totalPurchaseValue > 0) {
+            const totalReturn = latestSnapshot.totalCurrentValue / firstSnapshot.totalPurchaseValue;
+            cagr = Math.pow(totalReturn, 1 / years) - 1;
+            cagr = Math.max(-0.5, Math.min(cagr, 1));
+        }
+    }
+
+    const projected = latestSnapshot.totalCurrentValue * (1 + cagr);
+    document.getElementById('projectedValue').textContent = formatCurrency(projected);
+
+    const cagrEl = document.getElementById('projectedCagr');
+    if (cagrEl) {
+        cagrEl.textContent = `CAGR: ${(cagr * 100).toFixed(1)}%`;
+        cagrEl.className = 'kpi-desc ' + (cagr >= 0 ? 'positive' : 'negative');
+    }
+
+    // 4. Volatilidad anualizada y mejor mes (por rango)
+    const labels = monthlyData.map(s => {
+        const date = new Date(s.date);
+        return date.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+    });
+
+    const getValues = (snapshot) => {
+        if (selectedCategory) {
+            const catAssets = snapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+            const value = catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+            const invested = catAssets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+            return { value, invested };
+        }
+        return { value: snapshot.totalCurrentValue, invested: snapshot.totalPurchaseValue };
+    };
+
+    const periodReturns = monthlyData.map((s, i) => {
+        const { value, invested } = getValues(s);
+        if (i === 0) return 0;
+        const prev = monthlyData[i - 1];
+        const { value: prevValue, invested: prevInvested } = getValues(prev);
+        const newInvestment = invested - prevInvested;
+        const actualGain = value - prevValue - newInvestment;
+        return prevValue > 0 ? (actualGain / prevValue) * 100 : 0;
+    });
+
+    const validReturns = periodReturns.slice(1).filter(v => Number.isFinite(v));
+    const avg = validReturns.length ? validReturns.reduce((a, b) => a + b, 0) / validReturns.length : 0;
+    const variance = validReturns.length
+        ? validReturns.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / validReturns.length
+        : 0;
+    const monthlyStd = Math.sqrt(variance);
+    const annualizedVol = monthlyStd * Math.sqrt(12);
+
+    const volatilityEl = document.getElementById('volatility');
+    if (volatilityEl) {
+        volatilityEl.textContent = annualizedVol.toFixed(1) + '%';
+    }
+
+    let bestIdx = -1;
+    let bestValue = -Infinity;
+    validReturns.forEach((val, i) => {
+        const idx = i + 1;
+        if (val > bestValue) {
+            bestValue = val;
+            bestIdx = idx;
+        }
+    });
+
+    const bestMonthEl = document.getElementById('bestMonth');
+    const bestMonthReturnEl = document.getElementById('bestMonthReturn');
+    if (bestMonthEl && bestMonthReturnEl) {
+        if (bestIdx >= 0) {
+            bestMonthEl.textContent = labels[bestIdx] || '-';
+            bestMonthReturnEl.textContent = `Mejor mes: ${bestValue >= 0 ? '+' : ''}${bestValue.toFixed(1)}%`;
+            bestMonthReturnEl.className = 'kpi-desc ' + (bestValue >= 0 ? 'positive' : 'negative');
+        } else {
+            bestMonthEl.textContent = '-';
+            bestMonthReturnEl.textContent = 'Mejor mes';
+            bestMonthReturnEl.className = 'kpi-desc';
+        }
+    }
+
+    updateCompositionList();
+    updateOpportunities();
+}
+
+function updateOpportunities() {
+    const container = document.getElementById('opportunityList');
+    if (!container || snapshots.length === 0) return;
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    const normalizeKey = (value) => (value || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+    const monthlySnapshots = getMonthlySnapshotsForRange();
+    const windowSize = Math.max(opportunityRangeMonths + 1, 3);
+    const windowSnapshots = monthlySnapshots.slice(-Math.min(monthlySnapshots.length, windowSize));
+
+    if (windowSnapshots.length < 2) {
+        container.innerHTML = '<div class="opportunity-empty">Sin datos suficientes para comparar.</div>';
+        return;
+    }
+
+    const calcSeriesStats = (series) => {
+        const returns = [];
+        for (let i = 1; i < series.length; i++) {
+            const prev = series[i - 1];
+            const curr = series[i];
+            if (!prev || !curr || prev.value <= 0) continue;
+            const newInvestment = curr.invested - prev.invested;
+            const actualGain = curr.value - prev.value - newInvestment;
+            const ret = (actualGain / prev.value) * 100;
+            if (Number.isFinite(ret)) returns.push(ret);
+        }
+
+        const validReturns = returns.filter(v => Number.isFinite(v));
+        const mean = validReturns.length ? validReturns.reduce((a, b) => a + b, 0) / validReturns.length : 0;
+        const variance = validReturns.length
+            ? validReturns.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / validReturns.length
+            : 0;
+        const std = Math.sqrt(variance);
+
+        const first = series[0];
+        const last = series[series.length - 1];
+        const base = first && first.value > 0 ? first.value : 0;
+        const netInvestment = last ? (last.invested - (first ? first.invested : 0)) : 0;
+        const netGain = last ? (last.value - (first ? first.value : 0) - netInvestment) : 0;
+        const trend = base > 0 ? (netGain / base) * 100 : 0;
+        const netFlowPct = base > 0 ? (netInvestment / base) * 100 : 0;
+
+        const maxValue = series.reduce((max, point) => Math.max(max, point.value || 0), 0) || 0;
+        const drawdown = maxValue > 0 && last ? ((last.value - maxValue) / maxValue) * 100 : 0;
+
+        const lastReturn = validReturns.length ? validReturns[validReturns.length - 1] : 0;
+        const zScore = std > 0 ? (lastReturn - mean) / std : 0;
+
+        return { lastReturn, mean, std, zScore, trend, drawdown, netInvestment, netFlowPct };
+    };
+
+    let items = [];
+    const latestAssets = selectedCategory
+        ? latestSnapshot.assets.filter(a => normalizeKey(a[AssetIndex.CATEGORY]) === normalizeKey(selectedCategory))
+        : latestSnapshot.assets;
+    const latestNames = latestAssets.map(a => a[AssetIndex.NAME]);
+
+    items = latestNames.map(name => {
+        const series = windowSnapshots.map(s => {
+            const found = s.assets.find(a => normalizeKey(a[AssetIndex.NAME]) === normalizeKey(name)
+                && (!selectedCategory || normalizeKey(a[AssetIndex.CATEGORY]) === normalizeKey(selectedCategory)));
+            return {
+                value: found ? found[AssetIndex.CURRENT_VALUE] : 0,
+                invested: found ? found[AssetIndex.PURCHASE_VALUE] : 0
+            };
+        });
+        return { label: name, stats: calcSeriesStats(series) };
+    });
+
+    items = items.map(item => {
+        const { lastReturn, zScore, trend, drawdown, netFlowPct, netInvestment } = item.stats;
+        const tags = [];
+        if (netFlowPct <= -2) tags.push('Venta neta');
+        if (zScore <= -1.2 && lastReturn < 0) tags.push('Caída atípica');
+        if (zScore >= 1.2 && lastReturn > 0) tags.push('Impulso fuerte');
+        if (drawdown <= -12 && netInvestment >= 0) tags.push('Drawdown alto');
+        if (trend >= 8 && lastReturn >= 0) tags.push('Tendencia positiva');
+        if (trend <= -8 && lastReturn <= 0) tags.push('Tendencia negativa');
+
+        const flowPenalty = netInvestment < 0 ? 0.6 : 1;
+        const score = Math.max(Math.abs(zScore), Math.abs(drawdown) / 10, Math.abs(trend) / 10) * flowPenalty;
+        return { ...item, tags, score };
+    });
+
+    const ranked = items
+        .filter(item => item.tags.length > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6);
+
+    if (ranked.length === 0) {
+        container.innerHTML = '<div class="opportunity-empty">Sin señales destacadas en el periodo.</div>';
+        return;
+    }
+
+    container.innerHTML = ranked.map(item => {
+        const { lastReturn, zScore, trend, drawdown, netFlowPct } = item.stats;
+        const changeClass = lastReturn >= 0 ? 'positive' : 'negative';
+        const arrow = lastReturn >= 0 ? '↑' : '↓';
+        const tagsHtml = item.tags.map(tag => {
+            const tagClass = tag.includes('negativa') || tag.includes('Caída') || tag.includes('Drawdown') ? 'negative' : 'positive';
+            return `<span class="opportunity-tag ${tagClass}">${tag}</span>`;
+        }).join('');
+
+        return `
+            <div class="opportunity-item">
+                <div class="opportunity-info">
+                    <span class="opportunity-label">${item.label}</span>
+                    <span class="opportunity-desc">
+                        Último periodo: ${lastReturn >= 0 ? '+' : ''}${lastReturn.toFixed(2)}% ·
+                        Tendencia: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)}% ·
+                        Flujo neto: ${netFlowPct >= 0 ? '+' : ''}${netFlowPct.toFixed(2)}% ·
+                        Drawdown: ${drawdown.toFixed(1)}% ·
+                        Z: ${zScore.toFixed(2)}
+                    </span>
+                    <div class="opportunity-tags">${tagsHtml}</div>
+                </div>
+                <span class="opportunity-change ${changeClass}">${arrow} ${Math.abs(lastReturn).toFixed(2)}%</span>
+            </div>
+        `;
+    }).join('');
+}
+
+function updateCategoryRoiTable() {
+    const tbody = document.getElementById('categoryRoiBody');
+    const title = document.getElementById('categoryRoiTitle');
+    const thead = document.getElementById('categoryRoiHead');
+    if (!tbody || !title || !thead) return;
+    const latestSnapshot = snapshots[snapshots.length - 1];
+
+    if (!latestSnapshot) {
+        tbody.innerHTML = '';
+        return;
+    }
+
+    title.textContent = selectedCategory ? `Rentabilidad por Categoría · ${selectedCategory}` : 'Rentabilidad por Categoría';
+    thead.innerHTML = '<tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Volatilidad</th><th>Drawdown</th></tr>';
+
+    const monthlySnapshots = getMonthlySnapshotsForRange();
+    const categories = selectedCategory
+        ? [selectedCategory]
+        : Object.keys(latestSnapshot.categoryTotals || {});
+    const categoryData = categories.map(cat => {
+        const invested = latestSnapshot.categoryInvested[cat] || 0;
+        const current = latestSnapshot.categoryTotals[cat] || 0;
+        const roi = invested > 0 ? ((current - invested) / invested * 100) : 0;
+        const values = monthlySnapshots.map(s => {
+            const catAssets = s.assets.filter(a => a[AssetIndex.CATEGORY] === cat);
+            return catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+        });
+        const returns = values.slice(1).map((value, i) => {
+            const prev = values[i];
+            return prev > 0 ? (value - prev) / prev : 0;
+        });
+        const volatility = calculateVolatility(returns);
+        const drawdown = calculateMaxDrawdown(values);
+
+        return { cat, invested, current, roi, volatility, drawdown };
+    });
+
+    categoryData.sort((a, b) => b.roi - a.roi);
+
+    tbody.innerHTML = categoryData.map(({ cat, invested, current, roi, volatility, drawdown }) => {
+        const roiClass = roi >= 0 ? 'positive' : 'negative';
+        const categoryClass = cat.replaceAll(/\s+/g, '');
+        const volatilityText = Number.isFinite(volatility) ? `${volatility.toFixed(1)}%` : '—';
+        const drawdownText = Number.isFinite(drawdown) ? `${drawdown.toFixed(1)}%` : '—';
+        const drawdownClass = Number.isFinite(drawdown) && drawdown < 0 ? 'negative' : 'positive';
+        return `
+            <tr>
+                <td><span class="category-badge category-${categoryClass}">${cat}</span></td>
+                <td>${formatCurrency(invested)}</td>
+                <td>${formatCurrency(current)}</td>
+                <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
+                <td class="metric-muted">${volatilityText}</td>
+                <td class="${drawdownClass}">${drawdownText}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function updateTargetsTable() {
+    const targetsSection = document.querySelector('.targets-section');
+    const tbody = document.getElementById('targetsBody');
+    const monthlyTotalEl = document.getElementById('monthlyTotal');
+    const targetsTotalIndicator = document.getElementById('targetsTotalIndicator');
+    const targetsHead = document.querySelector('.targets-section thead');
+    const targetsSectionTitle = document.getElementById('targetsSectionTitle');
+    const monthlyBudgetInput = document.getElementById('monthlyBudget');
+    const adjustmentHardnessInput = document.getElementById('adjustmentHardness');
+    const adjustmentHardnessValue = document.getElementById('adjustmentHardnessValue');
+    const toggleTargetsEditBtn = document.getElementById('toggleTargetsEditBtn');
+    const saveTargetsBtn = document.getElementById('saveTargetsBtn');
+    const cancelTargetsEditBtn = document.getElementById('cancelTargetsEditBtn');
+    const targetEditPolicy = getTargetEditPolicy();
+    const workingTargets = getWorkingTargets();
+    const workingMeta = getWorkingTargetsMeta();
+    if (!tbody || !monthlyTotalEl) return;
+
+    if (targetsSection) {
+        targetsSection.classList.toggle('is-readonly', !targetsEditMode);
+        targetsSection.classList.toggle('is-editing', targetsEditMode);
+    }
+
+    if (monthlyBudgetInput) {
+        monthlyBudgetInput.value = workingMeta.monthlyBudget || 0;
+        monthlyBudgetInput.disabled = !targetsEditMode;
+    }
+
+    if (adjustmentHardnessInput) {
+        const hardnessPct = Math.round(clampAdjustmentHardness(workingMeta.adjustmentHardness) * 100);
+        adjustmentHardnessInput.value = String(hardnessPct);
+        adjustmentHardnessInput.disabled = !targetsEditMode;
+        if (adjustmentHardnessValue) {
+            adjustmentHardnessValue.textContent = `${hardnessPct}%`;
+        }
+    }
+
+    if (toggleTargetsEditBtn) {
+        toggleTargetsEditBtn.textContent = targetsEditMode ? '✕' : '✎';
+        toggleTargetsEditBtn.setAttribute('aria-label', targetsEditMode ? 'Cancelar edición de objetivos' : 'Editar objetivos');
+        toggleTargetsEditBtn.title = targetsEditMode ? 'Cancelar edición' : 'Editar objetivos';
+    }
+
+    if (saveTargetsBtn) {
+        saveTargetsBtn.style.display = targetsEditMode ? 'inline-flex' : 'none';
+    }
+
+    if (cancelTargetsEditBtn) {
+        cancelTargetsEditBtn.style.display = targetsEditMode ? 'inline-flex' : 'none';
+    }
+
+    if (snapshots.length === 0) {
+        if (targetsSectionTitle) targetsSectionTitle.textContent = 'Objetivos por Categoría';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Sin datos</td></tr>';
+        monthlyTotalEl.textContent = formatCurrency(0);
+        if (targetsHead) {
+            targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Aporte mensual</th><th>Ajuste sugerido</th></tr>';
+        }
+        if (targetsTotalIndicator) {
+            targetsTotalIndicator.textContent = `Objetivos: 0% · ${targetEditPolicy.lockMessage}`;
+            targetsTotalIndicator.className = 'targets-indicator warn';
+        }
+        return;
+    }
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+
+    // Asset mode when a category is selected
+    if (selectedCategory) {
+        if (targetsSectionTitle) targetsSectionTitle.textContent = `Objetivos por Activo · ${selectedCategory}`;
+        const assets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+        const totalCategoryValue = assets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0) || 1;
+        const assetTargets = workingTargets[selectedCategory]?.assets || {};
+
+        if (targetsHead) {
+            targetsHead.innerHTML = '<tr><th>Activo</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th></tr>';
+        }
+
+        const rows = assets.map(asset => {
+            const assetName = asset[AssetIndex.NAME];
+            const currentValue = asset[AssetIndex.CURRENT_VALUE] || 0;
+            const currentPct = (currentValue / totalCategoryValue) * 100;
+            const target = assetTargets[assetName]?.target ?? 0;
+            const diff = target - currentPct;
+            return {
+                assetName,
+                currentPct,
+                target,
+                diff,
+                gapAbs: Math.abs(diff)
+            };
+        });
+
+        rows.sort((a, b) => {
+            if (b.gapAbs !== a.gapAbs) return b.gapAbs - a.gapAbs;
+            return b.currentPct - a.currentPct;
+        });
+
+        const sumTargets = rows.reduce((sum, row) => sum + row.target, 0);
+        const deltaTo100 = 100 - sumTargets;
+        if (targetsTotalIndicator) {
+            const sign = deltaTo100 >= 0 ? 'Falta' : 'Sobra';
+            targetsTotalIndicator.textContent = `Objetivos de ${selectedCategory}: ${sumTargets.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}% · ${targetEditPolicy.lockMessage}`;
+            targetsTotalIndicator.className = `targets-indicator ${Math.abs(deltaTo100) < 0.1 ? 'ok' : 'warn'}`;
+        }
+        monthlyTotalEl.textContent = '—';
+
+        tbody.innerHTML = rows.map(row => {
+            const diffClass = row.diff >= 0 ? 'positive' : 'negative';
+            return `
+                <tr>
+                    <td><strong>${row.assetName.length > 30 ? row.assetName.substring(0, 27) + '...' : row.assetName}</strong></td>
+                    <td>${row.currentPct.toFixed(1)}%</td>
+                    <td>
+                        <input class="table-input asset-target-input" type="number" min="0" max="100" step="0.1" data-asset="${row.assetName}" value="${row.target}" ${(targetsEditMode && targetEditPolicy.canEdit) ? '' : 'disabled'}>
+                    </td>
+                    <td class="${diffClass}">${row.diff >= 0 ? '+' : ''}${row.diff.toFixed(1)}%</td>
+                </tr>
+            `;
+        }).join('');
+
+        tbody.querySelectorAll('.asset-target-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                if (!targetsEditMode) {
+                    showToast('Pulsa el lápiz para editar objetivos', 'error');
+                    updateTargetsTable();
+                    return;
+                }
+                if (!targetEditPolicy.canEdit) {
+                    showToast(targetEditPolicy.lockMessage, 'error');
+                    updateTargetsTable();
+                    return;
+                }
+                const assetName = e.target.dataset.asset;
+                const value = Number.parseFloat(e.target.value) || 0;
+                targetsDraft[selectedCategory] = {
+                    ...(targetsDraft[selectedCategory] || {}),
+                    assets: {
+                        ...((targetsDraft[selectedCategory] || {}).assets || {}),
+                        [assetName]: {
+                            target: Math.max(0, Math.min(100, value))
+                        }
+                    }
+                };
+                updateTargetsTable();
+                updateCompositionList();
+            });
+        });
+
+        return;
+    }
+
+    const categories = Object.keys(latestSnapshot.categoryTotals);
+    if (targetsSectionTitle) targetsSectionTitle.textContent = 'Objetivos por Categoría';
+    const totalValue = categories.reduce((sum, cat) => sum + (latestSnapshot.categoryTotals[cat] || 0), 0);
+    const sumTargets = categories.reduce((sum, cat) => sum + (workingTargets[cat]?.target ?? 0), 0) || 1;
+    const totalMonthlyAll = categories.reduce((sum, cat) => sum + (workingTargets[cat]?.monthly ?? 0), 0);
+    const referenceBudget = (workingMeta.monthlyBudget || 0) > 0 ? (workingMeta.monthlyBudget || 0) : totalMonthlyAll;
+    const softAdjustFactor = clampAdjustmentHardness(workingMeta.adjustmentHardness);
+    const deadbandPp = 1.5;
+
+    let monthlyTotal = 0;
+
+    const rows = categories.map(cat => {
+        const currentValue = latestSnapshot.categoryTotals[cat] || 0;
+        const currentPct = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
+        const target = workingTargets[cat]?.target ?? 0;
+        const monthly = workingTargets[cat]?.monthly ?? 0;
+        const diff = target - currentPct;
+        const baseMonthly = totalMonthlyAllocationForTarget(target, sumTargets, workingMeta.monthlyBudget || 0);
+
+        const contributionPct = totalMonthlyAll > 0 ? (monthly / totalMonthlyAll) * 100 : 0;
+        const effectiveDiff = Math.abs(diff) < deadbandPp ? 0 : diff;
+        const baseCorrection = referenceBudget > 0
+            ? (referenceBudget * (effectiveDiff / 100)) * softAdjustFactor
+            : 0;
+        const suggestedMonthly = Math.max(0, baseMonthly + baseCorrection);
+        const adjustmentAmount = suggestedMonthly - monthly;
+        const adjustmentPp = referenceBudget > 0 ? (adjustmentAmount / referenceBudget) * 100 : 0;
+
+        return {
+            cat,
+            currentPct,
+            target,
+            diff,
+            monthly,
+            contributionPct,
+            suggestedMonthly,
+            adjustmentAmount,
+            adjustmentPp,
+            baseMonthly,
+            gapAbs: Math.abs(diff)
+        };
+    });
+
+    const maxAbsCombinedAdjustment = Math.max(
+        ...rows.map(row => Math.abs(row.adjustmentPp || 0)),
+        1
+    );
+
+    const targetsSum = rows.reduce((sum, row) => sum + row.target, 0);
+    const deltaTo100 = 100 - targetsSum;
+    if (targetsHead) {
+        targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Aporte mensual</th><th>Ajuste sugerido</th></tr>';
+    }
+    if (targetsTotalIndicator) {
+        const sign = deltaTo100 >= 0 ? 'Falta' : 'Sobra';
+        targetsTotalIndicator.textContent = `Objetivos: ${targetsSum.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}% · ${targetEditPolicy.lockMessage}`;
+        targetsTotalIndicator.className = `targets-indicator ${Math.abs(deltaTo100) < 0.1 ? 'ok' : 'warn'}`;
+    }
+
+    rows.sort((a, b) => {
+        if (b.currentPct !== a.currentPct) return b.currentPct - a.currentPct;
+        return a.cat.localeCompare(b.cat, 'es');
+    });
+
+
+    tbody.innerHTML = rows.map(row => {
+        monthlyTotal += row.monthly;
+        const isNeutral = Math.abs(row.adjustmentPp) < 0.5;
+        const combinedClass = isNeutral ? 'neutral' : (row.adjustmentPp >= 0 ? 'positive' : 'negative');
+        const normalizedRange = Math.min(Math.abs(row.adjustmentPp) / maxAbsCombinedAdjustment, 1) * 50;
+        const rangeStart = row.adjustmentPp >= 0 ? 50 : 50 - normalizedRange;
+        const actionLabel = isNeutral ? 'Mantener' : (row.adjustmentPp >= 0 ? 'Subir' : 'Bajar');
+        return `
+            <tr>
+                <td><strong>${row.cat}</strong></td>
+                <td>${row.currentPct.toFixed(1)}%</td>
+                <td>
+                    <input class="table-input target-input" type="number" min="0" max="100" step="0.1" data-cat="${row.cat}" value="${row.target}" ${(targetsEditMode && targetEditPolicy.canEdit) ? '' : 'disabled'}>
+                </td>
+                <td>
+                    <input class="table-input monthly-input" type="number" min="0" step="1" data-cat="${row.cat}" value="${row.monthly}" ${targetsEditMode ? '' : 'disabled'}>
+                    <div class="target-hint">Base: ${formatCurrency(row.baseMonthly)} · Final: ${formatCurrency(row.monthly)}</div>
+                </td>
+                <td>
+                    <div class="allocation-compare">
+                        <div class="allocation-range">
+                            <span class="allocation-range-mid"></span>
+                            <span class="allocation-range-fill ${combinedClass}" style="left:${rangeStart}%; width:${normalizedRange}%;"></span>
+                        </div>
+                        <span class="allocation-diff ${combinedClass}">${actionLabel} ${row.adjustmentPp >= 0 ? '+' : ''}${row.adjustmentPp.toFixed(1)}pp</span>
+                        <div class="target-hint">Recomendado: ${formatCurrency(row.suggestedMonthly)} (${row.adjustmentAmount >= 0 ? '+' : ''}${formatCurrency(row.adjustmentAmount)})</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    monthlyTotalEl.textContent = formatCurrency(monthlyTotal);
+
+    tbody.querySelectorAll('.target-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            if (!targetsEditMode) {
+                showToast('Pulsa el lápiz para editar objetivos', 'error');
+                updateTargetsTable();
+                return;
+            }
+            if (!targetEditPolicy.canEdit) {
+                showToast(targetEditPolicy.lockMessage, 'error');
+                updateTargetsTable();
+                return;
+            }
+            const cat = e.target.dataset.cat;
+            const value = Number.parseFloat(e.target.value) || 0;
+            targetsDraft[cat] = {
+                ...(targetsDraft[cat] || {}),
+                target: Math.max(0, Math.min(100, value))
+            };
+            updateTargetsTable();
+        });
+    });
+
+    tbody.querySelectorAll('.monthly-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            if (!targetsEditMode) {
+                showToast('Pulsa el lápiz para editar objetivos', 'error');
+                updateTargetsTable();
+                return;
+            }
+            const cat = e.target.dataset.cat;
+            const value = Number.parseFloat(e.target.value) || 0;
+            targetsDraft[cat] = {
+                ...(targetsDraft[cat] || {}),
+                monthly: Math.max(0, value)
+            };
+            updateTargetsTable();
+        });
+    });
+}
+
+function autoBalanceTargets() {
+    if (snapshots.length === 0) return;
+
+    const workingTargets = getWorkingTargets();
+    const workingMeta = getWorkingTargetsMeta();
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    const categories = Object.keys(latestSnapshot.categoryTotals);
+    const totalValue = categories.reduce((sum, cat) => sum + (latestSnapshot.categoryTotals[cat] || 0), 0);
+    const totalMonthly = workingMeta.monthlyBudget || 0;
+
+    if (totalMonthly <= 0 || totalValue <= 0) return;
+
+    const sumTargets = categories.reduce((sum, cat) => sum + (workingTargets[cat]?.target ?? 0), 0) || 1;
+    const minFloorRatio = 0.25;
+    const adjustFactor = 0.6;
+
+    const weights = categories.map(cat => {
+        const currentValue = latestSnapshot.categoryTotals[cat] || 0;
+        const currentPct = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
+        const target = workingTargets[cat]?.target ?? 0;
+        const baseWeight = Math.max(target, 0);
+        const gap = target - currentPct;
+        const adjusted = baseWeight + adjustFactor * gap;
+        const floor = baseWeight * minFloorRatio;
+        const weight = Math.max(adjusted, floor);
+        return { cat, weight };
+    });
+
+    const totalWeight = weights.reduce((sum, w) => sum + w.weight, 0) || 1;
+
+    weights.forEach(({ cat, weight }) => {
+        const allocation = (weight / totalWeight) * totalMonthly;
+        workingTargets[cat] = {
+            ...(workingTargets[cat] || {}),
+            monthly: Number.isFinite(allocation) ? Math.round(allocation) : 0
+        };
+    });
+    updateTargetsTable();
+}
+
+function updateTopAssetsTable() {
+    const tbody = document.getElementById('topAssetsBody');
+    if (!tbody) return;
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+
+    if (!latestSnapshot) {
+        tbody.innerHTML = '';
+        return;
+    }
+
+    if (selectedCategory) {
+        const assetsToShow = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+        const sortedAssets = [...assetsToShow]
+            .sort((a, b) => b[AssetIndex.CURRENT_VALUE] - a[AssetIndex.CURRENT_VALUE])
+            .slice(0, 5);
+
+        tbody.innerHTML = sortedAssets.map(asset => {
+            const name = asset[AssetIndex.NAME];
+            const currentValue = asset[AssetIndex.CURRENT_VALUE];
+            const purchaseValue = asset[AssetIndex.PURCHASE_VALUE];
+            const roi = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0;
+            const roiClass = roi >= 0 ? 'positive' : 'negative';
+
+            return `
+                <tr>
+                    <td><strong>${name.length > 25 ? name.substring(0, 22) + '...' : name}</strong></td>
+                    <td>${formatCurrency(currentValue)}</td>
+                    <td>${formatCurrency(purchaseValue)}</td>
+                    <td class="${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</td>
+                </tr>
+            `;
+        }).join('');
+    } else {
+        const categories = Object.keys(latestSnapshot.categoryTotals);
+        const categoryData = categories.map(cat => {
+            const catAssets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === cat);
+            const value = catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+            const invested = catAssets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+            const roi = invested > 0 ? ((value - invested) / invested) * 100 : 0;
+            return { cat, value, invested, roi };
+        }).sort((a, b) => b.value - a.value).slice(0, 5);
+
+        tbody.innerHTML = categoryData.map(({ cat, value, invested, roi }) => {
+            const roiClass = roi >= 0 ? 'positive' : 'negative';
+            const catClass = cat.replace(/\s+/g, '');
+            return `
+                <tr>
+                    <td><span class="category-badge category-${catClass}">${cat}</span></td>
+                    <td>${formatCurrency(value)}</td>
+                    <td>${formatCurrency(invested)}</td>
+                    <td class="${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</td>
+                </tr>
+            `;
+        }).join('');
+    }
+}
+
+function updateSummary() {
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    const previousSnapshot = getPreviousMonthSnapshot(latestSnapshot);
+    const firstSnapshot = snapshots[0];
+
+    if (latestSnapshot) {
+        let totalValue, totalPurchase, variation, prevValue, prevInvested;
+
+        if (selectedCategory) {
+            const categoryAssets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+            totalValue = categoryAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+            totalPurchase = categoryAssets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+            variation = totalValue - totalPurchase;
+
+            if (previousSnapshot) {
+                const prevAssets = previousSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+                prevValue = prevAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+                prevInvested = prevAssets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+            }
+        } else {
+            totalValue = latestSnapshot.totalCurrentValue;
+            totalPurchase = latestSnapshot.totalPurchaseValue;
+            variation = totalValue - totalPurchase;
+            prevValue = previousSnapshot ? previousSnapshot.totalCurrentValue : null;
+            prevInvested = previousSnapshot ? previousSnapshot.totalPurchaseValue : null;
+        }
+
+        const totalValueEl = document.getElementById('totalValue');
+        if (totalValueEl) totalValueEl.textContent = formatCurrency(totalValue);
+        const totalInvestedEl = document.getElementById('totalInvested');
+        if (totalInvestedEl) totalInvestedEl.textContent = formatCurrency(totalPurchase);
+
+        let roi = totalPurchase > 0 ? (variation / totalPurchase) * 100 : 0;
+        let periodGain = variation;
+        if (previousSnapshot && prevValue !== null && prevValue !== undefined) {
+            const newInvestment = (totalPurchase - (prevInvested || 0));
+            periodGain = totalValue - prevValue - newInvestment;
+            roi = prevValue > 0 ? (periodGain / prevValue) * 100 : 0;
+        }
+        const roiEl = document.getElementById('totalROI');
+        if (roiEl) {
+            roiEl.textContent = (roi >= 0 ? '+' : '') + roi.toFixed(2) + '%';
+            roiEl.className = 'metric-value ' + (roi >= 0 ? 'positive' : 'negative');
+        }
+
+        const variationEl = document.getElementById('totalVariation');
+        if (variationEl) {
+            variationEl.textContent = (periodGain >= 0 ? '+' : '') + formatCurrency(periodGain);
+            variationEl.className = 'metric-value ' + (periodGain >= 0 ? 'positive' : 'negative');
+        }
+
+        const accumRoi = totalPurchase > 0 ? ((totalValue - totalPurchase) / totalPurchase) * 100 : 0;
+        const totalRoiAccumEl = document.getElementById('totalRoiAccum');
+        if (totalRoiAccumEl) {
+            totalRoiAccumEl.textContent = (accumRoi >= 0 ? '+' : '') + accumRoi.toFixed(2) + '%';
+            totalRoiAccumEl.className = 'metric-value ' + (accumRoi >= 0 ? 'positive' : 'negative');
+        }
+
+        const lastMonthInvestedEl = document.getElementById('lastMonthInvested');
+        if (lastMonthInvestedEl) {
+            if (previousSnapshot && prevInvested !== null && prevInvested !== undefined) {
+                const lastInvestment = totalPurchase - prevInvested;
+                const arrow = lastInvestment >= 0 ? '↑' : '↓';
+                lastMonthInvestedEl.textContent = `${arrow} ${formatCurrency(Math.abs(lastInvestment))}`;
+                lastMonthInvestedEl.className = 'metric-change ' + (lastInvestment >= 0 ? 'positive' : 'negative');
+            } else {
+                lastMonthInvestedEl.textContent = '';
+                lastMonthInvestedEl.className = 'metric-change';
+            }
+        }
+
+        const changeIndicator = document.getElementById('valueChangeIndicator');
+        const currentProfit = totalValue - totalPurchase;
+        if (changeIndicator && firstSnapshot) {
+            changeIndicator.textContent = `${currentProfit >= 0 ? '↑' : '↓'} ${formatCurrency(Math.abs(currentProfit))}`;
+            changeIndicator.className = 'change-indicator ' + (currentProfit >= 0 ? 'positive' : 'negative');
+        } else if (document.getElementById('valueChangeIndicator')) {
+            document.getElementById('valueChangeIndicator').textContent = '';
+        }
+
+        const getSnapshotTotals = (snapshot) => {
+            if (!snapshot) return null;
+            if (selectedCategory) {
+                const assets = snapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+                const value = assets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+                const invested = assets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+                return { value, invested };
+            }
+            return { value: snapshot.totalCurrentValue, invested: snapshot.totalPurchaseValue };
+        };
+
+        const compareStartEl = document.getElementById('compareStart');
+        const compareMonthEl = document.getElementById('compareMonth');
+        const compareYearEl = document.getElementById('compareYear');
+
+        const setComparison = (el, snapshot) => {
+            if (!el) return;
+            const totals = getSnapshotTotals(snapshot);
+            if (!totals) {
+                el.textContent = '—';
+                el.className = 'comparison-value';
+                return;
+            }
+            const profit = totals.value - totals.invested;
+            const change = currentProfit - profit;
+            el.textContent = `${change >= 0 ? '+' : '-'}${formatCurrency(Math.abs(change))}`;
+            el.className = 'comparison-value ' + (change >= 0 ? 'positive' : 'negative');
+        };
+
+        setComparison(compareStartEl, getYearStartSnapshot(latestSnapshot));
+        setComparison(compareMonthEl, previousSnapshot);
+        setComparison(compareYearEl, getSnapshotMonthsAgo(latestSnapshot, 12));
+    } else {
+        const totalValueEl = document.getElementById('totalValue');
+        if (totalValueEl) totalValueEl.textContent = '0,00 €';
+        const totalInvestedEl = document.getElementById('totalInvested');
+        if (totalInvestedEl) totalInvestedEl.textContent = '0,00 €';
+        const roiEl = document.getElementById('totalROI');
+        if (roiEl) roiEl.textContent = '0,00%';
+        const variationEl = document.getElementById('totalVariation');
+        if (variationEl) variationEl.textContent = '0,00 €';
+        const totalRoiAccumEl = document.getElementById('totalRoiAccum');
+        if (totalRoiAccumEl) totalRoiAccumEl.textContent = '0,00%';
+        const lastMonthInvestedEl = document.getElementById('lastMonthInvested');
+        if (lastMonthInvestedEl) {
+            lastMonthInvestedEl.textContent = '— vs mes anterior';
+            lastMonthInvestedEl.className = 'metric-change';
+        }
+        const compareStartEl = document.getElementById('compareStart');
+        const compareMonthEl = document.getElementById('compareMonth');
+        const compareYearEl = document.getElementById('compareYear');
+        if (compareStartEl) compareStartEl.textContent = '—';
+        if (compareMonthEl) compareMonthEl.textContent = '—';
+        if (compareYearEl) compareYearEl.textContent = '—';
+    }
+
+}
+
+function updateHistoryTable() {
+    const tbody = document.getElementById('historyBody');
+    const emptyState = document.getElementById('emptyState');
+
+    if (snapshots.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = snapshots.slice().reverse().map(snapshot => {
+        const date = new Date(snapshot.date);
+        const formattedDate = date.toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        const variationClass = snapshot.variation >= 0 ? 'positive' : 'negative';
+        const variationSign = snapshot.variation >= 0 ? '+' : '';
+
+        const tag = snapshot.tag ? `<span class="history-tag">${snapshot.tag}</span>` : '';
+        const note = snapshot.note ? `<span class="history-note">${snapshot.note}</span>` : '';
+        const meta = tag || note ? `<div class="history-meta">${tag}${note}</div>` : '<span class="history-empty">—</span>';
+
+        return `
+            <tr>
+                <td>${formattedDate}</td>
+                <td>${formatCurrency(snapshot.totalCurrentValue)}</td>
+                <td class="${variationClass}">${variationSign}${formatCurrency(snapshot.variation)}</td>
+                <td>${snapshot.assets.length}</td>
+                <td>${meta}</td>
+                <td>
+                    <button class="action-btn" data-action="view" data-id="${snapshot.id}">👁️</button>
+                    <button class="action-btn" data-action="copy" data-id="${snapshot.id}" title="Copiar snapshot">⎘</button>
+                    <button class="action-btn" data-action="edit" data-id="${snapshot.id}">✏️</button>
+                    <button class="action-btn delete" data-action="delete" data-id="${snapshot.id}">🗑️</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function viewSnapshot(id) {
+    const snapshot = snapshots.find(s => s.id === id);
+    if (!snapshot) return;
+
+    const section = document.getElementById('assetsSection');
+    section.style.display = 'block';
+
+    const date = new Date(snapshot.date);
+    const dateLabel = date.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    const metaParts = [];
+    if (snapshot.tag) metaParts.push(snapshot.tag);
+    if (snapshot.note) metaParts.push(snapshot.note);
+    document.getElementById('assetsDate').textContent = metaParts.length
+        ? `${dateLabel} · ${metaParts.join(' · ')}`
+        : dateLabel;
+
+    const tbody = document.getElementById('assetsBody');
+    tbody.innerHTML = snapshot.assets.map(asset => {
+        const name = asset[AssetIndex.NAME];
+        const term = asset[AssetIndex.TERM];
+        const category = asset[AssetIndex.CATEGORY];
+        const purchasePrice = asset[AssetIndex.PURCHASE_PRICE];
+        const quantity = asset[AssetIndex.QUANTITY];
+        const currentPrice = asset[AssetIndex.CURRENT_PRICE];
+        const purchaseValue = asset[AssetIndex.PURCHASE_VALUE];
+        const currentValue = asset[AssetIndex.CURRENT_VALUE];
+
+        const variation = currentValue - purchaseValue;
+        const variationClass = variation >= 0 ? 'positive' : 'negative';
+        const variationSign = variation >= 0 ? '+' : '';
+        const categoryClass = category.replace(/\s+/g, '');
+
+        return `
+            <tr>
+                <td><strong>${name}</strong></td>
+                <td><span class="term-badge term-${term}">${term}</span></td>
+                <td><span class="category-badge category-${categoryClass}">${category}</span></td>
+                <td>${formatCurrency(purchasePrice)}</td>
+                <td>${quantity.toLocaleString('es-ES', { minimumFractionDigits: 3 })}</td>
+                <td>${formatCurrency(currentPrice)}</td>
+                <td>${formatCurrency(purchaseValue)}</td>
+                <td>${formatCurrency(currentValue)}</td>
+                <td class="${variationClass}">${variationSign}${formatCurrency(variation)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    section.scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteSnapshot(id) {
+    showModal('¿Estás seguro de que quieres eliminar este snapshot?', () => {
+        snapshots = snapshots.filter(s => s.id !== id);
+        saveSnapshots();
+        updateUI();
+        document.getElementById('assetsSection').style.display = 'none';
+        showToast('Snapshot eliminado', 'success');
+    });
+}
+
+function initCharts() {
+    const evolutionCtx = document.getElementById('evolutionChart').getContext('2d');
+    evolutionChart = new Chart(evolutionCtx, {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: createLineChartOptions(formatCurrency)
+    });
+
+    const roiCtx = document.getElementById('roiEvolutionChart').getContext('2d');
+    roiEvolutionChart = new Chart(roiCtx, {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: createRoiChartOptions(formatCurrency)
+    });
+
+    const categoryCanvas = document.getElementById('categoryChart');
+    const termCanvas = document.getElementById('termChart');
+    if (categoryCanvas && termCanvas) {
+        const categoryCtx = categoryCanvas.getContext('2d');
+        categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [] },
+            options: createDoughnutOptions(formatCurrency)
+        });
+
+        const termCtx = termCanvas.getContext('2d');
+        termChart = new Chart(termCtx, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [] },
+            options: createDoughnutOptions(formatCurrency)
+        });
+    }
+}
+
+function getSnapshotsForRange() {
+    return getSnapshotsForRangeUtil(snapshots, currentRange);
+}
+
+function getMonthlySnapshotsForRange() {
+    return getMonthlySnapshotsForRangeUtil(snapshots, currentRange);
+}
+
+function getSnapshotsForChartRange() {
+    return getSnapshotsForChartRangeUtil(snapshots, currentRange);
+}
+
+function updateEvolutionChart() {
+    if (!evolutionChart) return;
+
+    const snapshotData = getSnapshotsForChartRange();
+
+    if (snapshotData.length === 0) {
+        evolutionChart.data.labels = [];
+        evolutionChart.data.datasets = [];
+        evolutionChart.update();
+        return;
+    }
+
+    let datasets = [];
+
+    if (currentChartMode === 'total') {
+        let valueData, investedData, labelValue, labelInvested;
+
+        if (selectedCategory) {
+            valueData = snapshotData.map(s => {
+                const catAssets = s.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+                const total = catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+                return { x: new Date(s.date), y: total };
+            });
+            investedData = snapshotData.map(s => {
+                const catAssets = s.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+                const total = catAssets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+                return { x: new Date(s.date), y: total };
+            });
+            labelValue = selectedCategory;
+            labelInvested = 'Invertido';
+        } else {
+            valueData = snapshotData.map(s => ({ x: new Date(s.date), y: s.totalCurrentValue }));
+            investedData = snapshotData.map(s => ({ x: new Date(s.date), y: s.totalPurchaseValue }));
+            labelValue = 'Valor Total';
+            labelInvested = 'Total Invertido';
+        }
+
+        datasets = [
+            {
+                label: labelValue,
+                data: valueData,
+                borderColor: '#0071e3',
+                backgroundColor: 'rgba(0, 113, 227, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                pointHitRadius: 6,
+                pointBackgroundColor: '#0071e3'
+            },
+            {
+                label: labelInvested,
+                data: investedData,
+                borderColor: '#86868b',
+                borderDash: [5, 5],
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                pointHitRadius: 6,
+                pointBackgroundColor: '#86868b'
+            }
+        ];
+        evolutionChart.options.scales.y.stacked = false;
+    } else if (currentChartMode === 'category') {
+        const latestSnapshot = snapshotData[snapshotData.length - 1];
+
+        if (selectedCategory) {
+            const categoryAssets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+            const topAssets = categoryAssets
+                .sort((a, b) => b[AssetIndex.CURRENT_VALUE] - a[AssetIndex.CURRENT_VALUE])
+                .slice(0, 5);
+
+            const colors = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f'];
+            datasets = topAssets.map((asset, i) => {
+                const assetName = asset[AssetIndex.NAME];
+                const data = snapshotData.map(s => {
+                    const found = s.assets.find(a => a[AssetIndex.NAME] === assetName);
+                    return { x: new Date(s.date), y: found ? found[AssetIndex.CURRENT_VALUE] : 0 };
+                });
+
+                return {
+                    label: assetName.length > 20 ? assetName.substring(0, 17) + '...' : assetName,
+                    data: data,
+                    borderColor: colors[i],
+                    backgroundColor: colors[i] + '60',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                };
+            });
+        } else {
+            const sortedCategories = Object.entries(latestSnapshot.categoryTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([cat]) => cat);
+
+            sortedCategories.forEach(cat => {
+                datasets.push({
+                    label: cat,
+                    data: snapshotData.map(s => ({ x: new Date(s.date), y: s.categoryTotals[cat] || 0 })),
+                    borderColor: categoryColors[cat] || '#888',
+                    backgroundColor: (categoryColors[cat] || '#888') + '60',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            });
+        }
+        const categoryMinZoom = evolutionMinMode === 'min';
+        evolutionChart.options.scales.y.stacked = !categoryMinZoom;
+        if (categoryMinZoom) {
+            datasets = datasets.map(ds => ({
+                ...ds,
+                fill: false,
+                pointRadius: 1,
+                pointHoverRadius: 3
+            }));
+        }
+    }
+
+    evolutionChart.data.labels = [];
+    evolutionChart.data.datasets = datasets;
+
+    const allValues = datasets.flatMap(ds => (ds.data || []).map(point => point.y));
+
+    if (evolutionScaleMode === 'logarithmic') {
+        const positiveValues = allValues.filter(v => v > 0);
+        const minPositive = positiveValues.length ? Math.min(...positiveValues) : 1;
+
+        evolutionChart.options.scales.y.type = 'logarithmic';
+        evolutionChart.options.scales.y.min = minPositive * 0.8;
+        evolutionChart.options.scales.y.beginAtZero = false;
+    } else {
+        evolutionChart.options.scales.y.type = 'linear';
+        if (evolutionMinMode === 'min' && allValues.length) {
+            const positiveValues = allValues.filter(v => Number.isFinite(v) && v > 0);
+            const baseValues = positiveValues.length ? positiveValues : allValues.filter(v => Number.isFinite(v));
+            const minValue = baseValues.length ? Math.min(...baseValues) : 0;
+            const padding = Math.abs(minValue) * 0.05;
+            evolutionChart.options.scales.y.min = minValue - padding;
+            evolutionChart.options.scales.y.beginAtZero = false;
+        } else {
+            evolutionChart.options.scales.y.min = undefined;
+            evolutionChart.options.scales.y.beginAtZero = true;
+        }
+    }
+    evolutionChart.update();
+
+    updateRoiEvolutionChart(snapshotData);
+}
+
+function updateRoiEvolutionChart(snapshotData) {
+    if (!roiEvolutionChart) return;
+
+    if (!snapshotData) snapshotData = getSnapshotsForChartRange();
+    const monthlyData = getMonthlySnapshotsForRange();
+
+    if (snapshotData.length === 0) {
+        roiEvolutionChart.data.labels = [];
+        roiEvolutionChart.data.datasets = [];
+        roiEvolutionChart.update();
+        return;
+    }
+
+    const getValues = (snapshot) => {
+        if (selectedCategory) {
+            const catAssets = snapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+            const value = catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0);
+            const invested = catAssets.reduce((sum, a) => sum + a[AssetIndex.PURCHASE_VALUE], 0);
+            return { value, invested };
+        }
+        return { value: snapshot.totalCurrentValue, invested: snapshot.totalPurchaseValue };
+    };
+
+    const percentTickFormatter = (value) => (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+    const currencyTickFormatter = (value) => formatCurrency(value);
+    const percentTooltipLabel = (context) => {
+        const value = context.parsed.y;
+        if (context.dataset.yAxisID === 'y1') {
+            return context.dataset.label + ': ' + formatCurrency(value);
+        }
+        return context.dataset.label + ': ' + (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
+    };
+    const currencyTooltipLabel = (context) => context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+
+    let datasets = [];
+    const isBreakdownMode = currentRoiMode === 'breakdown' || currentRoiMode === 'breakdown-period';
+    const isCashflowMode = currentRoiMode === 'cashflow';
+
+    const roiCumulativeByCategoryInput = document.getElementById('roiCumulativeByCategory');
+    if (roiCumulativeByCategoryInput) {
+        const canUseByCategory = currentRoiMode === 'cumulative' && !selectedCategory;
+        roiCumulativeByCategoryInput.disabled = !canUseByCategory;
+        if (!canUseByCategory && roiCumulativeByCategory) {
+            roiCumulativeByCategory = false;
+        }
+        roiCumulativeByCategoryInput.checked = roiCumulativeByCategory;
+    }
+
+    if (currentRoiMode === 'cumulative') {
+        if (roiCumulativeByCategory && !selectedCategory) {
+            const palette = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+            const latestSnapshot = snapshotData.at(-1);
+            const categories = Object.entries(latestSnapshot?.categoryTotals || {})
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6)
+                .map(([cat]) => cat);
+
+            datasets = categories.map((cat, index) => {
+                const data = snapshotData.map(s => {
+                    const catAssets = (s.assets || []).filter(a => a[AssetIndex.CATEGORY] === cat);
+                    const value = catAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0);
+                    const invested = catAssets.reduce((sum, a) => sum + (a[AssetIndex.PURCHASE_VALUE] || 0), 0);
+                    const roi = invested > 0 ? ((value - invested) / invested) * 100 : null;
+                    return { x: new Date(s.date), y: Number.isFinite(roi) ? roi : null };
+                });
+
+                return {
+                    label: cat,
+                    data,
+                    borderColor: categoryColors[cat] || palette[index % palette.length],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    yAxisID: 'y'
+                };
+            }).filter(ds => ds.data.some(point => Number.isFinite(point.y)));
+
+            delete roiEvolutionChart.options.scales.y1;
+        } else {
+            const roiPercent = snapshotData.map(s => {
+                const { value, invested } = getValues(s);
+                const roi = invested > 0 ? ((value - invested) / invested) * 100 : 0;
+                return { x: new Date(s.date), y: roi };
+            });
+
+            const roiAbsolute = snapshotData.map(s => {
+                const { value, invested } = getValues(s);
+                return { x: new Date(s.date), y: value - invested };
+            });
+
+            datasets = [
+                {
+                    label: 'ROI %',
+                    data: roiPercent,
+                    borderColor: '#0071e3',
+                    backgroundColor: 'rgba(0, 113, 227, 0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    pointHitRadius: 6,
+                    pointBackgroundColor: roiPercent.map(p => p.y >= 0 ? '#32d74b' : '#ff453a'),
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Ganancia €',
+                    data: roiAbsolute,
+                    borderColor: '#bf5af2',
+                    borderDash: [5, 5],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    pointHitRadius: 6,
+                    yAxisID: 'y1'
+                }
+            ];
+
+            roiEvolutionChart.options.scales.y1 = {
+                position: 'right',
+                grid: { display: false },
+                ticks: {
+                    color: '#6e6e73',
+                    font: { size: 11 },
+                    callback: value => formatCurrency(value)
+                },
+                beginAtZero: true
+            };
+        }
+    } else if (currentRoiMode === 'annualized') {
+        const startDate = new Date(snapshotData[0].date);
+
+        const annualizedRoiPercent = snapshotData.map(s => {
+            const { value, invested } = getValues(s);
+            const roi = calculateAnnualizedRoi(value, invested, startDate, new Date(s.date));
+            return { x: new Date(s.date), y: roi };
+        });
+
+        datasets = [
+            {
+                label: 'ROI anualizado %',
+                data: annualizedRoiPercent,
+                borderColor: '#0071e3',
+                backgroundColor: 'rgba(0, 113, 227, 0.15)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                pointHitRadius: 6,
+                pointBackgroundColor: annualizedRoiPercent.map(p => p.y >= 0 ? '#32d74b' : '#ff453a'),
+                yAxisID: 'y'
+            }
+        ];
+
+        delete roiEvolutionChart.options.scales.y1;
+    } else if (isBreakdownMode) {
+        const palette = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+        const isBreakdownPeriod = currentRoiMode === 'breakdown-period';
+        const breakdownSource = isBreakdownPeriod
+            ? (monthlyData.length ? monthlyData : snapshotData)
+            : snapshotData;
+
+        const buildRangeRelativeRoiData = (valueSelector) => {
+            const series = breakdownSource.map(s => valueSelector(s));
+            const firstActiveIndex = series.findIndex(point => (point.value || 0) > 0 || (point.invested || 0) > 0);
+
+            if (firstActiveIndex === -1) {
+                return breakdownSource.map(s => ({ x: new Date(s.date), y: null }));
+            }
+
+            const result = [];
+            let cumulativeFactor = 1;
+
+            for (let i = 0; i < breakdownSource.length; i++) {
+                const x = new Date(breakdownSource[i].date);
+
+                if (i < firstActiveIndex) {
+                    result.push({ x, y: null });
+                    continue;
+                }
+
+                if (i === firstActiveIndex) {
+                    cumulativeFactor = 1;
+                    result.push({ x, y: 0 });
+                    continue;
+                }
+
+                const prev = series[i - 1] || { value: 0, invested: 0 };
+                const curr = series[i] || { value: 0, invested: 0 };
+
+                if ((prev.value || 0) <= 0) {
+                    if ((curr.value || 0) > 0) {
+                        cumulativeFactor = 1;
+                        result.push({ x, y: 0 });
+                    } else {
+                        result.push({ x, y: null });
+                    }
+                    continue;
+                }
+
+                const newInvestment = (curr.invested || 0) - (prev.invested || 0);
+                const actualGain = (curr.value || 0) - (prev.value || 0) - newInvestment;
+                const periodReturn = actualGain / (prev.value || 1);
+
+                if (isBreakdownPeriod) {
+                    result.push({ x, y: Number.isFinite(periodReturn) ? periodReturn * 100 : null });
+                    continue;
+                }
+
+                if (!Number.isFinite(periodReturn) || periodReturn <= -1) {
+                    result.push({ x, y: (cumulativeFactor - 1) * 100 });
+                    continue;
+                }
+
+                cumulativeFactor *= (1 + periodReturn);
+                result.push({ x, y: (cumulativeFactor - 1) * 100 });
+            }
+
+            return result;
+        };
+
+        if (selectedCategory) {
+            const latestSnapshot = snapshotData.at(-1);
+            const topAssets = (latestSnapshot?.assets || [])
+                .filter(a => a[AssetIndex.CATEGORY] === selectedCategory)
+                .sort((a, b) => (b[AssetIndex.CURRENT_VALUE] || 0) - (a[AssetIndex.CURRENT_VALUE] || 0))
+                .slice(0, 6)
+                .map(a => ({
+                    name: a[AssetIndex.NAME] || 'Sin nombre',
+                    category: a[AssetIndex.CATEGORY] || 'Sin categoría'
+                }));
+
+            datasets = topAssets.map((asset, index) => {
+                const data = buildRangeRelativeRoiData((s) => {
+                    return (s.assets || []).reduce((acc, item) => {
+                        const sameName = (item[AssetIndex.NAME] || '') === asset.name;
+                        const sameCategory = (item[AssetIndex.CATEGORY] || '') === asset.category;
+                        if (!sameName || !sameCategory) return acc;
+                        return {
+                            value: acc.value + (item[AssetIndex.CURRENT_VALUE] || 0),
+                            invested: acc.invested + (item[AssetIndex.PURCHASE_VALUE] || 0)
+                        };
+                    }, { value: 0, invested: 0 });
+                });
+
+                return {
+                    label: asset.name.length > 22 ? asset.name.substring(0, 19) + '...' : asset.name,
+                    data,
+                    borderColor: palette[index % palette.length],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    yAxisID: 'y'
+                };
+            }).filter(ds => ds.data.some(point => Number.isFinite(point.y)));
+        } else {
+            const latestSnapshot = snapshotData.at(-1);
+            const categories = Object.entries(latestSnapshot?.categoryTotals || {})
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6)
+                .map(([cat]) => cat);
+
+            datasets = categories.map((cat, index) => {
+                const data = buildRangeRelativeRoiData((s) => {
+                    const catAssets = (s.assets || []).filter(a => a[AssetIndex.CATEGORY] === cat);
+                    return {
+                        value: catAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0),
+                        invested: catAssets.reduce((sum, a) => sum + (a[AssetIndex.PURCHASE_VALUE] || 0), 0)
+                    };
+                });
+
+                return {
+                    label: cat,
+                    data,
+                    borderColor: categoryColors[cat] || palette[index % palette.length],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    yAxisID: 'y'
+                };
+            }).filter(ds => ds.data.some(point => Number.isFinite(point.y)));
+        }
+
+        delete roiEvolutionChart.options.scales.y1;
+    } else if (isCashflowMode) {
+        const periodSource = monthlyData.length ? monthlyData : snapshotData;
+        const flowPoints = periodSource.map((s, i) => {
+            const { value, invested } = getValues(s);
+            if (i === 0) {
+                return { x: new Date(s.date), netInvestment: 0, realGain: 0, cumulativeGain: 0 };
+            }
+
+            const prev = periodSource[i - 1];
+            const { value: prevValue, invested: prevInvested } = getValues(prev);
+            const netInvestment = invested - prevInvested;
+            const realGain = value - prevValue - netInvestment;
+            return { x: new Date(s.date), netInvestment, realGain, cumulativeGain: 0 };
+        });
+
+        let runningGain = 0;
+        flowPoints.forEach((point, index) => {
+            if (index === 0) {
+                point.cumulativeGain = 0;
+                return;
+            }
+            runningGain += point.realGain;
+            point.cumulativeGain = runningGain;
+        });
+
+        datasets = [
+            {
+                type: 'bar',
+                label: 'Aporte neto €',
+                data: flowPoints.map(p => ({ x: p.x, y: p.netInvestment })),
+                backgroundColor: flowPoints.map(p => p.netInvestment >= 0 ? 'rgba(0, 113, 227, 0.45)' : 'rgba(255, 159, 10, 0.45)'),
+                borderColor: flowPoints.map(p => p.netInvestment >= 0 ? '#0071e3' : '#ff9f0a'),
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: 'y'
+            },
+            {
+                type: 'bar',
+                label: 'Ganancia real €',
+                data: flowPoints.map(p => ({ x: p.x, y: p.realGain })),
+                backgroundColor: flowPoints.map(p => p.realGain >= 0 ? 'rgba(50, 215, 75, 0.45)' : 'rgba(255, 69, 58, 0.45)'),
+                borderColor: flowPoints.map(p => p.realGain >= 0 ? '#32d74b' : '#ff453a'),
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: 'y'
+            },
+            {
+                type: 'line',
+                label: 'Ganancia acumulada €',
+                data: flowPoints.map(p => ({ x: p.x, y: p.cumulativeGain })),
+                borderColor: '#bf5af2',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                yAxisID: 'y'
+            }
+        ];
+
+        delete roiEvolutionChart.options.scales.y1;
+    } else {
+        const periodSource = monthlyData.length ? monthlyData : snapshotData;
+
+        const periodRoiPercent = periodSource.map((s, i) => {
+            const { value, invested } = getValues(s);
+            if (i === 0) {
+                const roi = invested > 0 ? ((value - invested) / invested) * 100 : 0;
+                return { x: new Date(s.date), y: roi };
+            }
+            const prev = periodSource[i - 1];
+            const { value: prevValue, invested: prevInvested } = getValues(prev);
+            const newInvestment = invested - prevInvested;
+            const actualGain = value - prevValue - newInvestment;
+            const roi = prevValue > 0 ? (actualGain / prevValue) * 100 : 0;
+            return { x: new Date(s.date), y: roi };
+        });
+
+        const periodRoiAbsolute = periodSource.map((s, i) => {
+            const { value, invested } = getValues(s);
+            if (i === 0) {
+                return { x: new Date(s.date), y: value - invested };
+            }
+            const prev = periodSource[i - 1];
+            const { value: prevValue, invested: prevInvested } = getValues(prev);
+            const newInvestment = invested - prevInvested;
+            return { x: new Date(s.date), y: value - prevValue - newInvestment };
+        });
+
+        datasets = [
+            {
+                label: 'Variación %',
+                data: periodRoiPercent,
+                borderColor: '#0071e3',
+                backgroundColor: periodRoiPercent.map(p => p.y >= 0 ? 'rgba(50, 215, 75, 0.3)' : 'rgba(255, 69, 58, 0.3)'),
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                pointHitRadius: 6,
+                pointBackgroundColor: periodRoiPercent.map(p => p.y >= 0 ? '#32d74b' : '#ff453a'),
+                yAxisID: 'y'
+            },
+            {
+                label: 'Variación €',
+                data: periodRoiAbsolute,
+                borderColor: '#bf5af2',
+                borderDash: [5, 5],
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                pointHitRadius: 6,
+                yAxisID: 'y1'
+            }
+        ];
+
+        roiEvolutionChart.options.scales.y1 = {
+            position: 'right',
+            grid: { display: false },
+            ticks: {
+                color: '#6e6e73',
+                font: { size: 11 },
+                callback: value => formatCurrency(value)
+            },
+            beginAtZero: true
+        };
+    }
+
+    const primaryValues = datasets
+        .filter(ds => ds.yAxisID !== 'y1')
+        .flatMap(ds => (ds.data || []).map(point => point.y))
+        .filter(v => Number.isFinite(v));
+
+    if (isCashflowMode) {
+        roiEvolutionChart.options.scales.y.min = undefined;
+        roiEvolutionChart.options.scales.y.max = undefined;
+        roiEvolutionChart.options.scales.y.beginAtZero = true;
+        roiEvolutionChart.options.scales.y.ticks.callback = currencyTickFormatter;
+        roiEvolutionChart.options.plugins.tooltip.callbacks.label = currencyTooltipLabel;
+        roiEvolutionChart.options.plugins.tooltip.itemSort = (a, b) => Math.abs(b.parsed.y) - Math.abs(a.parsed.y);
+        roiEvolutionChart.options.plugins.tooltip.filter = undefined;
+    } else if (isBreakdownMode && primaryValues.length > 0) {
+        const minVal = Math.min(...primaryValues);
+        const maxVal = Math.max(...primaryValues);
+        const absMax = Math.max(Math.abs(minVal), Math.abs(maxVal));
+        const dynamicPadding = Math.max(absMax * 0.08, 1.5);
+        const isFlat = Math.abs(maxVal - minVal) < 1;
+
+        if (currentRoiMode === 'breakdown-period') {
+            const symmetric = Math.max(absMax + dynamicPadding, 3);
+            roiEvolutionChart.options.scales.y.min = -symmetric;
+            roiEvolutionChart.options.scales.y.max = symmetric;
+        } else if (isFlat) {
+            roiEvolutionChart.options.scales.y.min = minVal - 3;
+            roiEvolutionChart.options.scales.y.max = maxVal + 3;
+        } else {
+            roiEvolutionChart.options.scales.y.min = minVal - dynamicPadding;
+            roiEvolutionChart.options.scales.y.max = maxVal + dynamicPadding;
+        }
+
+        roiEvolutionChart.options.scales.y.beginAtZero = false;
+        roiEvolutionChart.options.scales.y.ticks.callback = percentTickFormatter;
+        roiEvolutionChart.options.plugins.tooltip.callbacks.label = percentTooltipLabel;
+        roiEvolutionChart.options.plugins.tooltip.itemSort = (a, b) => Math.abs(b.parsed.y) - Math.abs(a.parsed.y);
+        roiEvolutionChart.options.plugins.tooltip.filter = (ctx) => Math.abs(ctx.parsed.y) >= 0.05;
+    } else {
+        roiEvolutionChart.options.scales.y.min = undefined;
+        roiEvolutionChart.options.scales.y.max = undefined;
+        roiEvolutionChart.options.scales.y.beginAtZero = true;
+        roiEvolutionChart.options.scales.y.ticks.callback = percentTickFormatter;
+        roiEvolutionChart.options.plugins.tooltip.callbacks.label = percentTooltipLabel;
+        roiEvolutionChart.options.plugins.tooltip.itemSort = undefined;
+        roiEvolutionChart.options.plugins.tooltip.filter = undefined;
+    }
+
+    roiEvolutionChart.data = { labels: [], datasets };
+    roiEvolutionChart.update();
+}
+
+function updateDistributionCharts() {
+    if (!categoryChart || !termChart) return;
+
+    if (snapshots.length === 0) {
+        categoryChart.data = { labels: [], datasets: [] };
+        termChart.data = { labels: [], datasets: [] };
+        categoryChart.update();
+        termChart.update();
+        return;
+    }
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+
+    if (selectedCategory) {
+        const categoryAssets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+        const assetLabels = categoryAssets.map(a => a[AssetIndex.NAME].length > 15 ? a[AssetIndex.NAME].substring(0, 12) + '...' : a[AssetIndex.NAME]);
+        const assetData = categoryAssets.map(a => a[AssetIndex.CURRENT_VALUE]);
+        const assetColors = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+
+        categoryChart.data = {
+            labels: assetLabels,
+            datasets: [{
+                data: assetData,
+                backgroundColor: assetColors.slice(0, assetData.length),
+                borderColor: 'transparent',
+                hoverOffset: 10
+            }]
+        };
+
+        categoryChart.options.onClick = null;
+    } else {
+        const categoryLabels = Object.keys(latestSnapshot.categoryTotals);
+        const categoryData = Object.values(latestSnapshot.categoryTotals);
+        const catColors = categoryLabels.map(cat => (categoryColors && categoryColors[cat]) || '#888');
+
+        categoryChart.data = {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryData,
+                backgroundColor: catColors,
+                borderColor: 'transparent',
+                hoverOffset: 10
+            }]
+        };
+
+        categoryChart.options.onClick = (evt, elements) => {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                const category = categoryLabels[index];
+                selectCategory(category);
+            }
+        };
+    }
+    categoryChart.update();
+
+    const termLabels = Object.keys(latestSnapshot.termTotals);
+    const termData = Object.values(latestSnapshot.termTotals);
+    const tColors = termLabels.map(term => termColors[term] || '#888');
+
+    termChart.data = {
+        labels: termLabels,
+        datasets: [{
+            data: termData,
+            backgroundColor: tColors,
+            borderColor: 'transparent',
+            hoverOffset: 10
+        }]
+    };
+    termChart.update();
+}
+
+function getPreviousMonthSnapshot(currentSnapshot) {
+    return getPreviousMonthSnapshotUtil(snapshots, currentSnapshot);
+}
+
+function getSnapshotMonthsAgo(currentSnapshot, monthsBack) {
+    return getSnapshotMonthsAgoUtil(snapshots, currentSnapshot, monthsBack);
+}
+
+function getYearStartSnapshot(currentSnapshot) {
+    return getYearStartSnapshotUtil(snapshots, currentSnapshot);
+}
+
+function updateCompositionList() {
+    const container = document.getElementById('compositionList');
+    const title = document.getElementById('diversificationTitle');
+    if (!container || snapshots.length === 0) return;
+
+    const latestSnapshot = snapshots[snapshots.length - 1];
+    const prevSnapshot = getSnapshotMonthsAgo(latestSnapshot, compositionCompareMonths);
+    const colors = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a', '#5e5ce6', '#ac8e68'];
+
+    const normalizeKey = (value) => (value || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+
+    let items = [];
+
+    if (selectedCategory) {
+        title.textContent = 'Composición de ' + selectedCategory;
+        const catAssets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+        const catTotal = catAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0) || 1;
+        const assetTargets = categoryTargets[selectedCategory]?.assets || {};
+
+        let prevCatTotal = catTotal;
+        const prevAssetMap = new Map();
+        if (prevSnapshot) {
+            const prevCatAssets = prevSnapshot.assets.filter(a => normalizeKey(a[AssetIndex.CATEGORY]) === normalizeKey(selectedCategory));
+            prevCatTotal = prevCatAssets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0) || 1;
+            prevCatAssets.forEach(a => {
+                const key = normalizeKey(a[AssetIndex.NAME]);
+                if (!prevAssetMap.has(key)) {
+                    prevAssetMap.set(key, a);
+                }
+            });
+        }
+
+        catAssets.sort((a, b) => b[AssetIndex.CURRENT_VALUE] - a[AssetIndex.CURRENT_VALUE]);
+
+        items = catAssets.slice(0, 8).map((asset, i) => {
+            const percent = (asset[AssetIndex.CURRENT_VALUE] / catTotal) * 100;
+            let prevPercent = 0;
+            if (prevSnapshot) {
+                const prevAsset = prevAssetMap.get(normalizeKey(asset[AssetIndex.NAME]));
+                if (prevAsset) {
+                    prevPercent = (prevAsset[AssetIndex.CURRENT_VALUE] / prevCatTotal) * 100;
+                }
+            }
+            const change = prevSnapshot ? percent - prevPercent : 0;
+            const targetPercent = assetTargets[asset[AssetIndex.NAME]]?.target;
+            return {
+                label: asset[AssetIndex.NAME].length > 18 ? asset[AssetIndex.NAME].substring(0, 15) + '...' : asset[AssetIndex.NAME],
+                fullLabel: asset[AssetIndex.NAME],
+                percent,
+                prevPercent,
+                change,
+                color: colors[i % colors.length],
+                targetPercent
+            };
+        });
+    } else {
+        title.textContent = 'Composición del Portfolio';
+        const total = latestSnapshot.totalCurrentValue || 1;
+        const prevTotal = prevSnapshot ? prevSnapshot.totalCurrentValue || 1 : total;
+
+        const categories = Object.keys(latestSnapshot.categoryTotals).sort((a, b) =>
+            (latestSnapshot.categoryTotals[b] || 0) - (latestSnapshot.categoryTotals[a] || 0)
+        );
+
+        items = categories.map(cat => {
+            const percent = ((latestSnapshot.categoryTotals[cat] || 0) / total) * 100;
+            let prevPercent = 0;
+            if (prevSnapshot && prevSnapshot.categoryTotals) {
+                prevPercent = ((prevSnapshot.categoryTotals[cat] || 0) / prevTotal) * 100;
+            }
+            const change = prevSnapshot ? percent - prevPercent : 0;
+            return {
+                label: cat,
+                percent,
+                prevPercent,
+                change,
+                color: categoryColors && categoryColors[cat] ? categoryColors[cat] : '#888',
+                targetPercent: categoryTargets[cat]?.target
+            };
+        });
+    }
+
+    const hasChange = items.some(item => Math.abs(item.change) > 0.01);
+
+    container.innerHTML = items.map(item => {
+        const changeClass = item.change > 0.05 ? 'positive' : item.change < -0.05 ? 'negative' : 'neutral';
+        const arrow = item.change > 0.05 ? '↑' : item.change < -0.05 ? '↓' : '';
+        const changeText = !hasChange ? '—' : (Math.abs(item.change) < 0.05 ? '=' : `${item.change > 0 ? '+' : ''}${item.change.toFixed(1)}%`);
+        const percentText = `${item.percent.toFixed(1)}%`;
+        const isSmallPercent = item.percent < 8;
+        const target = Number.isFinite(item.targetPercent) ? item.targetPercent : null;
+        const targetMarker = target !== null
+            ? `<span class="composition-target-marker" style="left: ${Math.min(Math.max(target, 0), 100)}%"></span>`
+            : '';
+        return `
+            <div class="composition-item">
+                <span class="composition-label">${item.label}</span>
+                <div class="composition-bar-wrapper">
+                    <div class="composition-bar composition-bar-previous" style="width: ${item.prevPercent ? Math.max(item.prevPercent, 2) : 0}%; background: ${item.color};"></div>
+                    <div class="composition-bar composition-bar-current" style="width: ${Math.max(item.percent, 2)}%; background: ${item.color};">
+                        ${isSmallPercent ? '' : `<span class="composition-percent">${percentText}</span>`}
+                    </div>
+                    ${isSmallPercent ? `<span class="composition-percent-floating" style="left: min(calc(${Math.max(item.percent, 2)}% + 8px), calc(100% - 38px));">${percentText}</span>` : ''}
+                    ${item.prevPercent ? `<span class="composition-bar-marker" style="left: ${Math.min(item.prevPercent, 100)}%"></span>` : ''}
+                    ${targetMarker}
+                </div>
+                <span class="composition-change ${changeClass}">
+                    <span>${arrow} ${changeText}</span>
+                </span>
+            </div>
+        `;
+    }).join('');
+}
+
+function showModal(message, onConfirm) {
+    const modal = document.getElementById('modal');
+    const modalBox = modal.querySelector('.modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalIcon = document.getElementById('modalIcon');
+    const cancelBtn = document.getElementById('modalCancel');
+    const confirmBtn = document.getElementById('modalConfirm');
+
+    if (modalBox) modalBox.classList.remove('detailed');
+    if (modalTitle) modalTitle.textContent = 'Confirmar';
+    if (modalIcon) modalIcon.textContent = '✓';
+    if (modalMessage) modalMessage.textContent = message;
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+    if (confirmBtn) confirmBtn.textContent = 'Confirmar';
+
+    modal.classList.add('show');
+
+    document.getElementById('modalConfirm').onclick = () => {
+        hideModal();
+        if (onConfirm) onConfirm();
+    };
+}
+
+function showHoldingsChangesIfAny() {
+    const message = localStorage.getItem(HOLDINGS_CHANGES_KEY);
+    if (!message) return;
+    localStorage.removeItem(HOLDINGS_CHANGES_KEY);
+    const modal = document.getElementById('modal');
+    const modalBox = modal.querySelector('.modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalIcon = document.getElementById('modalIcon');
+    const cancelBtn = document.getElementById('modalCancel');
+    const confirmBtn = document.getElementById('modalConfirm');
+
+    if (modalBox) modalBox.classList.add('detailed');
+    if (modalTitle) modalTitle.textContent = 'Cambios guardados';
+    if (modalIcon) modalIcon.textContent = '✓';
+    if (modalMessage) modalMessage.textContent = message;
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (confirmBtn) confirmBtn.textContent = 'Cerrar';
+
+    modal.classList.add('show');
+    confirmBtn.onclick = () => hideModal();
+}
+
+function hideModal() {
+    document.getElementById('modal').classList.remove('show');
+}
+
+document.addEventListener('DOMContentLoaded', init);

@@ -134,13 +134,16 @@
                 <div class="card chart-card">
                     <div class="card-header">
                         <h2>Rentabilidad</h2>
-                        <div class="segmented-control">
-                            <button class="segment-roi active" data-roi="cumulative">Acumulada</button>
-                            <button class="segment-roi" data-roi="period">Mensual %</button>
-                            <button class="segment-roi" data-roi="annualized">Anualizada</button>
-                            <button class="segment-roi" data-roi="breakdown">Desglose</button>
-                            <button class="segment-roi" data-roi="breakdown-period">Desglose mensual</button>
-                            <button class="segment-roi" data-roi="cashflow">Flujos</button>
+                        <div class="header-controls">
+                            <div class="segmented-control">
+                                <button class="segment-roi active" data-roi="cumulative">Acumulada</button>
+                                <button class="segment-roi" data-roi="annualized">Anualizada</button>
+                                <button class="segment-roi" data-roi="cashflow">Flujos</button>
+                            </div>
+                            <label class="scale-toggle" for="roiCumulativeByCategory">
+                                <input type="checkbox" id="roiCumulativeByCategory">
+                                <span>Por categoría</span>
+                            </label>
                         </div>
                     </div>
                     <div class="chart-wrapper">
@@ -254,6 +257,13 @@
                             <label class="budget-input">
                                 <span>Presupuesto mensual</span>
                                 <input type="number" id="monthlyBudget" min="0" step="1" value="0">
+                            </label>
+                            <label class="hardness-input">
+                                <span>Dureza ajuste</span>
+                                <div class="hardness-input-control">
+                                    <input type="range" id="adjustmentHardness" min="0" max="100" step="5" value="50">
+                                    <span id="adjustmentHardnessValue">50%</span>
+                                </div>
                             </label>
                             <button class="btn secondary" id="autoBalanceBtn">Auto-balancear</button>
                         </div>
