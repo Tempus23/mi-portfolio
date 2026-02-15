@@ -149,51 +149,6 @@
                 </div>
             </section>
 
-            <!-- Distribution Row -->
-            <section class="distribution-row">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Distribución</h2>
-                    </div>
-                    <div class="distribution-charts">
-                        <div class="distribution-item">
-                            <span class="distribution-label">Por Categoría</span>
-                            <div class="chart-wrapper-sm">
-                                <canvas id="categoryChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="distribution-item">
-                            <span class="distribution-label">Por Plazo</span>
-                            <div class="chart-wrapper-sm">
-                                <canvas id="termChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h2 id="categoryRoiTitle">Rendimiento por Categoría</h2>
-                        <div class="segmented-control" id="profitabilityModeControl" aria-label="Vista de rentabilidad">
-                            <button class="segment-profitability active" data-profitability="category">Categorías</button>
-                            <button class="segment-profitability" data-profitability="asset">Activos</button>
-                        </div>
-                    </div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead id="categoryRoiHead">
-                                <tr>
-                                    <th>Categoría</th>
-                                    <th>Invertido</th>
-                                    <th>Valor</th>
-                                    <th>ROI</th>
-                                </tr>
-                            </thead>
-                            <tbody id="categoryRoiBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
             <!-- Analytics -->
             <section class="analytics-section">
                 <div class="card">
@@ -271,6 +226,9 @@
                     <div class="opportunities-section">
                         <div class="opportunities-header">
                             <h3>Oportunidades recientes</h3>
+                            <button class="toggle-section-btn" id="toggleOpportunitiesBtn" aria-expanded="false" aria-controls="opportunitiesContent">Mostrar</button>
+                        </div>
+                        <div class="opportunities-content collapsed" id="opportunitiesContent">
                             <label class="opportunities-compare">
                                 <span>Comparar con</span>
                                 <select id="opportunityRange">
@@ -279,8 +237,8 @@
                                     <option value="6">6 meses</option>
                                 </select>
                             </label>
+                            <div class="opportunity-list" id="opportunityList"></div>
                         </div>
-                        <div class="opportunity-list" id="opportunityList"></div>
                     </div>
                 </div>
             </section>
@@ -290,6 +248,9 @@
                     <div class="card-header">
                         <h2 id="targetsSectionTitle">Objetivos por Categoría</h2>
                         <div class="targets-controls">
+                            <button class="btn secondary" id="toggleTargetsEditBtn" type="button" aria-label="Editar objetivos" title="Editar objetivos">✎</button>
+                            <button class="btn primary" id="saveTargetsBtn" type="button" style="display:none;">Guardar</button>
+                            <button class="btn secondary" id="cancelTargetsEditBtn" type="button" style="display:none;">Cancelar</button>
                             <label class="budget-input">
                                 <span>Presupuesto mensual</span>
                                 <input type="number" id="monthlyBudget" min="0" step="1" value="0">
@@ -304,9 +265,8 @@
                                     <th>Categoría</th>
                                     <th>Actual %</th>
                                     <th>Objetivo %</th>
-                                    <th>Diferencia</th>
                                     <th>Aporte mensual</th>
-                                    <th>Impacto</th>
+                                    <th>Ajuste sugerido</th>
                                 </tr>
                             </thead>
                             <tbody id="targetsBody"></tbody>

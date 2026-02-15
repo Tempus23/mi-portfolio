@@ -482,7 +482,7 @@ body {
 }
 
 .chart-wrapper-sm {
-    height: 200px;
+    height: 280px;
     position: relative;
 }
 
@@ -508,7 +508,6 @@ body {
 
 .segment.active,
 .segment-roi.active,
-.segment-profitability.active,
 .segment-holdings-roi.active {
     background: rgba(255, 255, 255, 0.12);
     color: var(--text);
@@ -516,13 +515,11 @@ body {
 
 .segment:hover:not(.active),
 .segment-roi:hover:not(.active),
-.segment-profitability:hover:not(.active),
 .segment-holdings-roi:hover:not(.active) {
     color: var(--text);
 }
 
 .segment-roi,
-.segment-profitability,
 .segment-holdings-roi {
     padding: 6px 12px;
     background: transparent;
@@ -556,14 +553,14 @@ body {
 
 .distribution-row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 16px;
 }
 
 .distribution-charts {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    gap: 18px;
 }
 
 .distribution-item {
@@ -803,6 +800,34 @@ body {
     gap: 12px;
 }
 
+.targets-section.is-readonly .data-table input.table-input,
+.targets-section.is-readonly .budget-input input {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+.targets-section.is-readonly .target-hint {
+    color: rgba(245, 245, 247, 0.45);
+}
+
+.targets-section.is-readonly .allocation-compare {
+    opacity: 0.82;
+}
+
+.targets-section.is-readonly #toggleTargetsEditBtn {
+    border-color: rgba(0, 113, 227, 0.45);
+    color: var(--blue);
+    background: rgba(0, 113, 227, 0.12);
+}
+
+.targets-section.is-editing #toggleTargetsEditBtn {
+    border-color: rgba(255, 159, 10, 0.5);
+    color: var(--orange);
+    background: rgba(255, 159, 10, 0.12);
+}
+
 .budget-input {
     display: inline-flex;
     align-items: center;
@@ -866,6 +891,32 @@ body {
     font-size: 15px;
     font-weight: 500;
     color: var(--text-secondary);
+}
+
+.toggle-section-btn {
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-section-btn:hover {
+    color: var(--text);
+    border-color: var(--border-focus);
+}
+
+.opportunities-content {
+    display: grid;
+    gap: 10px;
+}
+
+.opportunities-content.collapsed {
+    display: none;
 }
 
 .opportunities-compare {
@@ -1055,12 +1106,13 @@ body {
 
 .composition-target-marker {
     position: absolute;
-    top: 3px;
-    bottom: 3px;
-    width: 1px;
-    background: rgba(255, 159, 10, 0.5);
-    transform: translateX(-0.5px);
-    z-index: 2;
+    top: 2px;
+    bottom: 2px;
+    width: 2px;
+    background: rgba(255, 159, 10, 0.95);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+    transform: translateX(-1px);
+    z-index: 6;
 }
 
 
@@ -1071,6 +1123,18 @@ body {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     position: relative;
     z-index: 3;
+}
+
+.composition-percent-floating {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-shadow: none;
+    z-index: 4;
+    pointer-events: none;
 }
 
 .composition-change {
@@ -1456,6 +1520,59 @@ body {
     color: var(--text-secondary);
 }
 
+.allocation-compare {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+}
+
+.allocation-range {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.allocation-range-mid {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateX(-0.5px);
+}
+
+.allocation-range-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 999px;
+}
+
+.allocation-range-fill.positive {
+    background: rgba(50, 215, 75, 0.7);
+}
+
+.allocation-range-fill.negative {
+    background: rgba(255, 69, 58, 0.7);
+}
+
+.allocation-range-fill.neutral {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.allocation-diff {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.allocation-diff.neutral {
+    color: var(--text-secondary);
+}
+
 .btn {
     display: inline-flex;
     align-items: center;
@@ -1531,7 +1648,6 @@ button:focus-visible,
 .range-btn:focus-visible,
 .segment:focus-visible,
 .segment-roi:focus-visible,
-.segment-profitability:focus-visible,
 .segment-holdings-roi:focus-visible,
 .action-btn:focus-visible,
 .category-selector:focus-visible,

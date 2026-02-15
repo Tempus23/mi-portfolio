@@ -26,8 +26,12 @@ let categoryTargets = {};
 let targetsMeta = { monthlyBudget: 0 };
 let compositionCompareMonths = 1;
 let opportunityRangeMonths = 1;
-let profitabilityViewMode = 'category';
-const PROFITABILITY_VIEW_KEY = 'portfolio_profitability_view';
+let targetsEditMode = false;
+let targetsDraft = null;
+let targetsMetaDraft = null;
+
+const TARGET_EDIT_LOCK_MONTHS = 3;
+const TARGET_EDIT_WINDOW_HOURS = 24;
 
 const categoryColors = CATEGORY_COLORS;
 const termColors = TERM_COLORS;
@@ -43,7 +47,6 @@ function init() {
     loadTargets();
     loadTargetsMeta();
     loadSelectedCategory();
-    loadProfitabilityViewMode();
     updateCurrentDate();
     setupEventListeners();
     initCharts();
@@ -219,16 +222,6 @@ function setupEventListeners() {
         });
     });
 
-    document.querySelectorAll('.segment-profitability').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.segment-profitability').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            profitabilityViewMode = e.target.dataset.profitability === 'asset' ? 'asset' : 'category';
-            persistProfitabilityViewMode();
-            updateCategoryRoiTable();
-        });
-    });
-
     document.querySelectorAll('.range-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
@@ -298,9 +291,12 @@ function setupEventListeners() {
     if (monthlyBudgetInput) {
         monthlyBudgetInput.value = targetsMeta.monthlyBudget || 0;
         monthlyBudgetInput.addEventListener('input', (e) => {
+            if (!targetsEditMode || !targetsMetaDraft) {
+                updateTargetsTable();
+                return;
+            }
             const value = Number.parseFloat(e.target.value) || 0;
-            targetsMeta.monthlyBudget = Math.max(0, value);
-            saveTargetsMeta();
+            targetsMetaDraft.monthlyBudget = Math.max(0, value);
             updateTargetsTable();
         });
     }
@@ -308,8 +304,33 @@ function setupEventListeners() {
     const autoBalanceBtn = document.getElementById('autoBalanceBtn');
     if (autoBalanceBtn) {
         autoBalanceBtn.addEventListener('click', () => {
+            if (!targetsEditMode) {
+                showToast('Pulsa el lápiz para editar objetivos', 'error');
+                return;
+            }
             autoBalanceTargets();
         });
+    }
+
+    const toggleTargetsEditBtn = document.getElementById('toggleTargetsEditBtn');
+    if (toggleTargetsEditBtn) {
+        toggleTargetsEditBtn.addEventListener('click', () => {
+            if (targetsEditMode) {
+                cancelTargetsEditMode();
+            } else {
+                enterTargetsEditMode();
+            }
+        });
+    }
+
+    const saveTargetsBtn = document.getElementById('saveTargetsBtn');
+    if (saveTargetsBtn) {
+        saveTargetsBtn.addEventListener('click', saveTargetsEditMode);
+    }
+
+    const cancelTargetsEditBtn = document.getElementById('cancelTargetsEditBtn');
+    if (cancelTargetsEditBtn) {
+        cancelTargetsEditBtn.addEventListener('click', cancelTargetsEditMode);
     }
 
     const compositionCompare = document.getElementById('compositionCompare');
@@ -329,6 +350,16 @@ function setupEventListeners() {
             const value = Number.parseInt(e.target.value, 10);
             opportunityRangeMonths = Number.isFinite(value) ? value : 1;
             updateOpportunities();
+        });
+    }
+
+    const toggleOpportunitiesBtn = document.getElementById('toggleOpportunitiesBtn');
+    const opportunitiesContent = document.getElementById('opportunitiesContent');
+    if (toggleOpportunitiesBtn && opportunitiesContent) {
+        toggleOpportunitiesBtn.addEventListener('click', () => {
+            const isCollapsed = opportunitiesContent.classList.toggle('collapsed');
+            toggleOpportunitiesBtn.setAttribute('aria-expanded', String(!isCollapsed));
+            toggleOpportunitiesBtn.textContent = isCollapsed ? 'Mostrar' : 'Ocultar';
         });
     }
 
@@ -356,6 +387,151 @@ function loadTargetsMeta() {
 function saveTargetsMeta() {
     localStorage.setItem(TARGETS_META_KEY, JSON.stringify(targetsMeta));
     syncPush(null);
+}
+
+function cloneDeep(value) {
+    return JSON.parse(JSON.stringify(value || {}));
+}
+
+function getWorkingTargets() {
+    return targetsEditMode && targetsDraft ? targetsDraft : categoryTargets;
+}
+
+function getWorkingTargetsMeta() {
+    return targetsEditMode && targetsMetaDraft ? targetsMetaDraft : targetsMeta;
+}
+
+function normalizeObjectives(targetsData = {}) {
+    const normalized = {};
+    Object.keys(targetsData).sort((a, b) => a.localeCompare(b, 'es')).forEach(cat => {
+        const categoryData = targetsData[cat] || {};
+        const assets = categoryData.assets || {};
+        const normalizedAssets = {};
+
+        Object.keys(assets).sort((a, b) => a.localeCompare(b, 'es')).forEach(assetName => {
+            const target = Number(assets[assetName]?.target);
+            normalizedAssets[assetName] = Number.isFinite(target) ? target : 0;
+        });
+
+        const categoryTarget = Number(categoryData.target);
+        normalized[cat] = {
+            target: Number.isFinite(categoryTarget) ? categoryTarget : 0,
+            assets: normalizedAssets
+        };
+    });
+    return normalized;
+}
+
+function hasObjectiveChanges(originalTargets, draftTargets) {
+    const originalSignature = JSON.stringify(normalizeObjectives(originalTargets));
+    const draftSignature = JSON.stringify(normalizeObjectives(draftTargets));
+    return originalSignature !== draftSignature;
+}
+
+function enterTargetsEditMode() {
+    targetsEditMode = true;
+    targetsDraft = cloneDeep(categoryTargets);
+    targetsMetaDraft = cloneDeep(targetsMeta);
+    updateTargetsTable();
+}
+
+function cancelTargetsEditMode() {
+    targetsEditMode = false;
+    targetsDraft = null;
+    targetsMetaDraft = null;
+    updateTargetsTable();
+}
+
+function saveTargetsEditMode() {
+    if (!targetsEditMode || !targetsDraft || !targetsMetaDraft) return;
+
+    const objectiveChanged = hasObjectiveChanges(categoryTargets, targetsDraft);
+    const targetEditPolicy = getTargetEditPolicy();
+
+    if (objectiveChanged && !targetEditPolicy.canEdit) {
+        showToast(targetEditPolicy.lockMessage, 'error');
+        updateTargetsTable();
+        return;
+    }
+
+    if (objectiveChanged && targetEditPolicy.shouldStartNewWindow) {
+        targetsMetaDraft.lastObjectiveUpdateAt = new Date().toISOString();
+    }
+
+    categoryTargets = cloneDeep(targetsDraft);
+    targetsMeta = cloneDeep(targetsMetaDraft);
+    saveTargets();
+    saveTargetsMeta();
+
+    targetsEditMode = false;
+    targetsDraft = null;
+    targetsMetaDraft = null;
+
+    updateTargetsTable();
+    showToast('Cambios de objetivos guardados', 'success');
+}
+
+function addMonths(date, months) {
+    const value = new Date(date);
+    value.setMonth(value.getMonth() + months);
+    return value;
+}
+
+function getTargetEditPolicy(now = new Date()) {
+    const lastUpdateRaw = targetsMeta.lastObjectiveUpdateAt;
+    if (!lastUpdateRaw) {
+        return {
+            canEdit: true,
+            lockMessage: 'Objetivos editables',
+            shouldStartNewWindow: true,
+            nextUnlockDate: null
+        };
+    }
+
+    const lastUpdate = new Date(lastUpdateRaw);
+    if (!Number.isFinite(lastUpdate.getTime())) {
+        return {
+            canEdit: true,
+            lockMessage: 'Objetivos editables',
+            shouldStartNewWindow: true,
+            nextUnlockDate: null
+        };
+    }
+
+    const windowEnd = new Date(lastUpdate.getTime() + TARGET_EDIT_WINDOW_HOURS * 60 * 60 * 1000);
+    const nextUnlockDate = addMonths(lastUpdate, TARGET_EDIT_LOCK_MONTHS);
+    const inCurrentWindow = now <= windowEnd;
+    const unlockedByTime = now >= nextUnlockDate;
+
+    if (inCurrentWindow) {
+        return {
+            canEdit: true,
+            lockMessage: `Ventana de edición abierta hasta ${windowEnd.toLocaleDateString('es-ES')}`,
+            shouldStartNewWindow: false,
+            nextUnlockDate
+        };
+    }
+
+    if (unlockedByTime) {
+        return {
+            canEdit: true,
+            lockMessage: 'Objetivos editables',
+            shouldStartNewWindow: true,
+            nextUnlockDate
+        };
+    }
+
+    return {
+        canEdit: false,
+        lockMessage: `Objetivos bloqueados hasta ${nextUnlockDate.toLocaleDateString('es-ES')}`,
+        shouldStartNewWindow: false,
+        nextUnlockDate
+    };
+}
+
+function startTargetEditWindow() {
+    targetsMeta.lastObjectiveUpdateAt = new Date().toISOString();
+    saveTargetsMeta();
 }
 
 function exportToJson() {
@@ -595,21 +771,6 @@ function loadSelectedCategory() {
     selectedCategory = categories.includes(stored) ? stored : null;
 }
 
-function loadProfitabilityViewMode() {
-    const stored = localStorage.getItem(PROFITABILITY_VIEW_KEY);
-    profitabilityViewMode = stored === 'asset' ? 'asset' : 'category';
-}
-
-function persistProfitabilityViewMode() {
-    localStorage.setItem(PROFITABILITY_VIEW_KEY, profitabilityViewMode);
-}
-
-function updateProfitabilityModeControls() {
-    document.querySelectorAll('.segment-profitability').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.profitability === profitabilityViewMode);
-    });
-}
-
 function persistSelectedCategory() {
     if (selectedCategory) {
         localStorage.setItem(SELECTED_CATEGORY_KEY, selectedCategory);
@@ -761,7 +922,6 @@ function saveEditedSnapshot() {
 
 function updateUI() {
     populateCategorySelector();
-    updateProfitabilityModeControls();
     updateSummary();
     updateHistoryTable();
     updateEvolutionChart();
@@ -780,7 +940,7 @@ function populateCategorySelector() {
 
     if (snapshots.length > 0) {
         const latestSnapshot = snapshots[snapshots.length - 1];
-        const categories = Object.keys(latestSnapshot.categoryTotals).sort();
+        const categories = Object.keys(latestSnapshot.categoryTotals).sort((a, b) => a.localeCompare(b, 'es'));
         categories.forEach(cat => {
             const selected = cat === currentValue ? 'selected' : '';
             options += `<option value="${cat}" ${selected}>${cat}</option>`;
@@ -1114,6 +1274,7 @@ function updateCategoryRoiTable() {
     const tbody = document.getElementById('categoryRoiBody');
     const title = document.getElementById('categoryRoiTitle');
     const thead = document.getElementById('categoryRoiHead');
+    if (!tbody || !title || !thead) return;
     const latestSnapshot = snapshots[snapshots.length - 1];
 
     if (!latestSnapshot) {
@@ -1121,82 +1282,13 @@ function updateCategoryRoiTable() {
         return;
     }
 
-    if (profitabilityViewMode === 'asset') {
-        const scopedAssets = selectedCategory
-            ? latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory)
-            : latestSnapshot.assets;
-
-        title.textContent = selectedCategory
-            ? `Rentabilidad por Activo · ${selectedCategory}`
-            : 'Rentabilidad por Activo';
-
-        thead.innerHTML = selectedCategory
-            ? '<tr><th>Activo</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>'
-            : '<tr><th>Activo</th><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>';
-
-        const groupedAssets = new Map();
-        const scopeTotal = scopedAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0) || 1;
-
-        scopedAssets.forEach(asset => {
-            const name = asset[AssetIndex.NAME] || 'Sin nombre';
-            const category = asset[AssetIndex.CATEGORY] || 'Sin categoría';
-            const key = `${name}::${category}`;
-            const invested = asset[AssetIndex.PURCHASE_VALUE] || 0;
-            const current = asset[AssetIndex.CURRENT_VALUE] || 0;
-
-            if (!groupedAssets.has(key)) {
-                groupedAssets.set(key, { name, category, invested: 0, current: 0 });
-            }
-
-            const row = groupedAssets.get(key);
-            row.invested += invested;
-            row.current += current;
-        });
-
-        const assetData = Array.from(groupedAssets.values()).map(row => {
-            const roi = row.invested > 0 ? ((row.current - row.invested) / row.invested) * 100 : 0;
-            const allocation = (row.current / scopeTotal) * 100;
-            return { ...row, roi, allocation };
-        });
-
-        assetData.sort((a, b) => {
-            if (b.roi !== a.roi) return b.roi - a.roi;
-            return b.current - a.current;
-        });
-
-        tbody.innerHTML = assetData.map(({ name, category, invested, current, roi, allocation }) => {
-            const roiClass = roi >= 0 ? 'positive' : 'negative';
-            const categoryClass = (category || 'Sin categoría').replaceAll(/\s+/g, '');
-            if (selectedCategory) {
-                return `
-                    <tr>
-                        <td><strong>${name.length > 28 ? name.substring(0, 25) + '...' : name}</strong></td>
-                        <td>${formatCurrency(invested)}</td>
-                        <td>${formatCurrency(current)}</td>
-                        <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
-                        <td class="metric-muted">${allocation.toFixed(1)}%</td>
-                    </tr>
-                `;
-            }
-            return `
-                <tr>
-                    <td><strong>${name.length > 26 ? name.substring(0, 23) + '...' : name}</strong></td>
-                    <td><span class="category-badge category-${categoryClass}">${category}</span></td>
-                    <td>${formatCurrency(invested)}</td>
-                    <td>${formatCurrency(current)}</td>
-                    <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
-                    <td class="metric-muted">${allocation.toFixed(1)}%</td>
-                </tr>
-            `;
-        }).join('');
-        return;
-    }
-
-    title.textContent = 'Rentabilidad por Categoría';
+    title.textContent = selectedCategory ? `Rentabilidad por Categoría · ${selectedCategory}` : 'Rentabilidad por Categoría';
     thead.innerHTML = '<tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Volatilidad</th><th>Drawdown</th></tr>';
 
     const monthlySnapshots = getMonthlySnapshotsForRange();
-    const categories = Object.keys(latestSnapshot.categoryTotals || {});
+    const categories = selectedCategory
+        ? [selectedCategory]
+        : Object.keys(latestSnapshot.categoryTotals || {});
     const categoryData = categories.map(cat => {
         const invested = latestSnapshot.categoryInvested[cat] || 0;
         const current = latestSnapshot.categoryTotals[cat] || 0;
@@ -1237,22 +1329,54 @@ function updateCategoryRoiTable() {
 }
 
 function updateTargetsTable() {
+    const targetsSection = document.querySelector('.targets-section');
     const tbody = document.getElementById('targetsBody');
     const monthlyTotalEl = document.getElementById('monthlyTotal');
     const targetsTotalIndicator = document.getElementById('targetsTotalIndicator');
     const targetsHead = document.querySelector('.targets-section thead');
     const targetsSectionTitle = document.getElementById('targetsSectionTitle');
+    const monthlyBudgetInput = document.getElementById('monthlyBudget');
+    const toggleTargetsEditBtn = document.getElementById('toggleTargetsEditBtn');
+    const saveTargetsBtn = document.getElementById('saveTargetsBtn');
+    const cancelTargetsEditBtn = document.getElementById('cancelTargetsEditBtn');
+    const targetEditPolicy = getTargetEditPolicy();
+    const workingTargets = getWorkingTargets();
+    const workingMeta = getWorkingTargetsMeta();
     if (!tbody || !monthlyTotalEl) return;
+
+    if (targetsSection) {
+        targetsSection.classList.toggle('is-readonly', !targetsEditMode);
+        targetsSection.classList.toggle('is-editing', targetsEditMode);
+    }
+
+    if (monthlyBudgetInput) {
+        monthlyBudgetInput.value = workingMeta.monthlyBudget || 0;
+        monthlyBudgetInput.disabled = !targetsEditMode;
+    }
+
+    if (toggleTargetsEditBtn) {
+        toggleTargetsEditBtn.textContent = targetsEditMode ? '✕' : '✎';
+        toggleTargetsEditBtn.setAttribute('aria-label', targetsEditMode ? 'Cancelar edición de objetivos' : 'Editar objetivos');
+        toggleTargetsEditBtn.title = targetsEditMode ? 'Cancelar edición' : 'Editar objetivos';
+    }
+
+    if (saveTargetsBtn) {
+        saveTargetsBtn.style.display = targetsEditMode ? 'inline-flex' : 'none';
+    }
+
+    if (cancelTargetsEditBtn) {
+        cancelTargetsEditBtn.style.display = targetsEditMode ? 'inline-flex' : 'none';
+    }
 
     if (snapshots.length === 0) {
         if (targetsSectionTitle) targetsSectionTitle.textContent = 'Objetivos por Categoría';
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Sin datos</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Sin datos</td></tr>';
         monthlyTotalEl.textContent = formatCurrency(0);
         if (targetsHead) {
-            targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th><th>Aporte mensual</th><th>Impacto</th></tr>';
+            targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Aporte mensual</th><th>Ajuste sugerido</th></tr>';
         }
         if (targetsTotalIndicator) {
-            targetsTotalIndicator.textContent = 'Objetivos: 0%';
+            targetsTotalIndicator.textContent = `Objetivos: 0% · ${targetEditPolicy.lockMessage}`;
             targetsTotalIndicator.className = 'targets-indicator warn';
         }
         return;
@@ -1265,7 +1389,7 @@ function updateTargetsTable() {
         if (targetsSectionTitle) targetsSectionTitle.textContent = `Objetivos por Activo · ${selectedCategory}`;
         const assets = latestSnapshot.assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
         const totalCategoryValue = assets.reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0) || 1;
-        const assetTargets = categoryTargets[selectedCategory]?.assets || {};
+        const assetTargets = workingTargets[selectedCategory]?.assets || {};
 
         if (targetsHead) {
             targetsHead.innerHTML = '<tr><th>Activo</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th></tr>';
@@ -1295,7 +1419,7 @@ function updateTargetsTable() {
         const deltaTo100 = 100 - sumTargets;
         if (targetsTotalIndicator) {
             const sign = deltaTo100 >= 0 ? 'Falta' : 'Sobra';
-            targetsTotalIndicator.textContent = `Objetivos de ${selectedCategory}: ${sumTargets.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}%`;
+            targetsTotalIndicator.textContent = `Objetivos de ${selectedCategory}: ${sumTargets.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}% · ${targetEditPolicy.lockMessage}`;
             targetsTotalIndicator.className = `targets-indicator ${Math.abs(deltaTo100) < 0.1 ? 'ok' : 'warn'}`;
         }
         monthlyTotalEl.textContent = '—';
@@ -1307,7 +1431,7 @@ function updateTargetsTable() {
                     <td><strong>${row.assetName.length > 30 ? row.assetName.substring(0, 27) + '...' : row.assetName}</strong></td>
                     <td>${row.currentPct.toFixed(1)}%</td>
                     <td>
-                        <input class="table-input asset-target-input" type="number" min="0" max="100" step="0.1" data-asset="${row.assetName}" value="${row.target}">
+                        <input class="table-input asset-target-input" type="number" min="0" max="100" step="0.1" data-asset="${row.assetName}" value="${row.target}" ${(targetsEditMode && targetEditPolicy.canEdit) ? '' : 'disabled'}>
                     </td>
                     <td class="${diffClass}">${row.diff >= 0 ? '+' : ''}${row.diff.toFixed(1)}%</td>
                 </tr>
@@ -1316,18 +1440,27 @@ function updateTargetsTable() {
 
         tbody.querySelectorAll('.asset-target-input').forEach(input => {
             input.addEventListener('change', (e) => {
+                if (!targetsEditMode) {
+                    showToast('Pulsa el lápiz para editar objetivos', 'error');
+                    updateTargetsTable();
+                    return;
+                }
+                if (!targetEditPolicy.canEdit) {
+                    showToast(targetEditPolicy.lockMessage, 'error');
+                    updateTargetsTable();
+                    return;
+                }
                 const assetName = e.target.dataset.asset;
                 const value = Number.parseFloat(e.target.value) || 0;
-                categoryTargets[selectedCategory] = {
-                    ...(categoryTargets[selectedCategory] || {}),
+                targetsDraft[selectedCategory] = {
+                    ...(targetsDraft[selectedCategory] || {}),
                     assets: {
-                        ...((categoryTargets[selectedCategory] || {}).assets || {}),
+                        ...((targetsDraft[selectedCategory] || {}).assets || {}),
                         [assetName]: {
                             target: Math.max(0, Math.min(100, value))
                         }
                     }
                 };
-                saveTargets();
                 updateTargetsTable();
                 updateCompositionList();
             });
@@ -1339,41 +1472,30 @@ function updateTargetsTable() {
     const categories = Object.keys(latestSnapshot.categoryTotals);
     if (targetsSectionTitle) targetsSectionTitle.textContent = 'Objetivos por Categoría';
     const totalValue = categories.reduce((sum, cat) => sum + (latestSnapshot.categoryTotals[cat] || 0), 0);
-    const sumTargets = categories.reduce((sum, cat) => sum + (categoryTargets[cat]?.target ?? 0), 0) || 1;
-    const totalMonthlyAll = categories.reduce((sum, cat) => sum + (categoryTargets[cat]?.monthly ?? 0), 0);
+    const sumTargets = categories.reduce((sum, cat) => sum + (workingTargets[cat]?.target ?? 0), 0) || 1;
+    const totalMonthlyAll = categories.reduce((sum, cat) => sum + (workingTargets[cat]?.monthly ?? 0), 0);
+    const referenceBudget = (workingMeta.monthlyBudget || 0) > 0 ? (workingMeta.monthlyBudget || 0) : totalMonthlyAll;
+    const softAdjustFactor = 0.5;
+    const deadbandPp = 1.5;
 
     let monthlyTotal = 0;
 
     const rows = categories.map(cat => {
         const currentValue = latestSnapshot.categoryTotals[cat] || 0;
         const currentPct = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
-        const target = categoryTargets[cat]?.target ?? 0;
-        const monthly = categoryTargets[cat]?.monthly ?? 0;
+        const target = workingTargets[cat]?.target ?? 0;
+        const monthly = workingTargets[cat]?.monthly ?? 0;
         const diff = target - currentPct;
+        const baseMonthly = totalMonthlyAllocationForTarget(target, sumTargets, workingMeta.monthlyBudget || 0);
 
-        const projectedValue = currentValue + monthly;
-        const projectedTotal = totalValue + totalMonthlyAll;
-        const projectedPct = projectedTotal > 0 ? (projectedValue / projectedTotal) * 100 : currentPct;
-        const beforeGap = Math.abs(target - currentPct);
-        const afterGap = Math.abs(target - projectedPct);
-        const gapDelta = beforeGap - afterGap;
-
-        let impactLabel = 'Neutral';
-        let impactClass = 'impact-neutral';
-        let impactScore = 0;
-
-        impactLabel = `${gapDelta >= 0 ? '+' : '-'}${Math.abs(gapDelta).toFixed(2)}pp`;
-        if (monthly > 0 && totalMonthlyAll > 0) {
-            if (gapDelta > 0) {
-                impactClass = 'impact-positive';
-                impactScore = 1;
-            } else if (gapDelta < 0) {
-                impactClass = 'impact-negative';
-                impactScore = -1;
-            }
-        }
-
-        const baseMonthly = totalMonthlyAllocationForTarget(target, sumTargets, targetsMeta.monthlyBudget || 0);
+        const contributionPct = totalMonthlyAll > 0 ? (monthly / totalMonthlyAll) * 100 : 0;
+        const effectiveDiff = Math.abs(diff) < deadbandPp ? 0 : diff;
+        const baseCorrection = referenceBudget > 0
+            ? (referenceBudget * (effectiveDiff / 100)) * softAdjustFactor
+            : 0;
+        const suggestedMonthly = Math.max(0, baseMonthly + baseCorrection);
+        const adjustmentAmount = suggestedMonthly - monthly;
+        const adjustmentPp = referenceBudget > 0 ? (adjustmentAmount / referenceBudget) * 100 : 0;
 
         return {
             cat,
@@ -1381,22 +1503,28 @@ function updateTargetsTable() {
             target,
             diff,
             monthly,
+            contributionPct,
+            suggestedMonthly,
+            adjustmentAmount,
+            adjustmentPp,
             baseMonthly,
-            impactLabel,
-            impactClass,
-            impactScore,
             gapAbs: Math.abs(diff)
         };
     });
 
+    const maxAbsCombinedAdjustment = Math.max(
+        ...rows.map(row => Math.abs(row.adjustmentPp || 0)),
+        1
+    );
+
     const targetsSum = rows.reduce((sum, row) => sum + row.target, 0);
     const deltaTo100 = 100 - targetsSum;
     if (targetsHead) {
-        targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Diferencia</th><th>Aporte mensual</th><th>Impacto</th></tr>';
+        targetsHead.innerHTML = '<tr><th>Categoría</th><th>Actual %</th><th>Objetivo %</th><th>Aporte mensual</th><th>Ajuste sugerido</th></tr>';
     }
     if (targetsTotalIndicator) {
         const sign = deltaTo100 >= 0 ? 'Falta' : 'Sobra';
-        targetsTotalIndicator.textContent = `Objetivos: ${targetsSum.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}%`;
+        targetsTotalIndicator.textContent = `Objetivos: ${targetsSum.toFixed(1)}% · ${sign} ${Math.abs(deltaTo100).toFixed(1)}% · ${targetEditPolicy.lockMessage}`;
         targetsTotalIndicator.className = `targets-indicator ${Math.abs(deltaTo100) < 0.1 ? 'ok' : 'warn'}`;
     }
 
@@ -1408,21 +1536,31 @@ function updateTargetsTable() {
 
     tbody.innerHTML = rows.map(row => {
         monthlyTotal += row.monthly;
-        const diffClass = row.diff >= 0 ? 'positive' : 'negative';
+        const isNeutral = Math.abs(row.adjustmentPp) < 0.5;
+        const combinedClass = isNeutral ? 'neutral' : (row.adjustmentPp >= 0 ? 'positive' : 'negative');
+        const normalizedRange = Math.min(Math.abs(row.adjustmentPp) / maxAbsCombinedAdjustment, 1) * 50;
+        const rangeStart = row.adjustmentPp >= 0 ? 50 : 50 - normalizedRange;
+        const actionLabel = isNeutral ? 'Mantener' : (row.adjustmentPp >= 0 ? 'Subir' : 'Bajar');
         return `
             <tr>
                 <td><strong>${row.cat}</strong></td>
                 <td>${row.currentPct.toFixed(1)}%</td>
                 <td>
-                    <input class="table-input target-input" type="number" min="0" max="100" step="0.1" data-cat="${row.cat}" value="${row.target}">
+                    <input class="table-input target-input" type="number" min="0" max="100" step="0.1" data-cat="${row.cat}" value="${row.target}" ${(targetsEditMode && targetEditPolicy.canEdit) ? '' : 'disabled'}>
                 </td>
-                <td class="${diffClass}">${row.diff >= 0 ? '+' : ''}${row.diff.toFixed(1)}%</td>
                 <td>
-                    <input class="table-input monthly-input" type="number" min="0" step="1" data-cat="${row.cat}" value="${row.monthly}">
+                    <input class="table-input monthly-input" type="number" min="0" step="1" data-cat="${row.cat}" value="${row.monthly}" ${targetsEditMode ? '' : 'disabled'}>
                     <div class="target-hint">Base: ${formatCurrency(row.baseMonthly)} · Final: ${formatCurrency(row.monthly)}</div>
                 </td>
                 <td>
-                    <span class="impact-chip ${row.impactClass}">${row.impactLabel}</span>
+                    <div class="allocation-compare">
+                        <div class="allocation-range">
+                            <span class="allocation-range-mid"></span>
+                            <span class="allocation-range-fill ${combinedClass}" style="left:${rangeStart}%; width:${normalizedRange}%;"></span>
+                        </div>
+                        <span class="allocation-diff ${combinedClass}">${actionLabel} ${row.adjustmentPp >= 0 ? '+' : ''}${row.adjustmentPp.toFixed(1)}pp</span>
+                        <div class="target-hint">Recomendado: ${formatCurrency(row.suggestedMonthly)} (${row.adjustmentAmount >= 0 ? '+' : ''}${formatCurrency(row.adjustmentAmount)})</div>
+                    </div>
                 </td>
             </tr>
         `;
@@ -1432,26 +1570,39 @@ function updateTargetsTable() {
 
     tbody.querySelectorAll('.target-input').forEach(input => {
         input.addEventListener('change', (e) => {
+            if (!targetsEditMode) {
+                showToast('Pulsa el lápiz para editar objetivos', 'error');
+                updateTargetsTable();
+                return;
+            }
+            if (!targetEditPolicy.canEdit) {
+                showToast(targetEditPolicy.lockMessage, 'error');
+                updateTargetsTable();
+                return;
+            }
             const cat = e.target.dataset.cat;
             const value = Number.parseFloat(e.target.value) || 0;
-            categoryTargets[cat] = {
-                ...(categoryTargets[cat] || {}),
+            targetsDraft[cat] = {
+                ...(targetsDraft[cat] || {}),
                 target: Math.max(0, Math.min(100, value))
             };
-            saveTargets();
             updateTargetsTable();
         });
     });
 
     tbody.querySelectorAll('.monthly-input').forEach(input => {
         input.addEventListener('change', (e) => {
+            if (!targetsEditMode) {
+                showToast('Pulsa el lápiz para editar objetivos', 'error');
+                updateTargetsTable();
+                return;
+            }
             const cat = e.target.dataset.cat;
             const value = Number.parseFloat(e.target.value) || 0;
-            categoryTargets[cat] = {
-                ...(categoryTargets[cat] || {}),
+            targetsDraft[cat] = {
+                ...(targetsDraft[cat] || {}),
                 monthly: Math.max(0, value)
             };
-            saveTargets();
             updateTargetsTable();
         });
     });
@@ -1460,21 +1611,24 @@ function updateTargetsTable() {
 function autoBalanceTargets() {
     if (snapshots.length === 0) return;
 
+    const workingTargets = getWorkingTargets();
+    const workingMeta = getWorkingTargetsMeta();
+
     const latestSnapshot = snapshots[snapshots.length - 1];
     const categories = Object.keys(latestSnapshot.categoryTotals);
     const totalValue = categories.reduce((sum, cat) => sum + (latestSnapshot.categoryTotals[cat] || 0), 0);
-    const totalMonthly = targetsMeta.monthlyBudget || 0;
+    const totalMonthly = workingMeta.monthlyBudget || 0;
 
     if (totalMonthly <= 0 || totalValue <= 0) return;
 
-    const sumTargets = categories.reduce((sum, cat) => sum + (categoryTargets[cat]?.target ?? 0), 0) || 1;
+    const sumTargets = categories.reduce((sum, cat) => sum + (workingTargets[cat]?.target ?? 0), 0) || 1;
     const minFloorRatio = 0.25;
     const adjustFactor = 0.6;
 
     const weights = categories.map(cat => {
         const currentValue = latestSnapshot.categoryTotals[cat] || 0;
         const currentPct = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
-        const target = categoryTargets[cat]?.target ?? 0;
+        const target = workingTargets[cat]?.target ?? 0;
         const baseWeight = Math.max(target, 0);
         const gap = target - currentPct;
         const adjusted = baseWeight + adjustFactor * gap;
@@ -1487,13 +1641,11 @@ function autoBalanceTargets() {
 
     weights.forEach(({ cat, weight }) => {
         const allocation = (weight / totalWeight) * totalMonthly;
-        categoryTargets[cat] = {
-            ...(categoryTargets[cat] || {}),
+        workingTargets[cat] = {
+            ...(workingTargets[cat] || {}),
             monthly: Number.isFinite(allocation) ? Math.round(allocation) : 0
         };
     });
-
-    saveTargets();
     updateTargetsTable();
 }
 
@@ -1825,19 +1977,23 @@ function initCharts() {
         options: getRoiChartOptions()
     });
 
-    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-    categoryChart = new Chart(categoryCtx, {
-        type: 'doughnut',
-        data: { labels: [], datasets: [] },
-        options: getDoughnutOptions()
-    });
+    const categoryCanvas = document.getElementById('categoryChart');
+    const termCanvas = document.getElementById('termChart');
+    if (categoryCanvas && termCanvas) {
+        const categoryCtx = categoryCanvas.getContext('2d');
+        categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [] },
+            options: getDoughnutOptions()
+        });
 
-    const termCtx = document.getElementById('termChart').getContext('2d');
-    termChart = new Chart(termCtx, {
-        type: 'doughnut',
-        data: { labels: [], datasets: [] },
-        options: getDoughnutOptions()
-    });
+        const termCtx = termCanvas.getContext('2d');
+        termChart = new Chart(termCtx, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [] },
+            options: getDoughnutOptions()
+        });
+    }
 }
 
 function getLineChartOptions() {
@@ -1907,12 +2063,14 @@ function getDoughnutOptions() {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'right',
+                position: 'bottom',
                 labels: {
                     color: '#a1a1a6',
-                    font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 11 },
+                    font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', size: 12 },
                     usePointStyle: true,
-                    padding: 12
+                    padding: 14,
+                    boxWidth: 10,
+                    boxHeight: 10
                 }
             },
             tooltip: {
@@ -1942,7 +2100,7 @@ function getDoughnutOptions() {
                 }
             }
         },
-        cutout: '55%'
+        cutout: '48%'
     };
 }
 
@@ -2854,6 +3012,8 @@ function updateCompositionList() {
         const changeClass = item.change > 0.05 ? 'positive' : item.change < -0.05 ? 'negative' : 'neutral';
         const arrow = item.change > 0.05 ? '↑' : item.change < -0.05 ? '↓' : '';
         const changeText = !hasChange ? '—' : (Math.abs(item.change) < 0.05 ? '=' : `${item.change > 0 ? '+' : ''}${item.change.toFixed(1)}%`);
+        const percentText = `${item.percent.toFixed(1)}%`;
+        const isSmallPercent = item.percent < 8;
         const target = Number.isFinite(item.targetPercent) ? item.targetPercent : null;
         const targetMarker = target !== null
             ? `<span class="composition-target-marker" style="left: ${Math.min(Math.max(target, 0), 100)}%"></span>`
@@ -2864,8 +3024,9 @@ function updateCompositionList() {
                 <div class="composition-bar-wrapper">
                     <div class="composition-bar composition-bar-previous" style="width: ${item.prevPercent ? Math.max(item.prevPercent, 2) : 0}%; background: ${item.color};"></div>
                     <div class="composition-bar composition-bar-current" style="width: ${Math.max(item.percent, 2)}%; background: ${item.color};">
-                        <span class="composition-percent">${item.percent.toFixed(1)}%</span>
+                        ${isSmallPercent ? '' : `<span class="composition-percent">${percentText}</span>`}
                     </div>
+                    ${isSmallPercent ? `<span class="composition-percent-floating" style="left: min(calc(${Math.max(item.percent, 2)}% + 8px), calc(100% - 38px));">${percentText}</span>` : ''}
                     ${item.prevPercent ? `<span class="composition-bar-marker" style="left: ${Math.min(item.prevPercent, 100)}%"></span>` : ''}
                     ${targetMarker}
                 </div>
