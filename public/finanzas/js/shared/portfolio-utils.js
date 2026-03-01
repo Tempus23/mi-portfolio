@@ -172,7 +172,7 @@ export function parseData(rawData) {
     const assets = [];
 
     for (const line of lines) {
-        const parts = line.split('\t');
+        const parts = line.includes('\t') ? line.split('\t') : line.split(';');
         if (parts.length < 8) continue;
 
         const asset = [];

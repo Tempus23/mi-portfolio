@@ -1,7 +1,7 @@
 import { STORAGE_KEYS, AssetIndex, CATEGORY_COLORS, TERM_COLORS } from './shared/constants.js';
 import { formatCurrency } from './shared/format.js';
 import { showToast } from './shared/toast.js';
-import { syncPull, syncPush, setSyncCallback } from './shared/sync.js';
+import { syncPull, syncPush, setSyncCallback, markLocalDirty } from './shared/sync.js';
 import {
     createLineChartOptions,
     createDoughnutOptions,
@@ -26,6 +26,10 @@ import {
     getSnapshotMonthsAgo as getSnapshotMonthsAgoUtil,
     getYearStartSnapshot as getYearStartSnapshotUtil
 } from './shared/portfolio-utils.js';
+
+// AI modules
+import { initAIInsights, updateAIInsights } from './ui/ai-insights.js';
+import { initAIChat } from './ui/ai-chat.js';
 
 const {
     SNAPSHOTS: STORAGE_KEY,
@@ -76,6 +80,65 @@ function normalizeTargetsMeta(meta) {
     };
 }
 
+function toSafeNumber(value) {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function escapeHtml(value) {
+    const text = String(value ?? '');
+    return text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function toCssClassToken(value) {
+    const token = String(value ?? '').replaceAll(/[^a-zA-Z0-9_-]/g, '');
+    return token || 'generic';
+}
+
+function normalizeAsset(asset) {
+    if (Array.isArray(asset)) {
+        return [
+            String(asset[AssetIndex.NAME] || '').trim(),
+            String(asset[AssetIndex.TERM] || '').trim(),
+            String(asset[AssetIndex.CATEGORY] || '').trim(),
+            toSafeNumber(asset[AssetIndex.PURCHASE_PRICE]),
+            toSafeNumber(asset[AssetIndex.QUANTITY]),
+            toSafeNumber(asset[AssetIndex.CURRENT_PRICE]),
+            toSafeNumber(asset[AssetIndex.PURCHASE_VALUE]),
+            toSafeNumber(asset[AssetIndex.CURRENT_VALUE])
+        ];
+    }
+
+    return [
+        String(asset?.name || '').trim(),
+        String(asset?.term || '').trim(),
+        String(asset?.category || '').trim(),
+        toSafeNumber(asset?.purchasePrice),
+        toSafeNumber(asset?.quantity),
+        toSafeNumber(asset?.currentPrice),
+        toSafeNumber(asset?.purchaseValue),
+        toSafeNumber(asset?.currentValue)
+    ];
+}
+
+function normalizeSnapshot(snapshot) {
+    const parsedDate = snapshot?.date ? new Date(snapshot.date) : null;
+    const isDateValid = parsedDate && Number.isFinite(parsedDate.getTime());
+
+    return {
+        id: Number.isFinite(snapshot?.id) ? snapshot.id : Date.now(),
+        date: isDateValid ? parsedDate.toISOString() : new Date().toISOString(),
+        assets: (snapshot?.assets || []).map(normalizeAsset),
+        tag: typeof snapshot?.tag === 'string' ? snapshot.tag.trim() : '',
+        note: typeof snapshot?.note === 'string' ? snapshot.note.trim() : ''
+    };
+}
+
 if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
     Chart.register(ChartDataLabels);
 } else {
@@ -93,6 +156,10 @@ function init() {
     updateUI();
     showHoldingsChangesIfAny();
 
+    // AI modules
+    initAIInsights();
+    initAIChat();
+
     // Cloud sync: set reload callback
     setSyncCallback(() => {
         loadSnapshots();
@@ -107,44 +174,42 @@ function init() {
 
 function loadSnapshots() {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-        let loadedData;
-        try {
-            loadedData = JSON.parse(stored);
-        } catch (error) {
-            localStorage.removeItem(STORAGE_KEY);
-            snapshots = [];
-            showToast('Datos corruptos en almacenamiento local. Se reinició el historial.', 'error');
-            return;
-        }
-
-        // 1. Array Migration (if older version)
-        if (loadedData.length > 0 && loadedData[0].assets.length > 0 && !Array.isArray(loadedData[0].assets[0])) {
-            console.log("Migrating data to compact format...");
-            loadedData = migrateToArrays(loadedData);
-        }
-
-        // 2. Data Compression (Runtime Calculation)
-        // Ensure we strip old aggregated data if present to save space on next save
-        snapshots = loadedData.map(s => {
-            // Delete old aggregated keys if they exist
-            // (We don't delete them from the object reference here to avoid side effects during map, 
-            // but we will recalculate everything freshly)
-            const cleanSnapshot = {
-                id: s.id,
-                date: s.date,
-                assets: s.assets,
-                tag: s.tag || '',
-                note: s.note || ''
-            };
-            return calculateSnapshotMetrics(cleanSnapshot);
-        });
-
-        // Save cleaned version immediately to compress storage
-        saveSnapshots();
-    } else {
+    if (!stored) {
         snapshots = [];
+        return;
     }
+
+    let loadedData;
+    try {
+        loadedData = JSON.parse(stored);
+    } catch (error) {
+        console.error('[Snapshots] Error parseando historial local:', error);
+        localStorage.removeItem(STORAGE_KEY);
+        snapshots = [];
+        showToast('Datos corruptos en almacenamiento local. Se reinició el historial.', 'error');
+        return;
+    }
+
+    if (!Array.isArray(loadedData)) {
+        localStorage.removeItem(STORAGE_KEY);
+        snapshots = [];
+        showToast('Formato de historial inválido. Se reinició el historial.', 'error');
+        return;
+    }
+
+    // 1. Array Migration (if older version)
+    if (loadedData.length > 0 && Array.isArray(loadedData[0]?.assets) && loadedData[0].assets.length > 0 && !Array.isArray(loadedData[0].assets[0])) {
+        console.log('Migrating data to compact format...');
+        loadedData = migrateToArrays(loadedData);
+    }
+
+    // 2. Data Compression + normalization (Runtime Calculation)
+    snapshots = loadedData
+        .map(normalizeSnapshot)
+        .map(calculateSnapshotMetrics);
+
+    // Save cleaned version immediately to compress storage
+    saveSnapshots();
 }
 
 function saveSnapshots() {
@@ -157,6 +222,7 @@ function saveSnapshots() {
         note: s.note || ''
     }));
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    markLocalDirty();
     // Auto-push to cloud
     syncPush(null);
 }
@@ -183,7 +249,7 @@ function setupEventListeners() {
     const openHoldingsBtn = document.getElementById('openHoldingsBtn');
     if (openHoldingsBtn) {
         openHoldingsBtn.addEventListener('click', () => {
-            window.location.href = '/finanzas/investments.html';
+            globalThis.location.href = '/finanzas/investments.html';
         });
     }
 
@@ -382,21 +448,60 @@ function setupEventListeners() {
 
 function loadTargets() {
     const stored = localStorage.getItem(TARGETS_KEY);
-    categoryTargets = stored ? JSON.parse(stored) : {};
+    if (!stored) {
+        categoryTargets = {};
+        return;
+    }
+
+    try {
+        const parsed = JSON.parse(stored);
+        categoryTargets = parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (error) {
+        console.error('[Targets] Error parseando objetivos locales:', error);
+        localStorage.removeItem(TARGETS_KEY);
+        categoryTargets = {};
+        showToast('Objetivos corruptos en almacenamiento local. Se reiniciaron.', 'error');
+    }
 }
 
 function saveTargets() {
-    localStorage.setItem(TARGETS_KEY, JSON.stringify(categoryTargets));
+    try {
+        localStorage.setItem(TARGETS_KEY, JSON.stringify(categoryTargets));
+    } catch (error) {
+        console.error('[Targets] Error guardando objetivos locales:', error);
+        showToast('No se pudieron guardar los objetivos localmente.', 'error');
+        return;
+    }
+    markLocalDirty();
     syncPush(null);
 }
 
 function loadTargetsMeta() {
     const stored = localStorage.getItem(TARGETS_META_KEY);
-    targetsMeta = stored ? normalizeTargetsMeta(JSON.parse(stored)) : normalizeTargetsMeta({});
+    if (!stored) {
+        targetsMeta = normalizeTargetsMeta({});
+        return;
+    }
+
+    try {
+        targetsMeta = normalizeTargetsMeta(JSON.parse(stored));
+    } catch (error) {
+        console.error('[Targets] Error parseando metadatos de objetivos:', error);
+        localStorage.removeItem(TARGETS_META_KEY);
+        targetsMeta = normalizeTargetsMeta({});
+        showToast('Metadatos de objetivos corruptos. Se reiniciaron.', 'error');
+    }
 }
 
 function saveTargetsMeta() {
-    localStorage.setItem(TARGETS_META_KEY, JSON.stringify(targetsMeta));
+    try {
+        localStorage.setItem(TARGETS_META_KEY, JSON.stringify(targetsMeta));
+    } catch (error) {
+        console.error('[Targets] Error guardando metadatos de objetivos:', error);
+        showToast('No se pudieron guardar los metadatos localmente.', 'error');
+        return;
+    }
+    markLocalDirty();
     syncPush(null);
 }
 
@@ -547,44 +652,26 @@ function importFromJson(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (Array.isArray(imported)) {
-                // Determine if we need migration or calculation
-                const processed = imported.map(s => {
-                    // Migration check
-                    let assets = s.assets;
-                    if (assets.length > 0 && !Array.isArray(assets[0])) {
-                        assets = s.assets.map(asset => [
-                            asset.name, asset.term, asset.category,
-                            asset.purchasePrice, asset.quantity, asset.currentPrice,
-                            asset.purchaseValue, asset.currentValue
-                        ]);
-                    }
-
-                    return calculateSnapshotMetrics({
-                        id: s.id || Date.now(),
-                        date: s.date,
-                        assets: assets,
-                        tag: s.tag || '',
-                        note: s.note || ''
-                    });
-                });
-
-                snapshots = processed;
-                saveSnapshots();
-                updateUI();
-                showToast('Datos importados y optimizados', 'success');
-            } else {
-                throw new Error('Formato inválido');
+    file.text()
+        .then((rawText) => {
+            const imported = JSON.parse(rawText);
+            if (!Array.isArray(imported)) {
+                throw new TypeError('Formato inválido');
             }
-        } catch (err) {
+
+            snapshots = imported
+                .map(normalizeSnapshot)
+                .map(calculateSnapshotMetrics)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            saveSnapshots();
+            updateUI();
+            showToast('Datos importados y optimizados', 'success');
+        })
+        .catch((error) => {
+            console.error('[Import] Error importando JSON:', error);
             showToast('Error al importar el archivo JSON', 'error');
-        }
-    };
-    reader.readAsText(file);
+        });
 }
 
 function captureSnapshot() {
@@ -755,12 +842,12 @@ function renderEditPreview() {
 
     tbody.innerHTML = rows.map(row => `
         <tr>
-            <td>${row.name}</td>
-            <td>${row.term}</td>
-            <td>${row.category}</td>
-            <td>${row.purchasePrice}</td>
-            <td>${row.quantity}</td>
-            <td>${row.currentPrice}</td>
+            <td>${escapeHtml(row.name)}</td>
+            <td>${escapeHtml(row.term)}</td>
+            <td>${escapeHtml(row.category)}</td>
+            <td>${escapeHtml(row.purchasePrice)}</td>
+            <td>${escapeHtml(row.quantity)}</td>
+            <td>${escapeHtml(row.currentPrice)}</td>
         </tr>
     `).join('');
 }
@@ -813,6 +900,10 @@ function updateUI() {
     updateTopAssetsTable();
     updateAnalytics();
     updateTargetsTable();
+
+    // AI Insights
+    const monthlySnaps = getMonthlySnapshotsForRange();
+    updateAIInsights(snapshots, categoryTargets, targetsMeta, monthlySnaps);
 }
 
 function populateCategorySelector() {
@@ -826,7 +917,7 @@ function populateCategorySelector() {
         const categories = Object.keys(latestSnapshot.categoryTotals).sort((a, b) => a.localeCompare(b, 'es'));
         categories.forEach(cat => {
             const selected = cat === currentValue ? 'selected' : '';
-            options += `<option value="${cat}" ${selected}>${cat}</option>`;
+            options += `<option value="${escapeHtml(cat)}" ${selected}>${escapeHtml(cat)}</option>`;
         });
     }
 
@@ -1110,13 +1201,13 @@ function updateOpportunities() {
         const arrow = lastReturn >= 0 ? '↑' : '↓';
         const tagsHtml = item.tags.map(tag => {
             const tagClass = tag.includes('negativa') || tag.includes('Caída') || tag.includes('Drawdown') ? 'negative' : 'positive';
-            return `<span class="opportunity-tag ${tagClass}">${tag}</span>`;
+            return `<span class="opportunity-tag ${tagClass}">${escapeHtml(tag)}</span>`;
         }).join('');
 
         return `
             <div class="opportunity-item">
                 <div class="opportunity-info">
-                    <span class="opportunity-label">${item.label}</span>
+                    <span class="opportunity-label">${escapeHtml(item.label)}</span>
                     <span class="opportunity-desc">
                         Último periodo: ${lastReturn >= 0 ? '+' : ''}${lastReturn.toFixed(2)}% ·
                         Tendencia: ${trend >= 0 ? '+' : ''}${trend.toFixed(2)}% ·
@@ -1173,13 +1264,13 @@ function updateCategoryRoiTable() {
 
     tbody.innerHTML = categoryData.map(({ cat, invested, current, roi, volatility, drawdown }) => {
         const roiClass = roi >= 0 ? 'positive' : 'negative';
-        const categoryClass = cat.replaceAll(/\s+/g, '');
+        const categoryClass = toCssClassToken(cat);
         const volatilityText = Number.isFinite(volatility) ? `${volatility.toFixed(1)}%` : '—';
         const drawdownText = Number.isFinite(drawdown) ? `${drawdown.toFixed(1)}%` : '—';
         const drawdownClass = Number.isFinite(drawdown) && drawdown < 0 ? 'negative' : 'positive';
         return `
             <tr>
-                <td><span class="category-badge category-${categoryClass}">${cat}</span></td>
+                <td><span class="category-badge category-${categoryClass}">${escapeHtml(cat)}</span></td>
                 <td>${formatCurrency(invested)}</td>
                 <td>${formatCurrency(current)}</td>
                 <td class="${roiClass}"><strong>${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</strong></td>
@@ -1545,10 +1636,11 @@ function updateTopAssetsTable() {
             const purchaseValue = asset[AssetIndex.PURCHASE_VALUE];
             const roi = purchaseValue > 0 ? ((currentValue - purchaseValue) / purchaseValue) * 100 : 0;
             const roiClass = roi >= 0 ? 'positive' : 'negative';
+            const safeName = escapeHtml(name.length > 25 ? `${name.substring(0, 22)}...` : name);
 
             return `
                 <tr>
-                    <td><strong>${name.length > 25 ? name.substring(0, 22) + '...' : name}</strong></td>
+                    <td><strong>${safeName}</strong></td>
                     <td>${formatCurrency(currentValue)}</td>
                     <td>${formatCurrency(purchaseValue)}</td>
                     <td class="${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</td>
@@ -1567,10 +1659,10 @@ function updateTopAssetsTable() {
 
         tbody.innerHTML = categoryData.map(({ cat, value, invested, roi }) => {
             const roiClass = roi >= 0 ? 'positive' : 'negative';
-            const catClass = cat.replace(/\s+/g, '');
+            const catClass = toCssClassToken(cat);
             return `
                 <tr>
-                    <td><span class="category-badge category-${catClass}">${cat}</span></td>
+                    <td><span class="category-badge category-${catClass}">${escapeHtml(cat)}</span></td>
                     <td>${formatCurrency(value)}</td>
                     <td>${formatCurrency(invested)}</td>
                     <td class="${roiClass}">${roi >= 0 ? '+' : ''}${roi.toFixed(1)}%</td>
@@ -1743,8 +1835,8 @@ function updateHistoryTable() {
         const variationClass = snapshot.variation >= 0 ? 'positive' : 'negative';
         const variationSign = snapshot.variation >= 0 ? '+' : '';
 
-        const tag = snapshot.tag ? `<span class="history-tag">${snapshot.tag}</span>` : '';
-        const note = snapshot.note ? `<span class="history-note">${snapshot.note}</span>` : '';
+        const tag = snapshot.tag ? `<span class="history-tag">${escapeHtml(snapshot.tag)}</span>` : '';
+        const note = snapshot.note ? `<span class="history-note">${escapeHtml(snapshot.note)}</span>` : '';
         const meta = tag || note ? `<div class="history-meta">${tag}${note}</div>` : '<span class="history-empty">—</span>';
 
         return `
@@ -1799,13 +1891,14 @@ function viewSnapshot(id) {
         const variation = currentValue - purchaseValue;
         const variationClass = variation >= 0 ? 'positive' : 'negative';
         const variationSign = variation >= 0 ? '+' : '';
-        const categoryClass = category.replace(/\s+/g, '');
+        const categoryClass = toCssClassToken(category);
+        const termClass = toCssClassToken(term);
 
         return `
             <tr>
-                <td><strong>${name}</strong></td>
-                <td><span class="term-badge term-${term}">${term}</span></td>
-                <td><span class="category-badge category-${categoryClass}">${category}</span></td>
+            <td><strong>${escapeHtml(name)}</strong></td>
+            <td><span class="term-badge term-${termClass}">${escapeHtml(term)}</span></td>
+            <td><span class="category-badge category-${categoryClass}">${escapeHtml(category)}</span></td>
                 <td>${formatCurrency(purchasePrice)}</td>
                 <td>${quantity.toLocaleString('es-ES', { minimumFractionDigits: 3 })}</td>
                 <td>${formatCurrency(currentPrice)}</td>
@@ -2680,7 +2773,7 @@ function updateCompositionList() {
             : '';
         return `
             <div class="composition-item">
-                <span class="composition-label">${item.label}</span>
+                <span class="composition-label">${escapeHtml(item.label)}</span>
                 <div class="composition-bar-wrapper">
                     <div class="composition-bar composition-bar-previous" style="width: ${item.prevPercent ? Math.max(item.prevPercent, 2) : 0}%; background: ${item.color};"></div>
                     <div class="composition-bar composition-bar-current" style="width: ${Math.max(item.percent, 2)}%; background: ${item.color};">

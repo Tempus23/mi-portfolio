@@ -1,25 +1,43 @@
 import { STORAGE_KEYS, AssetIndex } from './js/shared/constants.js';
 import { formatCurrency } from './js/shared/format.js';
 import { showToast } from './js/shared/toast.js';
+import { markLocalDirty, syncPush } from './js/shared/sync.js';
+import { normalizeAsset, normalizeSnapshot, toSafeNumber } from './js/core/data-store.js';
 
 const {
     SNAPSHOTS: STORAGE_KEY,
     HOLDINGS_CHANGES: HOLDINGS_CHANGES_KEY
 } = STORAGE_KEYS;
+const HOLDINGS_DRAFT_KEY = 'portfolio_holdings_draft_v1';
 
 let snapshots = [];
 let originalAssets = [];
 let editedAssets = [];
 let baseSnapshotDate = null;
 let holdingsProfitabilityMode = 'category';
+let holdingsFilterText = '';
+let draftAutosaveTimer = null;
+
+function escapeHtml(value) {
+    const text = String(value ?? '');
+    return text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
 
 init();
 
 function init() {
     loadSnapshots();
     loadBaseAssets();
+    setupAdvancedControls();
+    restoreDraftIfAvailable();
     renderHoldingsTable();
     renderHoldingsProfitability();
+    updateHoldingsInsights();
     const saveBtn = document.getElementById('saveHoldings');
     if (saveBtn) saveBtn.addEventListener('click', openSaveModal);
 
@@ -36,6 +54,35 @@ function init() {
     const confirmBtn = document.getElementById('saveModalConfirm');
     if (cancelBtn) cancelBtn.addEventListener('click', hideSaveModal);
     if (confirmBtn) confirmBtn.addEventListener('click', confirmSaveChanges);
+
+    document.addEventListener('keydown', (e) => {
+        if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 's') return;
+        e.preventDefault();
+        openSaveModal();
+    });
+}
+
+function setupAdvancedControls() {
+    const searchInput = document.getElementById('holdingsSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            holdingsFilterText = (e.target.value || '').trim().toLowerCase();
+            renderHoldingsTable();
+        });
+    }
+
+    document.querySelectorAll('[data-holdings-pct]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const pct = Number.parseFloat(btn.dataset.holdingsPct);
+            if (!Number.isFinite(pct) || pct === 0) return;
+            applyBulkCurrentPriceAdjustment(pct);
+        });
+    });
+
+    const resetBtn = document.getElementById('resetHoldingsChanges');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetAllHoldingsChanges);
+    }
 }
 
 function loadSnapshots() {
@@ -49,6 +96,7 @@ function loadSnapshots() {
     try {
         loadedData = JSON.parse(stored);
     } catch (error) {
+        console.error('[Holdings] Error leyendo snapshots locales:', error);
         localStorage.removeItem(STORAGE_KEY);
         snapshots = [];
         showToast('Datos corruptos en almacenamiento local. Se reinició el historial.', 'error');
@@ -59,22 +107,7 @@ function loadSnapshots() {
         return;
     }
 
-    snapshots = loadedData.map(s => {
-        const assets = (s.assets || []).map(asset => {
-            if (Array.isArray(asset)) return asset;
-            return [
-                asset.name,
-                asset.term,
-                asset.category,
-                asset.purchasePrice,
-                asset.quantity,
-                asset.currentPrice,
-                asset.purchaseValue,
-                asset.currentValue
-            ];
-        });
-        return { id: s.id, date: s.date, assets };
-    });
+    snapshots = loadedData.map(normalizeSnapshot);
 }
 
 function loadBaseAssets() {
@@ -99,15 +132,32 @@ function renderHoldingsTable() {
     const latestSnapshot = snapshots.at(-1);
     if (!latestSnapshot) return;
 
+    const filteredAssets = editedAssets
+        .map((asset, index) => ({ asset, index }))
+        .filter(({ asset }) => {
+            if (!holdingsFilterText) return true;
+            const name = (asset[AssetIndex.NAME] || '').toLowerCase();
+            const category = (asset[AssetIndex.CATEGORY] || '').toLowerCase();
+            const term = (asset[AssetIndex.TERM] || '').toLowerCase();
+            return name.includes(holdingsFilterText) || category.includes(holdingsFilterText) || term.includes(holdingsFilterText);
+        });
+
+    if (!filteredAssets.length) {
+        tbody.innerHTML = '';
+        empty.textContent = 'No hay resultados para el filtro aplicado.';
+        empty.style.display = 'block';
+        return;
+    }
+
     empty.style.display = 'none';
 
-    tbody.innerHTML = editedAssets.map((asset, index) => {
-        const name = asset[AssetIndex.NAME];
-        const term = asset[AssetIndex.TERM];
-        const category = asset[AssetIndex.CATEGORY];
-        const purchasePrice = asset[AssetIndex.PURCHASE_PRICE];
-        const quantity = asset[AssetIndex.QUANTITY];
-        const currentPrice = asset[AssetIndex.CURRENT_PRICE];
+    tbody.innerHTML = filteredAssets.map(({ asset, index }) => {
+        const name = escapeHtml(asset[AssetIndex.NAME]);
+        const term = escapeHtml(asset[AssetIndex.TERM]);
+        const category = escapeHtml(asset[AssetIndex.CATEGORY]);
+        const purchasePrice = toSafeNumber(asset[AssetIndex.PURCHASE_PRICE]);
+        const quantity = toSafeNumber(asset[AssetIndex.QUANTITY]);
+        const currentPrice = toSafeNumber(asset[AssetIndex.CURRENT_PRICE]);
 
         const purchaseValue = purchasePrice * quantity;
         const currentValue = currentPrice * quantity;
@@ -174,6 +224,156 @@ function handleRowUpdate(e) {
     roiCell.classList.toggle('negative', roi < 0);
 
     renderHoldingsProfitability();
+    updateHoldingsInsights();
+    queueDraftAutosave();
+}
+
+function applyBulkCurrentPriceAdjustment(pct) {
+    if (!editedAssets.length) return;
+
+    const factor = 1 + (pct / 100);
+    const matcher = holdingsFilterText
+        ? (asset) => {
+            const name = (asset[AssetIndex.NAME] || '').toLowerCase();
+            const category = (asset[AssetIndex.CATEGORY] || '').toLowerCase();
+            const term = (asset[AssetIndex.TERM] || '').toLowerCase();
+            return name.includes(holdingsFilterText) || category.includes(holdingsFilterText) || term.includes(holdingsFilterText);
+        }
+        : () => true;
+
+    let adjusted = 0;
+    editedAssets.forEach(asset => {
+        if (!matcher(asset)) return;
+        const quantity = asset[AssetIndex.QUANTITY] || 0;
+        const nextPrice = Math.max(0, Number(((asset[AssetIndex.CURRENT_PRICE] || 0) * factor).toFixed(8)));
+        asset[AssetIndex.CURRENT_PRICE] = nextPrice;
+        asset[AssetIndex.CURRENT_VALUE] = nextPrice * quantity;
+        adjusted += 1;
+    });
+
+    renderHoldingsTable();
+    renderHoldingsProfitability();
+    updateHoldingsInsights();
+    queueDraftAutosave();
+    showToast(`Ajuste aplicado: ${pct >= 0 ? '+' : ''}${pct}% en ${adjusted} activos.`, 'success');
+}
+
+function resetAllHoldingsChanges() {
+    if (!originalAssets.length) return;
+    editedAssets = originalAssets.map(a => [...a]);
+    clearDraft();
+    renderHoldingsTable();
+    renderHoldingsProfitability();
+    updateHoldingsInsights();
+    showToast('Cambios descartados. Se restauró el snapshot base.', 'success');
+}
+
+function getChangedAssetsCount() {
+    return editedAssets.reduce((count, asset, i) => {
+        const prev = originalAssets[i];
+        if (!prev) return count + 1;
+
+        const changed =
+            asset[AssetIndex.QUANTITY] !== prev[AssetIndex.QUANTITY]
+            || asset[AssetIndex.PURCHASE_PRICE] !== prev[AssetIndex.PURCHASE_PRICE]
+            || asset[AssetIndex.CURRENT_PRICE] !== prev[AssetIndex.CURRENT_PRICE];
+
+        return changed ? count + 1 : count;
+    }, 0);
+}
+
+function updateHoldingsInsights() {
+    const baseTotals = getTotals(originalAssets);
+    const editedTotals = getTotals(editedAssets);
+    const changedCount = getChangedAssetsCount();
+    const delta = editedTotals.current - baseTotals.current;
+    const isDirty = changedCount > 0;
+
+    const totalCurrentEl = document.getElementById('holdingsTotalCurrent');
+    if (totalCurrentEl) totalCurrentEl.textContent = formatCurrency(editedTotals.current);
+
+    const deltaEl = document.getElementById('holdingsDeltaValue');
+    if (deltaEl) {
+        deltaEl.textContent = `${delta >= 0 ? '+' : ''}${formatCurrency(delta)}`;
+        deltaEl.classList.toggle('positive', delta >= 0);
+        deltaEl.classList.toggle('negative', delta < 0);
+    }
+
+    const changedEl = document.getElementById('holdingsChangedCount');
+    if (changedEl) changedEl.textContent = String(changedCount);
+
+    const statusEl = document.getElementById('holdingsEditStatus');
+    if (statusEl) {
+        statusEl.textContent = isDirty ? 'Cambios sin guardar' : 'Todo guardado';
+        statusEl.classList.toggle('dirty', isDirty);
+    }
+}
+
+function getDraftPayload() {
+    return {
+        baseSnapshotDate,
+        savedAt: new Date().toISOString(),
+        assets: editedAssets.map(a => [...a])
+    };
+}
+
+function queueDraftAutosave() {
+    if (draftAutosaveTimer) {
+        clearTimeout(draftAutosaveTimer);
+    }
+
+    draftAutosaveTimer = setTimeout(() => {
+        const changedCount = getChangedAssetsCount();
+        if (changedCount === 0) {
+            clearDraft();
+            return;
+        }
+
+        try {
+            localStorage.setItem(HOLDINGS_DRAFT_KEY, JSON.stringify(getDraftPayload()));
+            setDraftBadgeState('Borrador local activo', true);
+        } catch (error) {
+            console.error('[Holdings] Error guardando borrador local:', error);
+            showToast('No se pudo guardar el borrador local.', 'error');
+        }
+    }, 350);
+}
+
+function restoreDraftIfAvailable() {
+    const raw = localStorage.getItem(HOLDINGS_DRAFT_KEY);
+    if (!raw) {
+        setDraftBadgeState('Sin borrador', false);
+        return;
+    }
+
+    try {
+        const draft = JSON.parse(raw);
+        const isValidBase = draft?.baseSnapshotDate && draft.baseSnapshotDate === baseSnapshotDate;
+        const assets = Array.isArray(draft?.assets) ? draft.assets : null;
+
+        if (!isValidBase || assets?.length !== editedAssets.length) {
+            clearDraft();
+            return;
+        }
+
+        editedAssets = assets.map(normalizeAsset);
+        setDraftBadgeState('Borrador restaurado', true);
+        showToast('Se restauró tu borrador local de edición.', 'success');
+    } catch {
+        clearDraft();
+    }
+}
+
+function clearDraft() {
+    localStorage.removeItem(HOLDINGS_DRAFT_KEY);
+    setDraftBadgeState('Sin borrador', false);
+}
+
+function setDraftBadgeState(text, isActive) {
+    const draftBadge = document.getElementById('holdingsDraftBadge');
+    if (!draftBadge) return;
+    draftBadge.textContent = text;
+    draftBadge.classList.toggle('active', isActive);
 }
 
 function renderHoldingsProfitability() {
@@ -228,8 +428,8 @@ function renderHoldingsProfitability() {
             const roiClass = row.roi >= 0 ? 'positive' : 'negative';
             return `
                 <tr>
-                    <td><strong>${truncate(row.name, 34)}</strong></td>
-                    <td>${row.category}</td>
+                    <td><strong>${escapeHtml(truncate(row.name, 34))}</strong></td>
+                    <td>${escapeHtml(row.category)}</td>
                     <td>${formatCurrency(row.invested)}</td>
                     <td>${formatCurrency(row.current)}</td>
                     <td class="${roiClass}"><strong>${row.roi >= 0 ? '+' : ''}${row.roi.toFixed(2)}%</strong></td>
@@ -271,7 +471,7 @@ function renderHoldingsProfitability() {
         const roiClass = row.roi >= 0 ? 'positive' : 'negative';
         return `
             <tr>
-                <td><strong>${row.category}</strong></td>
+                <td><strong>${escapeHtml(row.category)}</strong></td>
                 <td>${formatCurrency(row.invested)}</td>
                 <td>${formatCurrency(row.current)}</td>
                 <td class="${roiClass}"><strong>${row.roi >= 0 ? '+' : ''}${row.roi.toFixed(2)}%</strong></td>
@@ -288,6 +488,10 @@ function truncate(value, max) {
 
 function openSaveModal() {
     if (snapshots.length === 0) return;
+    if (getChangedAssetsCount() === 0) {
+        showToast('No hay cambios para guardar.', 'error');
+        return;
+    }
     const modal = document.getElementById('saveModal');
     const title = document.getElementById('saveModalTitle');
     const message = document.getElementById('saveModalMessage');
@@ -311,10 +515,10 @@ function hideSaveModal() {
 
 function confirmSaveChanges() {
     hideSaveModal();
-    saveHoldingsChanges();
+    void saveHoldingsChanges();
 }
 
-function saveHoldingsChanges() {
+async function saveHoldingsChanges() {
     if (snapshots.length === 0) return;
 
     const latestSnapshot = snapshots.at(-1);
@@ -334,20 +538,37 @@ function saveHoldingsChanges() {
         snapshots.push({
             id: Date.now(),
             date: new Date().toISOString(),
-            assets: editedAssets.map(a => [...a])
+            assets: editedAssets.map(a => [...a]),
+            tag: '',
+            note: ''
         });
     }
 
     const updated = snapshots.map(s => ({
         id: s.id,
         date: s.date,
-        assets: s.assets
+        assets: s.assets,
+        tag: s.tag || '',
+        note: s.note || ''
     }));
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch (error) {
+        console.error('[Holdings] Error guardando snapshots locales:', error);
+        showToast('No se pudo guardar localmente (espacio insuficiente).', 'error');
+        return;
+    }
     localStorage.setItem(HOLDINGS_CHANGES_KEY, summary.message);
+    clearDraft();
 
-    window.location.href = '/finanzas/';
+    markLocalDirty();
+    const synced = await syncPush(null);
+    if (!synced) {
+        showToast('Cambios guardados localmente. La nube se sincronizará al reintentar.', 'error');
+    }
+
+    globalThis.location.href = '/finanzas/';
 }
 
 function buildChangeSummary(isSameDay) {
@@ -378,8 +599,8 @@ function buildChangeSummary(isSameDay) {
     ];
 
     if (changed.length) {
-        lines.push('Detalles:');
-        lines.push(...changed.slice(0, 6).map(item => `• ${item}`));
+        const detailLines = ['Detalles:', ...changed.slice(0, 6).map(item => `• ${item}`)];
+        lines.push(...detailLines);
         if (changed.length > 6) lines.push(`• +${changed.length - 6} más`);
     }
 

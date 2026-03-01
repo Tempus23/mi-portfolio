@@ -13,6 +13,11 @@ function formatParagraph(paragraph: string): string {
     "backend",
     "technical leadership",
     "international experience",
+    "qacodemonitor",
+    "Atenea",
+    "Inteligencia Artificial",
+    "liderazgo técnico",
+    "experiencia internacional",
   ];
   boldKeywords.forEach(keyword => {
     const regex = new RegExp(keyword, 'gi');
@@ -22,66 +27,23 @@ function formatParagraph(paragraph: string): string {
 }
 ---
 
-<article class="flex flex-col items-center justify-center gap-8 text-gray-700 dark:text-gray-300">
-  <div class="[&>p]:mb-6 [&>p]:text-lg [&>p]:leading-relaxed [&>p>strong]:text-blue-600 dark:[&>p>strong]:text-blue-400 [&>p>strong]:font-semibold text-pretty">
+<article class="flex flex-col gap-8 text-gray-700 dark:text-gray-300">
+  <div class="space-y-4 [&>p]:text-base [&>p]:leading-relaxed [&>p>strong]:text-indigo-600 dark:[&>p>strong]:text-indigo-400 [&>p>strong]:font-semibold text-pretty">
     {about_me.description_paragraphs.map((paragraph) => (
       <p set:html={formatParagraph(paragraph)} data-about-paragraph />
     ))}
   </div>
-  
-  <div class="w-full border-t border-gray-200 dark:border-gray-700 pt-6">
-    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100" data-i18n="aboutMe.keyValues">Key Values</h3>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {about_me.attributes.map(attribute => (
-        <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-          <span class="text-green-500">✓</span>
-          <span data-attribute>{attribute}</span>
-        </div>
-      ))}
-    </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+    {about_me.attributes.map(attribute => (
+      <div class="flex items-center gap-2.5 text-sm p-3 rounded-xl
+        bg-white/60 dark:bg-white/[0.03]
+        border border-gray-200/60 dark:border-white/[0.06]">
+        <svg class="size-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span data-attribute>{attribute}</span>
+      </div>
+    ))}
   </div>
 </article>
-
-<!-- FRASES PROHIBIDAS EN VUESTRO PORTFOLIO
-
-<p>
-  Mi sueño es encontrar mi primer empleo en el mundo de la programación. Una empresa donde pueda seguir aprendiendo. ❌
-</p>
-
-<p>
-  ❌ Apasionado de la programación desde chekitito. Me encantan los ordenadores y crear páginas web buenas y rápidas con la última tecnología.
-</p>
-
-<p>
-  Trabajo bien en equipo. Siempre estoy aprendiendo cosas nuevas.
-</p>
-
--------------------------------------
-
---------------------------------------
-
-<p>
-  ¡Soy Leo! Estudié Derecho Empresarial y, tras años ejerciendo, me pasé al mundo de la Programación. Desde entonces disfruto creando experiencias web para los usuarios.
-</p>
-
-<p>
-  Entre mis éxitos destaco que durante el Grado Superior, ayudé a mis compañeros a aprender sobre TDD. Me encanta el testing, creo en su importancia, y me gusta compartir mi conocimiento sobre ello.
-</p>
-
-<p>
-  Cuento con experiencia desarrollando aplicaciones móviles, y he creado una iniciativa llamada X para mezclar mis dos pasiones: la programación y el derecho. Ayudando a la sociedad a acceso a una defensa justa.
-</p>
-
----------------------------------------
-
-<p>Me llamo Sara, tengo 25 años y soy de Santiago, Chile 🇨🇱. Terminé mis estudios como Desarrolladora Web. Me encanta enfocarme en la parte del rendimiento, para ofrecer la mejora experiencia al usuario.</p>
-
-<p>
-  Colaboro en la organización del MeetUp local BeerJS donde reunimos a desarrolladores de Santiago para compartir conocimiento y experiencias. El año 2023 hicimos un total de 25 charlas con más de 2000 asistentes.
-</p>
-
-<p>
-  Además de participar activamente en la comunidad, he participado en la Hackathon de Midudev quedando en 3er puesto con mi proyecto _Chatty_, donde usando IA podías interactuar con un PDF. ¡Échale un vistazo!
-</p>
-
--->

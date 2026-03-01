@@ -39,6 +39,39 @@
                             <button class="header-btn primary" id="saveHoldings">Guardar cambios</button>
                         </div>
                     </div>
+                    <div class="holdings-workbench">
+                        <div class="holdings-kpis">
+                            <article class="holdings-kpi">
+                                <span class="holdings-kpi-label">Valor actual</span>
+                                <strong class="holdings-kpi-value" id="holdingsTotalCurrent">0,00 €</strong>
+                            </article>
+                            <article class="holdings-kpi">
+                                <span class="holdings-kpi-label">Impacto edición</span>
+                                <strong class="holdings-kpi-value" id="holdingsDeltaValue">0,00 €</strong>
+                            </article>
+                            <article class="holdings-kpi">
+                                <span class="holdings-kpi-label">Activos modificados</span>
+                                <strong class="holdings-kpi-value" id="holdingsChangedCount">0</strong>
+                            </article>
+                            <article class="holdings-kpi">
+                                <span class="holdings-kpi-label">Estado</span>
+                                <strong class="holdings-kpi-value" id="holdingsEditStatus">Todo guardado</strong>
+                            </article>
+                        </div>
+                        <div class="holdings-tools">
+                            <div class="holdings-search-wrap">
+                                <input id="holdingsSearch" class="input holdings-search" type="search" placeholder="Buscar activo, categoría o plazo...">
+                                <span class="draft-badge" id="holdingsDraftBadge">Sin borrador</span>
+                            </div>
+                            <div class="holdings-quick-actions">
+                                <button class="btn secondary" data-holdings-pct="-5">Precio -5%</button>
+                                <button class="btn secondary" data-holdings-pct="-1">Precio -1%</button>
+                                <button class="btn secondary" data-holdings-pct="1">Precio +1%</button>
+                                <button class="btn secondary" data-holdings-pct="5">Precio +5%</button>
+                                <button class="btn secondary" id="resetHoldingsChanges">Reset</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="table-wrapper">
                         <table class="data-table">
                             <thead>

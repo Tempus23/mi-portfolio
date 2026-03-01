@@ -1,36 +1,39 @@
 ---
 import cvData from "@/data/cv_data.json";
-import LinkInline from "@/components/ui/LinkInline.astro";
 
 const { academic_formation } = cvData;
 ---
 
-<div class="flex flex-col gap-y-16">
-  <ol class="relative mt-8">
-    {
-      academic_formation.map((formation) => (
-        <li class="">
-          <div
-            class="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]"
-            data-formation
-          >
-            <div class="relative pb-12 md:col-span-2">
-              <div class="sticky top-0">
-                <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl"
-                  >&bull;</span
-                >
+<div class="grid sm:grid-cols-2 gap-4 mt-6">
+  {
+    academic_formation.map((formation) => (
+      <article
+        class="relative p-5 rounded-2xl
+          bg-white/60 dark:bg-white/[0.03]
+          border border-gray-200/80 dark:border-white/[0.06]
+          backdrop-blur-sm
+          shadow-sm hover:shadow-md
+          transition-shadow duration-300"
+        data-formation
+      >
+        <time
+          class="absolute top-4 right-4 text-xs font-medium text-gray-500 dark:text-gray-400
+            bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full"
+          data-formation-date
+        >
+          {formation.date}
+        </time>
 
-                <h3 class="text-xl font-bold text-yellow-400" data-formation-title>{formation.title}</h3>
-                <h4 class="font-semibold text-xl text-gray-600 dark:text-white" data-formation-company>{formation.company}</h4>
-                <time class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80" data-formation-date>{formation.date}</time>
-              </div>
-            </div>
-            <div class="relative flex flex-col gap-2 pb-4 text-gray-600 dark:text-gray-300 md:col-span-3" data-formation-description>
-              {formation.description}
-            </div>
-          </div>
-        </li>
-      ))
-    }
-  </ol>
+        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1 pr-16" data-formation-title>
+          {formation.title}
+        </h3>
+        <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-2" data-formation-company>
+          {formation.company}
+        </p>
+        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed" data-formation-description>
+          {formation.description}
+        </p>
+      </article>
+    ))
+  }
 </div>

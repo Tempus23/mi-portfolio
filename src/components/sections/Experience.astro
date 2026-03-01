@@ -1,36 +1,61 @@
 ---
 import cvData from "@/data/cv_data.json";
-import LinkInline from "@/components/ui/LinkInline.astro";
 
-const { professional_experience } = cvData;
+const { professional_experience } = cvData as {
+  professional_experience: {
+    title: string;
+    company: string;
+    date: string;
+    description: string;
+    keywords?: string[];
+  }[];
+};
 ---
 
-<ol class="relative mt-8">
+<div class="flex flex-col gap-6 mt-6">
   {
     professional_experience.map((experience) => (
-      <li class="">
-        <div
-          class="relative mx-12 pb-12 grid before:absolute before:left-[-35px] before:block before:h-full before:border-l-2 before:border-black/20 dark:before:border-white/15 before:content-[''] md:grid-cols-5 md:gap-10 md:space-x-4]"
-          data-experience
-        >
-          <div class="relative pb-12 md:col-span-2">
-            <div class="sticky top-0">
-              <span class="text-yellow-400 -left-[42px] absolute rounded-full text-5xl"
-                >&bull;</span
-              >
-
-              <h3 class="text-xl font-bold text-yellow-400" data-exp-title>{experience.title}</h3>
-              <h4 class="font-semibold text-xl text-gray-600 dark:text-white" data-exp-company>{experience.company}</h4>
-              <time class="p-0 m-0 text-sm text-gray-600/80 dark:text-white/80" data-exp-date>{experience.date}</time>
-            </div>
+      <article
+        class="relative p-6 rounded-2xl
+          bg-white/60 dark:bg-white/[0.03]
+          border border-gray-200/80 dark:border-white/[0.06]
+          backdrop-blur-sm
+          shadow-sm hover:shadow-lg
+          transition-all duration-300 hover:-translate-y-1"
+        data-experience
+      >
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-1 mb-3">
+          <div>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white" data-exp-title>
+              {experience.title}
+            </h3>
+            <p class="text-base font-semibold text-indigo-600 dark:text-indigo-400" data-exp-company>
+              {experience.company}
+            </p>
           </div>
-          <div class="relative flex flex-col gap-2 pb-4 text-gray-600 dark:text-gray-300 md:col-span-3" data-exp-description>
-            {experience.description}
-          </div>
+          <time
+            class="shrink-0 text-sm font-medium text-gray-500 dark:text-gray-400
+              bg-gray-100 dark:bg-gray-800/80 px-3 py-1 rounded-full mt-2 md:mt-0 self-start md:self-auto"
+            data-exp-date
+          >
+            {experience.date}
+          </time>
         </div>
-      </li>
+        
+        <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4" data-exp-description>
+          {experience.description}
+        </p>
+
+        {experience.keywords && experience.keywords.length > 0 && (
+          <div class="flex flex-wrap gap-2 mt-2">
+            {experience.keywords.map((keyword) => (
+              <span class="px-3 py-1 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60">
+                {keyword}
+              </span>
+            ))}
+          </div>
+        )}
+      </article>
     ))
   }
-</ol>
-
-
+</div>

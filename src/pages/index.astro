@@ -10,7 +10,7 @@ import Projects from "@/components/sections/Projects.astro"
 import SectionContainer from "@/components/ui/SectionContainer.astro"
 import Hero from "@/components/sections/Hero.astro"
 import TitleSection from "@/components/ui/TitleSection.astro"
-import Skills from "@/components/sections/Skills.astro"; // Import Skills component
+import Skills from "@/components/sections/Skills.astro";
 import AcademicFormation from "@/components/sections/AcademicFormation.astro";
 import Education from "@/components/icons/Education.astro";
 ---
@@ -24,31 +24,31 @@ import Education from "@/components/icons/Education.astro";
     <SectionContainer id="experience">
       <TitleSection>
         <Briefcase class="size-8" />
-        <span data-i18n-title="workExperience">Work Experience</span>
+        <span>My Experience</span>
       </TitleSection>
       <Experience />
-    </SectionContainer>
-
-    <SectionContainer id="projects">
-      <TitleSection>
-        <CodeIcon class="size-7" />
-        <span data-i18n-title="featuredProjects">Featured Projects</span>
-      </TitleSection>
-      <Projects />
     </SectionContainer>
 
     <SectionContainer id="skills">
       <TitleSection>
         <CodeIcon class="size-7" />
-        <span data-i18n-title="techStack">Tech Stack</span>
+        <span>Tech Stack</span>
       </TitleSection>
       <Skills />
+    </SectionContainer>
+
+    <SectionContainer id="projects">
+      <TitleSection>
+        <CodeIcon class="size-7" />
+        <span>Featured Projects</span>
+      </TitleSection>
+      <Projects />
     </SectionContainer>
 
     <SectionContainer id="academic-formation">
       <TitleSection>
         <Education class="size-8" />
-        <span data-i18n-title="academicBackground">Academic Background</span>
+        <span>Academic Background</span>
       </TitleSection>
       <AcademicFormation />
     </SectionContainer>
@@ -56,7 +56,7 @@ import Education from "@/components/icons/Education.astro";
     <SectionContainer id="about-me">
       <TitleSection>
         <ProfileCheck class="size-8" />
-        <span data-i18n-title="aboutMe">About Me</span>
+        <span>About Me</span>
       </TitleSection>
       <AboutMe />
     </SectionContainer>
