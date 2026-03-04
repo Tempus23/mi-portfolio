@@ -17,71 +17,68 @@ export function initLanguage() {
   const cvData = lang === 'es' ? cvDataEs : cvDataEn;
   const t = lang === 'es' ? translations.es : translations.en;
 
-  // Update HTML lang attribute
   document.documentElement.lang = lang;
+  updateGlobalState(lang, cvData, t);
+  updateUIComponents(cvData, t);
+}
 
-  // Store globally for other scripts
+function updateGlobalState(lang: 'en' | 'es', cvData: typeof cvDataEn, t: typeof translations.en) {
+  window.__currentLang = lang;
   window.__cvData = cvData;
   window.__translations = t;
-  window.__currentLang = lang;
+}
 
-  // Update navigation items
+function updateUIComponents(cvData: typeof cvDataEn, t: typeof translations.en) {
   updateNavigation(t);
-  
-  // Update hero section
   updateHero(cvData, t);
-  
-  // Update section titles
   updateSectionTitles(t);
-  
-  // Update skills section
   updateSkills(cvData, t);
-  
-  // Update projects section
   updateProjects(cvData, t);
-  
-  // Update about me section
   updateAboutMe(cvData, t);
-  
-  // Update footer
-  updateFooter(cvData, t);
-  
-  // Update experience and academic formation (they use the same data structure)
+  updateFooter(t);
   updateExperience(cvData);
   updateAcademicFormation(cvData);
 }
 
 function updateNavigation(t: typeof translations.en) {
-  const navLinks = document.querySelectorAll('header nav a');
-  navLinks.forEach((link) => {
+  const navMap: Record<string, string> = {
+    'experience': t.nav.experience,
+    'projects': t.nav.projects,
+    'skills': t.nav.skills,
+    'about-me': t.nav.aboutMe,
+    'contact': t.nav.contact,
+  };
+
+  document.querySelectorAll('header nav a').forEach((link) => {
     const label = link.getAttribute('aria-label');
-    if (label === 'experience') link.textContent = t.nav.experience;
-    else if (label === 'projects') link.textContent = t.nav.projects;
-    else if (label === 'skills') link.textContent = t.nav.skills;
-    else if (label === 'about-me') link.textContent = t.nav.aboutMe;
-    else if (label === 'contact') link.textContent = t.nav.contact;
+    if (label && navMap[label]) link.textContent = navMap[label];
   });
 }
 
 function updateHero(cvData: typeof cvDataEn, t: typeof translations.en) {
-  // Update greeting
-  const greeting = document.querySelector('[data-i18n="hero.greeting"]');
-  if (greeting) greeting.textContent = t.hero.greeting;
-  
-  // Update tagline
+  updateElementText('[data-i18n="hero.greeting"]', t.hero.greeting);
+  updateElementText('[data-i18n="hero.contactMe"]', t.hero.contactMe);
+
   const tagline = document.querySelector('[data-i18n="hero.tagline"]');
-  if (tagline) tagline.innerHTML = cvData.basic_info.tagline
-    .replace('Artificial Intelligence', '<strong>Artificial Intelligence</strong>')
-    .replace('Backend Development', '<strong>Backend Development</strong>')
-    .replace('Inteligencia Artificial', '<strong>Inteligencia Artificial</strong>');
-  
-  // Update contact button
-  const contactBtn = document.querySelector('[data-i18n="hero.contactMe"]');
-  if (contactBtn) contactBtn.textContent = t.hero.contactMe;
-  
-  // Update language badges
+  if (tagline) {
+    tagline.innerHTML = formatTagline(cvData.basic_info.tagline);
+  }
+
+  updateLanguageBadges(cvData.languages);
+}
+
+function formatTagline(tagline: string): string {
+  const keywords = ['Artificial Intelligence', 'Backend Development', 'Inteligencia Artificial'];
+  let formatted = tagline;
+  keywords.forEach(keyword => {
+    formatted = formatted.replace(keyword, `<strong>${keyword}</strong>`);
+  });
+  return formatted;
+}
+
+function updateLanguageBadges(languages: { name: string; level: string }[]) {
   const langBadges = document.querySelectorAll('[data-lang-badge]');
-  cvData.languages.forEach((lang, index) => {
+  languages.forEach((lang, index) => {
     if (langBadges[index]) {
       langBadges[index].textContent = `${lang.name} · ${lang.level}`;
     }
@@ -89,131 +86,108 @@ function updateHero(cvData: typeof cvDataEn, t: typeof translations.en) {
 }
 
 function updateSectionTitles(t: typeof translations.en) {
-  const titles = document.querySelectorAll('[data-i18n-title]');
-  titles.forEach((title) => {
+  const titleMap: Record<string, string> = {
+    'workExperience': t.sections.workExperience,
+    'featuredProjects': t.sections.featuredProjects,
+    'techStack': t.sections.techStack,
+    'academicBackground': t.sections.academicBackground,
+    'aboutMe': t.sections.aboutMe,
+  };
+
+  document.querySelectorAll('[data-i18n-title]').forEach((title) => {
     const key = title.getAttribute('data-i18n-title');
-    if (key === 'workExperience') title.textContent = t.sections.workExperience;
-    else if (key === 'featuredProjects') title.textContent = t.sections.featuredProjects;
-    else if (key === 'techStack') title.textContent = t.sections.techStack;
-    else if (key === 'academicBackground') title.textContent = t.sections.academicBackground;
-    else if (key === 'aboutMe') title.textContent = t.sections.aboutMe;
+    if (key && titleMap[key]) title.textContent = titleMap[key];
   });
 }
 
 function updateSkills(cvData: typeof cvDataEn, t: typeof translations.en) {
-  const techTitle = document.querySelector('[data-i18n="skills.technicalSkills"]');
-  if (techTitle) techTitle.textContent = t.skills.technicalSkills;
-  
-  const compTitle = document.querySelector('[data-i18n="skills.professionalCompetencies"]');
-  if (compTitle) compTitle.textContent = t.skills.professionalCompetencies;
-  
-  // Update skill items
-  const techSkills = document.querySelectorAll('[data-skill-type="technical"]');
+  updateElementText('[data-i18n="skills.technicalSkills"]', t.skills.technicalSkills);
+  updateElementText('[data-i18n="skills.professionalCompetencies"]', t.skills.professionalCompetencies);
+
   const allTechSkills = cvData.skills.technical.flatMap(group => group.items);
-  allTechSkills.forEach((skill, index) => {
-    if (techSkills[index]) techSkills[index].textContent = skill;
-  });
-  
-  const compSkills = document.querySelectorAll('[data-skill-type="competency"]');
-  cvData.skills.competencies.forEach((comp, index) => {
-    if (compSkills[index]) compSkills[index].textContent = comp;
-  });
+  updateNodeListContent('[data-skill-type="technical"]', allTechSkills);
+  updateNodeListContent('[data-skill-type="competency"]', cvData.skills.competencies);
 }
 
 function updateProjects(cvData: typeof cvDataEn, t: typeof translations.en) {
-  const projects = document.querySelectorAll('[data-project]');
-  projects.forEach((projectEl, index) => {
+  document.querySelectorAll('[data-project]').forEach((projectEl, index) => {
     const project = cvData.projects[index];
     if (!project) return;
-    
-    const title = projectEl.querySelector('[data-project-title]');
-    if (title) title.textContent = project.title;
-    
-    const desc = projectEl.querySelector('[data-project-description]');
-    if (desc) desc.textContent = project.description;
-    
-    const inProgress = projectEl.querySelector('[data-project-in-progress]');
-    if (inProgress && project.inProgress) {
-      inProgress.textContent = t.projects.inProgress;
+
+    updateChildElementText(projectEl, '[data-project-title]', project.title);
+    updateChildElementText(projectEl, '[data-project-description]', project.description);
+
+    if (project.inProgress) {
+      updateChildElementText(projectEl, '[data-project-in-progress]', t.projects.inProgress);
     }
   });
 }
 
 function updateAboutMe(cvData: typeof cvDataEn, t: typeof translations.en) {
+  updateElementText('[data-i18n="aboutMe.keyValues"]', t.aboutMe.keyValues);
+  updateNodeListContent('[data-attribute]', cvData.about_me.attributes);
+
   const paragraphs = document.querySelectorAll('[data-about-paragraph]');
+  const keywords = window.__currentLang === 'es'
+    ? ['Inteligencia Artificial', 'Machine Learning', 'Deep Learning', 'agentes de IA', 'backend', 'liderazgo técnico', 'experiencia internacional']
+    : ['Artificial Intelligence', 'Machine Learning', 'Deep Learning', 'AI agents', 'backend', 'technical leadership', 'international experience'];
+
   cvData.about_me.description_paragraphs.forEach((para, index) => {
     if (paragraphs[index]) {
       let formattedPara = para;
-      const boldKeywords = window.__currentLang === 'es' 
-        ? ['Inteligencia Artificial', 'Machine Learning', 'Deep Learning', 'agentes de IA', 'backend', 'liderazgo técnico', 'experiencia internacional']
-        : ['Artificial Intelligence', 'Machine Learning', 'Deep Learning', 'AI agents', 'backend', 'technical leadership', 'international experience'];
-      
-      boldKeywords.forEach(keyword => {
-        const regex = new RegExp(keyword, 'gi');
-        formattedPara = formattedPara.replace(regex, `<strong>${keyword}</strong>`);
+      keywords.forEach(keyword => {
+        formattedPara = formattedPara.replace(new RegExp(keyword, 'gi'), `<strong>${keyword}</strong>`);
       });
-      
       paragraphs[index].innerHTML = formattedPara;
     }
   });
-  
-  const keyValuesTitle = document.querySelector('[data-i18n="aboutMe.keyValues"]');
-  if (keyValuesTitle) keyValuesTitle.textContent = t.aboutMe.keyValues;
-  
-  const attributes = document.querySelectorAll('[data-attribute]');
-  cvData.about_me.attributes.forEach((attr, index) => {
-    if (attributes[index]) attributes[index].textContent = attr;
-  });
 }
 
-function updateFooter(cvData: typeof cvDataEn, t: typeof translations.en) {
-  const rights = document.querySelector('[data-i18n="footer.rightsReserved"]');
-  if (rights) rights.textContent = t.footer.rightsReserved;
-  
-  const aboutLink = document.querySelector('[data-i18n="footer.aboutMe"]');
-  if (aboutLink) aboutLink.textContent = t.footer.aboutMe;
-  
-  const contactLink = document.querySelector('[data-i18n="footer.contact"]');
-  if (contactLink) contactLink.textContent = t.footer.contact;
+function updateFooter(t: typeof translations.en) {
+  updateElementText('[data-i18n="footer.rightsReserved"]', t.footer.rightsReserved);
+  updateElementText('[data-i18n="footer.aboutMe"]', t.footer.aboutMe);
+  updateElementText('[data-i18n="footer.contact"]', t.footer.contact);
 }
 
 function updateExperience(cvData: typeof cvDataEn) {
-  const experiences = document.querySelectorAll('[data-experience]');
-  experiences.forEach((expEl, index) => {
+  document.querySelectorAll('[data-experience]').forEach((expEl, index) => {
     const exp = cvData.professional_experience[index];
     if (!exp) return;
-    
-    const title = expEl.querySelector('[data-exp-title]');
-    if (title) title.textContent = exp.title;
-    
-    const company = expEl.querySelector('[data-exp-company]');
-    if (company) company.textContent = exp.company;
-    
-    const date = expEl.querySelector('[data-exp-date]');
-    if (date) date.textContent = exp.date;
-    
-    const desc = expEl.querySelector('[data-exp-description]');
-    if (desc) desc.textContent = exp.description;
+
+    updateChildElementText(expEl, '[data-exp-title]', exp.title);
+    updateChildElementText(expEl, '[data-exp-company]', exp.company);
+    updateChildElementText(expEl, '[data-exp-date]', exp.date);
+    updateChildElementText(expEl, '[data-exp-description]', exp.description);
   });
 }
 
 function updateAcademicFormation(cvData: typeof cvDataEn) {
-  const formations = document.querySelectorAll('[data-formation]');
-  formations.forEach((formEl, index) => {
+  document.querySelectorAll('[data-formation]').forEach((formEl, index) => {
     const formation = cvData.academic_formation[index];
     if (!formation) return;
-    
-    const title = formEl.querySelector('[data-formation-title]');
-    if (title) title.textContent = formation.title;
-    
-    const company = formEl.querySelector('[data-formation-company]');
-    if (company) company.textContent = formation.company;
-    
-    const date = formEl.querySelector('[data-formation-date]');
-    if (date) date.textContent = formation.date;
-    
-    const desc = formEl.querySelector('[data-formation-description]');
-    if (desc) desc.textContent = formation.description;
+
+    updateChildElementText(formEl, '[data-formation-title]', formation.title);
+    updateChildElementText(formEl, '[data-formation-company]', formation.company);
+    updateChildElementText(formEl, '[data-formation-date]', formation.date);
+    updateChildElementText(formEl, '[data-formation-description]', formation.description);
+  });
+}
+
+// Helper Functions
+function updateElementText(selector: string, text: string) {
+  const element = document.querySelector(selector);
+  if (element) element.textContent = text;
+}
+
+function updateChildElementText(parent: Element, selector: string, text: string) {
+  const element = parent.querySelector(selector);
+  if (element) element.textContent = text;
+}
+
+function updateNodeListContent(selector: string, contentArray: string[]) {
+  const nodes = document.querySelectorAll(selector);
+  contentArray.forEach((content, index) => {
+    if (nodes[index]) nodes[index].textContent = content;
   });
 }
 
