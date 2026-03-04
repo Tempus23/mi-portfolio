@@ -109,7 +109,8 @@ function updateSkills(cvData: typeof cvDataEn, t: typeof translations.en) {
   
   // Update skill items
   const techSkills = document.querySelectorAll('[data-skill-type="technical"]');
-  cvData.skills.technical.forEach((skill, index) => {
+  const allTechSkills = cvData.skills.technical.flatMap(group => group.items);
+  allTechSkills.forEach((skill, index) => {
     if (techSkills[index]) techSkills[index].textContent = skill;
   });
   
