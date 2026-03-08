@@ -471,6 +471,10 @@ body {
     padding: 20px;
 }
 
+.chart-card.full-width {
+    width: 100%;
+}
+
 .chart-wrapper {
     height: 280px;
     position: relative;
@@ -552,9 +556,9 @@ body {
 }
 
 .distribution-row {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
 }
 
 .distribution-charts {
@@ -769,6 +773,7 @@ body {
     line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -1879,13 +1884,6 @@ button:focus-visible,
    Distribution Row — Doughnut charts + Category ROI table
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.distribution-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 2fr;
-    gap: 20px;
-    margin-bottom: 24px;
-}
-
 .chart-card-sm {
     display: flex;
     flex-direction: column;
@@ -1928,17 +1926,8 @@ button:focus-visible,
 }
 
 @media (max-width: 900px) {
-    .distribution-row {
-        grid-template-columns: 1fr 1fr;
-    }
     .rentability-card {
         grid-column: 1 / -1;
-    }
-}
-
-@media (max-width: 600px) {
-    .distribution-row {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -2010,11 +1999,25 @@ button:focus-visible,
     transition: stroke-dasharray 0.8s ease;
 }
 
-.health-gauge.health-excellent { color: #32d74b; }
-.health-gauge.health-good { color: #0071e3; }
-.health-gauge.health-fair { color: #ff9f0a; }
-.health-gauge.health-poor { color: #ff6b35; }
-.health-gauge.health-critical { color: #ff453a; }
+.health-gauge.health-excellent {
+    color: #32d74b;
+}
+
+.health-gauge.health-good {
+    color: #0071e3;
+}
+
+.health-gauge.health-fair {
+    color: #ff9f0a;
+}
+
+.health-gauge.health-poor {
+    color: #ff6b35;
+}
+
+.health-gauge.health-critical {
+    color: #ff453a;
+}
 
 .health-score-number {
     position: absolute;
@@ -2104,14 +2107,33 @@ button:focus-visible,
     background: rgba(255, 255, 255, 0.06);
 }
 
-.ai-rec-item.signal-buy { border-left-color: #32d74b; }
-.ai-rec-item.signal-reduce { border-left-color: #ff453a; }
-.ai-rec-item.signal-hold { border-left-color: #86868b; }
-.ai-rec-item.signal-alert { border-left-color: #ff9f0a; }
-.ai-rec-item.signal-info { border-left-color: #0071e3; }
+.ai-rec-item.signal-buy {
+    border-left-color: #32d74b;
+}
 
-.ai-rec-item.severity-high { background: rgba(255, 69, 58, 0.06); }
-.ai-rec-item.severity-medium { background: rgba(255, 159, 10, 0.04); }
+.ai-rec-item.signal-reduce {
+    border-left-color: #ff453a;
+}
+
+.ai-rec-item.signal-hold {
+    border-left-color: #86868b;
+}
+
+.ai-rec-item.signal-alert {
+    border-left-color: #ff9f0a;
+}
+
+.ai-rec-item.signal-info {
+    border-left-color: #0071e3;
+}
+
+.ai-rec-item.severity-high {
+    background: rgba(255, 69, 58, 0.06);
+}
+
+.ai-rec-item.severity-medium {
+    background: rgba(255, 159, 10, 0.04);
+}
 
 .ai-rec-icon {
     font-size: 18px;
@@ -2121,11 +2143,25 @@ button:focus-visible,
     flex-shrink: 0;
 }
 
-.signal-buy .ai-rec-icon { color: #32d74b; }
-.signal-reduce .ai-rec-icon { color: #ff453a; }
-.signal-hold .ai-rec-icon { color: #86868b; }
-.signal-alert .ai-rec-icon { color: #ff9f0a; }
-.signal-info .ai-rec-icon { color: #0071e3; }
+.signal-buy .ai-rec-icon {
+    color: #32d74b;
+}
+
+.signal-reduce .ai-rec-icon {
+    color: #ff453a;
+}
+
+.signal-hold .ai-rec-icon {
+    color: #86868b;
+}
+
+.signal-alert .ai-rec-icon {
+    color: #ff9f0a;
+}
+
+.signal-info .ai-rec-icon {
+    color: #0071e3;
+}
 
 .ai-rec-content {
     flex: 1;
@@ -2158,9 +2194,20 @@ button:focus-visible,
     flex-shrink: 0;
 }
 
-.signal-buy .ai-rec-badge { color: #32d74b; background: rgba(50, 215, 75, 0.1); }
-.signal-reduce .ai-rec-badge { color: #ff453a; background: rgba(255, 69, 58, 0.1); }
-.signal-alert .ai-rec-badge { color: #ff9f0a; background: rgba(255, 159, 10, 0.1); }
+.signal-buy .ai-rec-badge {
+    color: #32d74b;
+    background: rgba(50, 215, 75, 0.1);
+}
+
+.signal-reduce .ai-rec-badge {
+    color: #ff453a;
+    background: rgba(255, 69, 58, 0.1);
+}
+
+.signal-alert .ai-rec-badge {
+    color: #ff9f0a;
+    background: rgba(255, 159, 10, 0.1);
+}
 
 /* ─── Asset Signals ─── */
 
@@ -2216,13 +2263,24 @@ button:focus-visible,
 }
 
 .ai-signal-chip.signal-buy .ai-signal-icon,
-.ai-signal-chip.signal-buy .ai-signal-label { color: #32d74b; }
+.ai-signal-chip.signal-buy .ai-signal-label {
+    color: #32d74b;
+}
+
 .ai-signal-chip.signal-reduce .ai-signal-icon,
-.ai-signal-chip.signal-reduce .ai-signal-label { color: #ff453a; }
+.ai-signal-chip.signal-reduce .ai-signal-label {
+    color: #ff453a;
+}
+
 .ai-signal-chip.signal-hold .ai-signal-icon,
-.ai-signal-chip.signal-hold .ai-signal-label { color: #86868b; }
+.ai-signal-chip.signal-hold .ai-signal-label {
+    color: #86868b;
+}
+
 .ai-signal-chip.signal-alert .ai-signal-icon,
-.ai-signal-chip.signal-alert .ai-signal-label { color: #ff9f0a; }
+.ai-signal-chip.signal-alert .ai-signal-label {
+    color: #ff9f0a;
+}
 
 /* ─── Monte Carlo ─── */
 
@@ -2252,9 +2310,17 @@ button:focus-visible,
     border-radius: 8px;
 }
 
-.mc-scenario.mc-pessimistic { background: rgba(255, 69, 58, 0.08); }
-.mc-scenario.mc-median { background: rgba(0, 113, 227, 0.08); }
-.mc-scenario.mc-optimistic { background: rgba(50, 215, 75, 0.08); }
+.mc-scenario.mc-pessimistic {
+    background: rgba(255, 69, 58, 0.08);
+}
+
+.mc-scenario.mc-median {
+    background: rgba(0, 113, 227, 0.08);
+}
+
+.mc-scenario.mc-optimistic {
+    background: rgba(50, 215, 75, 0.08);
+}
 
 .mc-label {
     font-size: 11px;
@@ -2268,9 +2334,17 @@ button:focus-visible,
     color: var(--text-primary, #f5f5f7);
 }
 
-.mc-pessimistic .mc-value { color: #ff453a; }
-.mc-median .mc-value { color: #0071e3; }
-.mc-optimistic .mc-value { color: #32d74b; }
+.mc-pessimistic .mc-value {
+    color: #ff453a;
+}
+
+.mc-median .mc-value {
+    color: #0071e3;
+}
+
+.mc-optimistic .mc-value {
+    color: #32d74b;
+}
 
 /* ─── GPT Analysis ─── */
 
@@ -2293,9 +2367,6 @@ button:focus-visible,
     color: var(--text-primary, #f5f5f7);
 }
 
-.ai-gpt-section {
-    /* container for AI response */
-}
 
 .ai-gpt-block {
     padding: 12px 0;
@@ -2521,8 +2592,15 @@ button:focus-visible,
 }
 
 @keyframes chatMsgIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .ai-chat-msg-user {
@@ -2577,12 +2655,25 @@ button:focus-visible,
     animation: typingBounce 1.4s infinite;
 }
 
-.ai-typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-.ai-typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+.ai-typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.ai-typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
 
 @keyframes typingBounce {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-6px); }
+
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+    }
+
+    30% {
+        transform: translateY(-6px);
+    }
 }
 
 .ai-chat-streaming .ai-typing-indicator {
@@ -2674,10 +2765,12 @@ button:focus-visible,
     .ai-insights-grid {
         grid-template-columns: 1fr;
     }
+
     .ai-insights-left {
         flex-direction: row;
         justify-content: center;
     }
+
     .ai-metrics-row {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -2688,4 +2781,3 @@ button:focus-visible,
         grid-template-columns: repeat(2, 1fr);
     }
 }
-

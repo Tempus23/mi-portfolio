@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/finanzas/styles.css">
+    <link rel="stylesheet" href="./styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
@@ -88,23 +88,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="hero-metrics">
-                    <div class="metric">
-                        <span class="metric-value" id="totalInvested">0,00 €</span>
-                        <span class="metric-change" id="lastMonthInvested">—</span>
-                        <span class="metric-label">Invertido</span>
-                    </div>
-                    <div class="metric-divider"></div>
-                    <div class="metric">
-                        <span class="metric-value" id="totalROI">0,00%</span>
-                        <span class="metric-label">Rentabilidad</span>
-                    </div>
-                    <div class="metric-divider"></div>
-                    <div class="metric">
-                        <span class="metric-value" id="totalVariation">0,00 €</span>
-                        <span class="metric-label">Ganancia</span>
-                    </div>
-                </div>
+
             </section>
 
             <!-- Charts Row -->
@@ -153,41 +137,22 @@
             </section>
 
             <!-- Distribution Charts -->
-            <section class="distribution-row">
-                <div class="card chart-card-sm">
-                    <div class="card-header"><h3>Por Categoría</h3></div>
-                    <div class="chart-wrapper-sm"><canvas id="categoryChart"></canvas></div>
-                </div>
-                <div class="card chart-card-sm">
-                    <div class="card-header"><h3>Por Plazo</h3></div>
-                    <div class="chart-wrapper-sm"><canvas id="termChart"></canvas></div>
-                </div>
-                <div class="card rentability-card">
-                    <div class="card-header">
-                        <h3 id="categoryRoiTitle">Rentabilidad por Categoría</h3>
+            <section class="distribution-row" style="margin-top: 1rem;">
+                <div class="card chart-card full-width">
+                    <div class="card-header" style="justify-content: space-between; align-items: center; display: flex;">
+                        <h3>Evolución de Distribución</h3>
+                        <div class="controls-row">
+                            <!-- Toggle Categoría / Plazo -->
+                            <div class="segmented-control" id="distributionModeFilter">
+                                <button class="segment active" data-dist="category">Categoría</button>
+                                <button class="segment" data-dist="term">Plazo</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="table-wrapper">
-                        <table class="data-table compact">
-                            <thead id="categoryRoiHead">
-                                <tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Volatilidad</th><th>Drawdown</th></tr>
-                            </thead>
-                            <tbody id="categoryRoiBody"></tbody>
-                        </table>
-                    </div>
+                    <div class="chart-wrapper distribution-chart-wrapper" style="height: 350px;"><canvas id="distributionChart"></canvas></div>
                 </div>
             </section>
 
-            <!-- AI Insights -->
-            <section class="ai-insights-section">
-                <div class="card">
-                    <div class="card-header">
-                        <h2><span class="ai-section-icon">🧠</span> AI Insights</h2>
-                    </div>
-                    <div id="aiInsightsContent">
-                        <p class="ai-empty">Captura al menos un snapshot para ver insights.</p>
-                    </div>
-                </div>
-            </section>
 
             <!-- Analytics -->
             <section class="analytics-section">
@@ -325,27 +290,6 @@
                 </div>
             </section>
 
-            <!-- Top Items -->
-            <section class="assets-overview">
-                <div class="card">
-                    <div class="card-header">
-                        <h2 id="topItemsTitle">Top 5 Categorías</h2>
-                    </div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead id="topItemsHead">
-                                <tr>
-                                    <th>Categoría</th>
-                                    <th>Valor</th>
-                                    <th>Invertido</th>
-                                    <th>ROI</th>
-                                </tr>
-                            </thead>
-                            <tbody id="topAssetsBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
 
             <!-- History -->
             <section class="history-section">
