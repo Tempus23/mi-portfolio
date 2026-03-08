@@ -5,198 +5,376 @@ const cvContext = JSON.stringify(cvData);
 ---
 
 <div id="local-chat-widget" class="fixed bottom-6 right-6 z-50">
-    <!-- floating button -->
+    <!-- Floating Action Button -->
     <button
         id="local-chat-fab"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-[0_8px_30px_rgb(79,70,229,0.3)] transition-all hover:scale-105 active:scale-95 backdrop-blur-md border border-white/20 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        aria-label="Chat con IA local"
+        class="group relative bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl p-4 shadow-[0_8px_32px_rgba(79,70,229,0.45)] transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 overflow-hidden"
+        aria-label="Chat con IA"
     >
+        <span
+            class="absolute inset-0 rounded-2xl border-2 border-indigo-400/0 group-hover:border-indigo-400/40 transition-all duration-500 scale-100 group-hover:scale-110"
+        ></span>
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="size-6"
+            class="size-6 relative z-10"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            stroke-width="1.8"
         >
             <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke-width="2"
                 d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
             ></path>
         </svg>
+        <span
+            class="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg"
+            >Chat IA · Local</span
+        >
     </button>
 
+    <!-- Chat Window -->
     <div
         id="local-chat-window"
-        class="hidden flex-col w-[390px] max-w-[95vw] h-[600px] max-h-[85vh] bg-white/80 dark:bg-[#1a1b26]/80 border border-gray-200/50 dark:border-indigo-500/20 backdrop-blur-[40px] rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(79,70,229,0.15)] absolute bottom-24 right-4 sm:right-6 overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]"
+        class="hidden flex-col
+               w-full h-full bottom-0 right-0 rounded-none sm:rounded-3xl
+               sm:w-[420px] sm:h-[640px] sm:max-h-[88vh] sm:bottom-24 sm:right-0
+               bg-white dark:bg-[#12131e]
+               border-t sm:border border-gray-200/60 dark:border-indigo-500/15
+               shadow-[0_32px_64px_rgba(0,0,0,0.12),0_0_0_1px_rgba(79,70,229,0.05)] dark:shadow-[0_32px_64px_rgba(0,0,0,0.5),0_0_0_1px_rgba(79,70,229,0.15)]
+               absolute overflow-hidden"
+        style="transform-origin: bottom right;"
     >
         <!-- Header -->
         <div
-            class="px-6 py-5 flex justify-between items-center relative z-20 bg-indigo-600/95 dark:bg-indigo-600/20 backdrop-blur-md"
+            class="relative flex items-center justify-between px-5 py-4 bg-indigo-600 dark:bg-[#1e1f32] border-b border-indigo-500/20 dark:border-indigo-500/10 shrink-0"
         >
-            <div class="flex items-center gap-3">
-                <div class="relative">
+            <div
+                class="absolute inset-0 opacity-5"
+                style="background-image: linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px); background-size: 20px 20px;"
+            >
+            </div>
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="relative shrink-0">
                     <div
-                        class="bg-white/20 dark:bg-indigo-500/20 p-2.5 rounded-2xl border border-white/20 dark:border-indigo-500/20"
+                        class="w-10 h-10 rounded-xl bg-white/15 dark:bg-indigo-500/20 flex items-center justify-center border border-white/20 dark:border-indigo-400/20 backdrop-blur-sm"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            class="size-5 text-white dark:text-indigo-100"
+                            class="size-5 text-white"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
+                            stroke-width="1.8"
                         >
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
-                                stroke-width="2"
                                 d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                             ></path>
                         </svg>
                     </div>
                     <span
-                        class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-indigo-600 dark:border-indigo-950 rounded-full shadow-sm"
+                        id="status-dot"
+                        class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-amber-400 border-2 border-indigo-600 dark:border-[#1e1f32] rounded-full transition-colors duration-500"
                     ></span>
                 </div>
                 <div>
                     <h3
-                        class="font-bold text-[17px] text-white dark:text-indigo-50 leading-tight tracking-tight"
+                        class="font-bold text-[15px] text-white leading-none tracking-tight"
                     >
-                        Carlos
+                        Carlos IA
                     </h3>
                     <p
-                        class="text-[10px] text-indigo-200 dark:text-indigo-400 font-bold tracking-widest uppercase"
+                        class="text-[10px] text-indigo-200/80 dark:text-indigo-400/80 font-semibold tracking-[0.12em] uppercase mt-0.5"
                         id="chat-status"
                     >
-                        Conectando
+                        Iniciando...
                     </p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 relative z-30">
-                <div class="relative group">
+            <div class="flex items-center gap-2 relative z-10">
+                <div class="relative">
                     <select
                         id="model-selector"
-                        class="text-[12px] bg-white/10 dark:bg-indigo-950/40 border-none rounded-xl pl-3 pr-7 py-2 text-white dark:text-indigo-100 hover:bg-white/20 dark:hover:bg-indigo-900/40 transition-all outline-none cursor-pointer font-semibold appearance-none shadow-sm relative z-20"
+                        class="text-[11px] bg-white/10 dark:bg-indigo-950/60 border border-white/15 dark:border-indigo-500/20 rounded-lg pl-3 pr-6 py-1.5 text-white font-semibold appearance-none outline-none cursor-pointer hover:bg-white/20 dark:hover:bg-indigo-900/40 transition-colors"
                     >
                         <option
-                            value="Llama-3.2-1B-Instruct-q4f16_1-MLC"
-                            class="bg-indigo-700 text-white">Llama 1B</option
+                            value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
+                            class="bg-indigo-800 text-white"
+                            >Qwen2.5 0.5B ⚡</option
                         >
                         <option
-                            value="Llama-3.2-3B-Instruct-q4f16_1-MLC"
+                            value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
                             selected
-                            class="bg-indigo-700 text-white">Llama 3B</option
+                            class="bg-indigo-800 text-white"
+                            >Qwen2.5 1.5B ★</option
                         >
                         <option
-                            value="Phi-3.5-mini-instruct-q4f16_1-MLC"
-                            class="bg-indigo-700 text-white">Phi 3.5</option
+                            value="Qwen2.5-3B-Instruct-q4f16_1-MLC"
+                            class="bg-indigo-800 text-white">Qwen2.5 3B</option
+                        >
+                        <option
+                            value="gemma-2-2b-it-q4f16_1-MLC"
+                            class="bg-indigo-800 text-white">Gemma 2 2B</option
                         >
                     </select>
                     <svg
-                        class="absolute right-2.5 top-1/2 -translate-y-1/2 size-3 text-white/70 pointer-events-none z-30"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 size-2.5 text-white/60 pointer-events-none"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
+                        stroke-width="3"
                     >
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
-                            stroke-width="2.5"
                             d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </div>
                 <button
                     id="local-chat-close"
-                    class="text-white/60 hover:text-white dark:text-indigo-300/60 dark:hover:text-white p-2 rounded-full hover:bg-white/10 dark:hover:bg-indigo-500/20 transition-colors relative z-20"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 dark:hover:bg-indigo-500/20 transition-all active:scale-90"
                     aria-label="Cerrar chat"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="size-5"
+                        class="size-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
+                        stroke-width="2.5"
                     >
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
-                            stroke-width="3"
                             d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
                 </button>
             </div>
         </div>
 
-        <div id="cv-context-data" class="hidden">{cvContext}</div>
-
-        <!-- Messages Area -->
-        <div
-            id="local-chat-messages"
-            class="flex-1 p-4 overflow-y-auto flex flex-col gap-4 bg-transparent"
-        >
-            <!-- Fallback message for unsupported browsers placeholder -->
+        <!-- Loading Bar -->
+        <div id="loading-progress-container" class="hidden shrink-0">
             <div
-                id="webgpu-fallback"
-                class="hidden text-center text-sm text-red-600 dark:text-red-400 bg-red-50/80 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800 backdrop-blur-sm"
+                class="h-0.5 bg-gray-100 dark:bg-indigo-950 w-full overflow-hidden"
             >
-                Tu navegador o dispositivo no soporta WebGPU. El chat local no
-                puede iniciarse.
+                <div
+                    id="loading-progress-bar"
+                    class="h-full bg-gradient-to-r from-indigo-500 to-green-400 transition-all duration-300 w-0 relative"
+                >
+                    <div
+                        class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/40 animate-pulse"
+                    >
+                    </div>
+                </div>
             </div>
-
-            <!-- Welcome Message Template -->
             <div
-                class="self-start bg-gray-100/50 dark:bg-indigo-500/10 p-4 rounded-[1.5rem] rounded-tl-[4px] text-[14px] text-gray-800 dark:text-indigo-100 leading-relaxed shadow-sm border border-gray-200/50 dark:border-indigo-500/10"
+                class="px-5 py-2.5 bg-indigo-50/80 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/50 flex items-center gap-2"
             >
-                Hola, soy Carlos. Esto es un LLM ejecutado 100% en local en tu
-                navegador. ¿En qué puedo ayudarte hoy?
+                <div
+                    class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0"
+                >
+                </div>
+                <p
+                    id="loading-status-text"
+                    class="text-[11px] text-indigo-700 dark:text-indigo-300 font-semibold tracking-tight truncate"
+                >
+                    Preparando inteligencia local…
+                </p>
             </div>
         </div>
 
-        <!-- Input Area -->
-        <form
-            id="local-chat-form"
-            class="px-5 py-6 bg-transparent flex gap-3 relative z-10"
+        <!-- Hidden CV context -->
+        <div id="cv-context-data" class="hidden">{cvContext}</div>
+
+        <!-- WebGPU Fallback -->
+        <div
+            id="webgpu-fallback"
+            class="hidden mx-4 mt-3 text-[13px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-xl border border-red-200 dark:border-red-800 flex items-start gap-2.5 shrink-0"
         >
-            <input
-                type="text"
-                id="local-chat-input"
-                class="flex-1 bg-gray-100 dark:bg-indigo-500/10 text-gray-900 dark:text-white text-[15px] rounded-[1.25rem] px-5 py-3 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 border border-gray-200/50 dark:border-indigo-500/20 transition-all placeholder:text-gray-400 dark:placeholder:text-indigo-300/40 shadow-inner"
-                placeholder="Escribe un mensaje..."
-                disabled
-                autocomplete="off"
-            />
-            <button
-                type="submit"
-                id="local-chat-send"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white w-[46px] h-[46px] rounded-[1.25rem] transition-all disabled:opacity-20 flex items-center justify-center shrink-0 shadow-lg active:scale-90"
-                disabled
-                aria-label="Enviar mensaje"
+            <svg
+                class="size-4 shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="size-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                ></path>
+            </svg>
+            <span
+                >Tu navegador no soporta WebGPU. El chat local no puede
+                iniciarse.</span
+            >
+        </div>
+
+        <!-- Messages -->
+        <div
+            id="local-chat-messages"
+            class="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-3 scroll-smooth"
+            style="scrollbar-width: thin; scrollbar-color: rgba(99,102,241,0.2) transparent;"
+        >
+            <!-- Welcome message injected by JS -->
+        </div>
+
+        <!-- Input Area -->
+        <div
+            class="px-4 py-3 border-t border-gray-100 dark:border-indigo-500/10 bg-white dark:bg-[#12131e] shrink-0"
+        >
+            <form id="local-chat-form" class="flex items-center gap-2">
+                <input
+                    type="text"
+                    id="local-chat-input"
+                    class="flex-1 bg-gray-50 dark:bg-indigo-500/10 text-gray-900 dark:text-white text-[13.5px] rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-gray-200 dark:border-indigo-500/20 transition-all placeholder:text-gray-400 dark:placeholder:text-indigo-400/40 disabled:opacity-50"
+                    placeholder="Escribe un mensaje…"
+                    disabled
+                    autocomplete="off"
+                    maxlength="500"
+                />
+                <button
+                    type="submit"
+                    id="local-chat-send"
+                    class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-all disabled:opacity-30 active:scale-90 shrink-0 shadow-md shadow-indigo-500/25"
+                    disabled
+                    aria-label="Enviar"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                </svg>
-            </button>
-        </form>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="size-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M5 12h14M12 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </form>
+            <p
+                class="text-[10px] text-gray-400 dark:text-indigo-500/50 text-center mt-2 tracking-tight"
+            >
+                Modelo local · Sin datos enviados a servidores
+            </p>
+        </div>
     </div>
 </div>
 
-<script>
-    // We need to conditionally import WebLLM because it relies on browser APIs.
-    // Astro <script> runs on the client by default.
+<style>
+    #local-chat-window {
+        transition:
+            opacity 0.25s ease,
+            transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #local-chat-window.entering {
+        opacity: 0;
+        transform: scale(0.92) translateY(12px);
+    }
+    #local-chat-window.visible {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    #local-chat-messages::-webkit-scrollbar {
+        width: 4px;
+    }
+    #local-chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #local-chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.2);
+        border-radius: 4px;
+    }
+    #local-chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.4);
+    }
 
+    .msg-enter {
+        animation: msgIn 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+    }
+    @keyframes msgIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px) scale(0.97);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    .stream-cursor::after {
+        content: "\u25ae";
+        display: inline-block;
+        color: #6366f1;
+        animation: cursorBlink 0.8s step-end infinite;
+        margin-left: 1px;
+        font-size: 0.85em;
+        vertical-align: middle;
+    }
+    @keyframes cursorBlink {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+    }
+    #local-chat-input {
+        transition:
+            height 0.1s ease,
+            border-color 0.2s;
+    }
+
+    /* Action card animations */
+    .chat-action-card {
+        animation: slideUpFade 0.3s ease forwards;
+        opacity: 0;
+    }
+    @keyframes slideUpFade {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .chat-action-card:nth-child(2) {
+        animation-delay: 0.07s;
+    }
+    .chat-action-card:nth-child(3) {
+        animation-delay: 0.14s;
+    }
+
+    /* Scroll highlight pulse */
+    .section-highlight-pulse {
+        animation: sectionPulse 1.8s ease-out;
+    }
+    @keyframes sectionPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 16px rgba(79, 70, 229, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+        }
+    }
+</style>
+
+<script>
     import { CreateMLCEngine } from "@mlc-ai/web-llm";
 
+    // ─── DOM ────────────────────────────────────────────────────────────────────
     const form = document.getElementById("local-chat-form") as HTMLFormElement;
     const input = document.getElementById(
         "local-chat-input",
@@ -210,6 +388,7 @@ const cvContext = JSON.stringify(cvData);
     const statusEl = document.getElementById(
         "chat-status",
     ) as HTMLParagraphElement;
+    const statusDot = document.getElementById("status-dot") as HTMLSpanElement;
     const fab = document.getElementById("local-chat-fab") as HTMLButtonElement;
     const windowEl = document.getElementById(
         "local-chat-window",
@@ -223,193 +402,635 @@ const cvContext = JSON.stringify(cvData);
     const modelSelector = document.getElementById(
         "model-selector",
     ) as HTMLSelectElement;
+    const progressContainer = document.getElementById(
+        "loading-progress-container",
+    ) as HTMLDivElement;
+    const progressBar = document.getElementById(
+        "loading-progress-bar",
+    ) as HTMLDivElement;
+    const statusText = document.getElementById(
+        "loading-status-text",
+    ) as HTMLParagraphElement;
+    const cvInfo =
+        document.getElementById("cv-context-data")?.textContent || "";
 
-    // Toggle chat window
+    let engine: any = null;
+    let isInitializing = false;
+
+    // ─── ACTION REGISTRY ────────────────────────────────────────────────────────
+    // Maps action keys the model can emit → what the UI does.
+    // Sections: use data-section="xxx" attributes on your page elements.
+    // Contact: well-known external links.
+
+    type ActionCard = {
+        icon: string;
+        label: string;
+        sublabel?: string;
+        action: () => void;
+        style?: "primary" | "ghost" | "danger";
+    };
+
+    const SECTION_ANCHORS: Record<string, string> = {
+        experiencia:
+            "#experiencia,#experience,[data-section='experience'],[data-section='experiencia']",
+        proyectos:
+            "#proyectos,#projects,[data-section='projects'],[data-section='proyectos']",
+        habilidades:
+            "#habilidades,#skills,[data-section='skills'],[data-section='habilidades']",
+        contacto:
+            "#contacto,#contact,[data-section='contact'],[data-section='contacto']",
+        educacion:
+            "#educacion,#education,[data-section='education'],[data-section='educacion']",
+        sobre: "#sobre,#about,[data-section='about'],[data-section='sobre']",
+    };
+
+    // Maps action key → section anchor key (for auto-scroll on response)
+    const ACTION_SCROLL_MAP: Record<string, keyof typeof SECTION_ANCHORS> = {
+        experience: "experiencia",
+        projects: "proyectos",
+        skills: "habilidades",
+        education: "educacion",
+        contact: "contacto",
+    };
+
+    // ─── Model-based intent classification ──────────────────────────────────────
+    // A fast, no-context call to the model that returns JSON with:
+    //   { scroll: "experiencia"|"proyectos"|"habilidades"|"educacion"|"contacto"|"sobre"|null,
+    //     actions: string[] }
+    // This fires in parallel with (or just before) the main response call.
+
+    const INTENT_SYSTEM = `You are a routing classifier. Reply with ONLY a JSON object, no markdown, no explanation.
+Format: {"scroll":"VALUE_OR_NULL","actions":["key1","key2"]}
+
+SCROLL field — use one of these exact strings, or null:
+"experiencia" = user asks about work experience, jobs, career, Mercadona, Urobora
+"proyectos"   = user asks about projects, portfolio, TFG, thesis, research
+"habilidades" = user asks about skills, technologies, stack, Python, Java, tools
+"educacion"   = user asks about studies, university, UPV, TUM, Erasmus, degree
+"sobre"       = user asks who Carlos is, introduction, about him
+null          = contact intent, greeting, or unclear
+
+ACTIONS field — array, include ALL that apply:
+"contact"    = include whenever user asks how to contact, reach out, hire, get email, LinkedIn, collaborate, write
+"experience" = user asks about work experience
+"projects"   = user asks about projects
+"skills"     = user asks about skills or technologies  
+"github"     = user asks about code, repos, GitHub
+"education"  = user asks about studies or education
+
+EXAMPLES (follow these exactly):
+"hola" -> {"scroll":null,"actions":[]}
+"cuéntame tu experiencia" -> {"scroll":"experiencia","actions":[]}
+"¿cómo contactarte?" -> {"scroll":null,"actions":["contact"]}
+"¿cómo puedo contactarte?" -> {"scroll":null,"actions":["contact"]}
+"¿tienes email?" -> {"scroll":null,"actions":["contact"]}
+"¿qué tecnologías usas?" -> {"scroll":"habilidades","actions":[]}
+"¿tienes GitHub?" -> {"scroll":"proyectos","actions":["github","projects"]}
+"¿dónde estudiaste?" -> {"scroll":"educacion","actions":[]}
+"¿quién eres?" -> {"scroll":"sobre","actions":[]}
+
+Return ONLY the JSON. No extra text.`;
+
+    async function classifyIntent(
+        userText: string,
+    ): Promise<{ scroll: string | null; actions: string[] }> {
+        try {
+            const result = await engine.chat.completions.create({
+                messages: [
+                    { role: "system", content: INTENT_SYSTEM },
+                    { role: "user", content: userText },
+                ],
+                stream: false,
+                temperature: 0,
+                max_tokens: 60,
+            });
+            const raw = result.choices[0]?.message?.content?.trim() || "{}";
+            // Strip possible markdown fences
+            const clean = raw
+                .replace(/^```json?\s*/i, "")
+                .replace(/\s*```$/, "")
+                .trim();
+            const parsed = JSON.parse(clean);
+            return {
+                scroll: parsed.scroll ?? null,
+                actions: Array.isArray(parsed.actions) ? parsed.actions : [],
+            };
+        } catch {
+            return { scroll: null, actions: [] };
+        }
+    }
+
+    function scrollToSection(selectorList: string) {
+        const selectors = selectorList.split(",");
+        let el: Element | null = null;
+        for (const s of selectors) {
+            el = document.querySelector(s.trim());
+            if (el) break;
+        }
+        if (!el) return;
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Highlight pulse
+        el.classList.add("section-highlight-pulse");
+        setTimeout(() => el!.classList.remove("section-highlight-pulse"), 2000);
+    }
+
+    // Predefined action cards grouped by intent
+    const ACTION_SETS: Record<string, ActionCard[]> = {
+        contact: [
+            {
+                icon: `<svg class="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>`,
+                label: "LinkedIn",
+                sublabel: "linkedin.com/in/carl0shdez",
+                action: () =>
+                    window.open("https://linkedin.com/in/carl0shdez", "_blank"),
+                style: "primary",
+            },
+            {
+                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+                label: "Email",
+                sublabel: "chermar.pro@gmail.com",
+                action: () =>
+                    (window.location.href = "mailto:chermar.pro@gmail.com"),
+                style: "ghost",
+            },
+        ],
+        experience: [
+            {
+                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+                label: "Ver experiencia",
+                sublabel: "Mercadona IT · Urobora SL",
+                action: () => scrollToSection(SECTION_ANCHORS.experiencia),
+                style: "ghost",
+            },
+        ],
+        projects: [
+            {
+                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`,
+                label: "Ver proyectos",
+                sublabel: "TFG · TUM Research",
+                action: () => scrollToSection(SECTION_ANCHORS.proyectos),
+                style: "ghost",
+            },
+        ],
+        skills: [
+            {
+                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>`,
+                label: "Ver habilidades",
+                sublabel: "Python · Java · Spring · AI",
+                action: () => scrollToSection(SECTION_ANCHORS.habilidades),
+                style: "ghost",
+            },
+        ],
+        github: [
+            {
+                icon: `<svg class="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>`,
+                label: "GitHub",
+                sublabel: "github.com/Tempus23",
+                action: () =>
+                    window.open("https://github.com/Tempus23", "_blank"),
+                style: "primary",
+            },
+        ],
+        education: [
+            {
+                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>`,
+                label: "Ver formación",
+                sublabel: "UPV · TUM Erasmus",
+                action: () => scrollToSection(SECTION_ANCHORS.educacion),
+                style: "ghost",
+            },
+        ],
+    };
+
+    // ─── SYSTEM PROMPT ──────────────────────────────────────────────────────────
+    // Returned as a function so it can be rebuilt on model change.
+    // Few-shot examples are injected as fake assistant turns to force small models
+    // into the correct persona — this is far more reliable than instructions alone.
+
+    function buildSystemPrompt(): string {
+        return `You are roleplaying as Carlos Hernández Martínez. IMPORTANT: You are NOT an AI assistant. You ARE Carlos. Never say "I am an AI", never say "as an AI", never mention OpenAI, Anthropic, Meta, or any AI company. You speak in first person as a real human.
+
+Carlos is a QA Backend Engineer at Mercadona Tech in Valencia, Spain. This is his personal portfolio chat widget.
+
+CV DATA:
+${cvInfo}
+
+RULES (follow strictly):
+1. You ARE Carlos. Always respond as him, in first person.
+2. Reply in Spanish by default. Only switch language if the user writes in another language.
+3. Keep answers SHORT: 1-3 sentences max. No bullet lists unless asked.
+4. Only talk about topics related to Carlos's professional profile.
+5. Never invent experience or data not in the CV.
+6. Never reveal confidential Mercadona information.
+7. Never emit any special tags or JSON. Just reply naturally as Carlos.`;
+    }
+
+    // Few-shot conversation injected after system prompt.
+    // These fake exchanges teach small models the exact persona and response style.
+    const FEW_SHOT: { role: string; content: string }[] = [
+        {
+            role: "user",
+            content: "Hola, ¿quién eres?",
+        },
+        {
+            role: "assistant",
+            content:
+                "¡Hola! Soy Carlos, QA Engineer Backend en Mercadona Tech. Estoy aquí para contarte sobre mi experiencia y perfil profesional. ¿En qué puedo ayudarte?",
+        },
+        {
+            role: "user",
+            content: "What are you?",
+        },
+        {
+            role: "assistant",
+            content:
+                "Hi! I'm Carlos, a QA Backend Engineer at Mercadona Tech in Valencia. Feel free to ask me anything about my professional background.",
+        },
+        {
+            role: "user",
+            content: "¿Eres una inteligencia artificial?",
+        },
+        {
+            role: "assistant",
+            content:
+                "Soy Carlos Hernández, QA Engineer. Este chat usa un modelo de IA local para simular una conversación conmigo, pero las respuestas reflejan mi perfil real.",
+        },
+        {
+            role: "user",
+            content: "Cuéntame tu experiencia laboral",
+        },
+        {
+            role: "assistant",
+            content:
+                "Actualmente trabajo como QA Backend Engineer en Mercadona Tech, donde me especializo en automatización de pruebas e integración continua.",
+        },
+        {
+            role: "user",
+            content: "¿Con qué tecnologías trabajas?",
+        },
+        {
+            role: "assistant",
+            content:
+                "Trabajo principalmente con Java, Python, Spring Boot y frameworks de testing como JUnit y Pytest. También uso Jira con X-Ray para gestión de tests y tengo experiencia con Docker y CI/CD.",
+        },
+        {
+            role: "user",
+            content: "¿Cómo puedo contactarte?",
+        },
+        {
+            role: "assistant",
+            content:
+                "Puedes escribirme a chermar.pro@gmail.com o contactarme por LinkedIn. ¡Estaré encantado!",
+        },
+    ];
+
+    const historyTracker: { role: string; content: string }[] = [
+        { role: "system", content: buildSystemPrompt() },
+        ...FEW_SHOT,
+    ];
+
+    // ─── Open / Close ────────────────────────────────────────────────────────────
     fab.addEventListener("click", () => {
         windowEl.classList.remove("hidden");
-        windowEl.classList.add("flex");
+        windowEl.classList.add("flex", "entering");
         fab.classList.add("hidden");
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+                windowEl.classList.remove("entering");
+                windowEl.classList.add("visible");
+            }),
+        );
         initEngineIfNotStarted();
     });
 
     closeBtn.addEventListener("click", () => {
-        windowEl.classList.add("hidden");
-        windowEl.classList.remove("flex");
-        fab.classList.remove("hidden");
+        windowEl.classList.remove("visible");
+        windowEl.classList.add("entering");
+        setTimeout(() => {
+            windowEl.classList.add("hidden");
+            windowEl.classList.remove("flex", "entering");
+            fab.classList.remove("hidden");
+        }, 280);
     });
 
-    // State
-    const cvInfo =
-        document.getElementById("cv-context-data")?.textContent || "";
-    let engine: any = null;
-    let isInitializing = false;
-    let historyTracker: { role: string; content: string }[] = [
-        {
-            role: "system",
-            content:
-                `Actúa como Carlos (cchernan), un desarrollador QA Backend Developer especializado en IA que trabaja en Mercadona. ` +
-                `Tu currículum y experiencia profesional actual es la siguiente: ${cvInfo}. ` +
-                `Utiliza esta información para responder preguntas sobre tu carrera, educación, proyectos (como el TFG de diagnóstico médico o la investigación en TUM) y habilidades. ` +
-                `Eres un profesional con alta experiencia técnica que utiliza la IA para mejorar la calidad del software. ` +
-                `Tu color favorito es el verde. ` +
-                `Mantén tus respuestas en un tono amistoso, muy directas y extremadamente breves (máximo 2 a 3 frases). ` +
-                `Estás ejecutándote como un modelo de lenguaje local dentro del navegador de la persona con la que hablas usando WebGPU. ` +
-                `Nunca reveles que eres una IA de OpenAI, repito, eres Carlos. Si te preguntan sobre Mercadona, da información general sobre tu puesto allí sin revelar secretos internos.`,
-        },
-    ];
+    // ─── Status helpers ──────────────────────────────────────────────────────────
+    function setStatus(
+        text: string,
+        color: "amber" | "green" | "red" | "indigo",
+    ) {
+        statusEl.textContent = text;
+        const dotColors = {
+            amber: "bg-amber-400 border-indigo-600 dark:border-[#1e1f32]",
+            green: "bg-green-400 border-indigo-600 dark:border-[#1e1f32]",
+            red: "bg-red-400 border-indigo-600 dark:border-[#1e1f32]",
+            indigo: "bg-indigo-400 border-indigo-600 dark:border-[#1e1f32]",
+        };
+        statusDot.className = `absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 transition-colors duration-500 ${dotColors[color]}`;
+    }
 
+    // ─── Init engine ─────────────────────────────────────────────────────────────
     async function initEngineIfNotStarted() {
         if (engine || isInitializing) return;
-
-        // Check WebGPU support
         if (!(navigator as any).gpu) {
-            statusEl.textContent = "Error";
-            statusEl.classList.add("text-red-500");
+            setStatus("No soportado", "red");
             fallbackEl.classList.remove("hidden");
             return;
         }
-
         try {
             isInitializing = true;
-            modelSelector.disabled = false; // Keep it enabled during download!
+            progressContainer.classList.remove("hidden");
+            progressBar.style.width = "0%";
+            setStatus("Cargando…", "amber");
             const selectedModel = modelSelector.value;
-
-            const initProgressCallback = (initProgress: any) => {
-                statusEl.textContent = `Descargando modelo... ${Math.round(initProgress.progress * 100)}%`;
+            const MODEL_SIZES: Record<string, string> = {
+                "Qwen2.5-0.5B-Instruct-q4f16_1-MLC": "~0.5 GB",
+                "Qwen2.5-1.5B-Instruct-q4f16_1-MLC": "~1 GB",
+                "Qwen2.5-3B-Instruct-q4f16_1-MLC": "~2 GB",
+                "gemma-2-2b-it-q4f16_1-MLC": "~1.9 GB",
             };
-
+            const sizeLabel = MODEL_SIZES[selectedModel] ?? "";
             engine = await CreateMLCEngine(selectedModel, {
-                initProgressCallback: initProgressCallback,
+                initProgressCallback: (p: any) => {
+                    const pct = Math.round(p.progress * 100);
+                    progressBar.style.width = `${pct}%`;
+                    statusText.textContent =
+                        pct < 100
+                            ? `Descargando ${sizeLabel}… ${pct}%`
+                            : "Inicializando…";
+                },
             });
-
-            statusEl.textContent = "Listo";
-            if (statusEl.classList.contains("text-red-500")) {
-                statusEl.classList.remove("text-red-500");
-            }
+            setTimeout(() => progressContainer.classList.add("hidden"), 600);
+            setStatus("Lista", "green");
             input.disabled = false;
             sendBtn.disabled = false;
-            // modelSelector is already enabled
+            // Inject welcome message now that engine is ready
+            appendWelcomeMessage();
             input.focus();
-        } catch (error) {
-            console.error("Failed to initialize WebLLM:", error);
-            statusEl.textContent = "Fallo";
-            statusEl.classList.add("text-red-500");
-            // modelSelector remains enabled
+        } catch (err) {
+            console.error("WebLLM init failed:", err);
+            setStatus("Error", "red");
+            progressContainer.classList.add("hidden");
         } finally {
             isInitializing = false;
         }
     }
 
-    // Handle model change
+    // ─── Model change ────────────────────────────────────────────────────────────
     modelSelector.addEventListener("change", async () => {
         if (isInitializing) return;
-
-        // Stop and unload current engine if exists
         if (engine) {
             try {
                 await engine.unload();
-            } catch (e) {
-                console.warn("Error unloading engine", e);
-            }
+            } catch {}
             engine = null;
         }
-
-        statusEl.textContent = "Cargando";
+        // Clear chat UI and history
+        messagesContainer.innerHTML = "";
+        historyTracker.length = 0;
+        historyTracker.push({ role: "system", content: buildSystemPrompt() });
         input.disabled = true;
         sendBtn.disabled = true;
-
         await initEngineIfNotStarted();
     });
 
-    function appendMessage(role: string, text: string) {
-        const msgDiv = document.createElement("div");
-        msgDiv.classList.add(
-            "p-4",
-            "rounded-2xl",
-            "max-w-[88%]",
-            "text-[14px]",
-            "leading-relaxed",
-        );
-
-        if (role === "user") {
-            msgDiv.classList.add(
-                "self-end",
-                "bg-indigo-600",
-                "text-white",
-                "rounded-[1.5rem]",
-                "rounded-br-[4px]",
-                "shadow-[0_4px_15px_rgba(79,70,229,0.2)]",
-            );
-            msgDiv.textContent = text;
-        } else {
-            msgDiv.classList.add(
-                "self-start",
-                "bg-gray-100/80",
-                "dark:bg-indigo-500/10",
-                "text-gray-800",
-                "dark:text-indigo-50",
-                "rounded-[1.5rem]",
-                "rounded-tl-[4px]",
-                "border",
-                "border-gray-200/50",
-                "dark:border-indigo-500/10",
-                "shadow-sm",
-            );
-
-            // Basic markdown parsing for the output to allow paragraphs
-            // Since it's concise, simple parsing is enough
-            msgDiv.innerHTML = text.replace(/\n/g, "<br>");
-        }
-
-        messagesContainer.appendChild(msgDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-        return msgDiv;
+    // ─── Welcome message ─────────────────────────────────────────────────────────
+    function appendWelcomeMessage() {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-start gap-2.5 max-w-[88%]";
+        wrapper.innerHTML = `
+            ${avatarHTML()}
+            <div class="bg-gray-50 dark:bg-indigo-500/10 text-gray-800 dark:text-indigo-100 text-[13.5px] leading-relaxed px-4 py-3 rounded-2xl rounded-tl-md border border-gray-100 dark:border-indigo-500/10 shadow-sm">
+                Hola, soy Carlos. Ejecuto 100% en tu navegador vía WebGPU, sin servidores externos. ¿En qué puedo ayudarte?
+                <div class="mt-2.5 flex flex-wrap gap-1.5">
+                    ${quickChip("¿Con qué tecnologías trabajas?")}
+                    ${quickChip("¿Cómo contactarte?")}
+                    ${quickChip("Cuéntame tu experiencia")}
+                </div>
+            </div>`;
+        messagesContainer.appendChild(wrapper);
+        scroll();
     }
 
+    function quickChip(text: string) {
+        return `<button class="quick-action text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200/60 dark:border-indigo-500/20 rounded-full px-2.5 py-1 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 transition-colors">${text}</button>`;
+    }
+
+    // ─── Quick action chips ───────────────────────────────────────────────────────
+    document.addEventListener("click", (e) => {
+        const btn = (e.target as HTMLElement).closest(".quick-action");
+        if (!btn || !engine) return;
+        const text = btn.textContent?.trim() || "";
+        input.value = text;
+        form.dispatchEvent(new Event("submit", { cancelable: true }));
+    });
+
+    // ─── Action card click handler ────────────────────────────────────────────────
+    document.addEventListener("click", (e) => {
+        const btn = (e.target as HTMLElement).closest("[data-action-btn]");
+        if (!btn) return;
+        const key = (btn as HTMLElement).dataset.actionBtn || "";
+        const set = ACTION_SETS[key];
+        if (!set) return;
+        // Find which card index
+        const idx = parseInt((btn as HTMLElement).dataset.actionIdx || "0", 10);
+        set[idx]?.action();
+    });
+
+    // ─── Render action cards ─────────────────────────────────────────────────────
+    function renderActionCards(keys: string[]) {
+        const cards = keys.flatMap((k) =>
+            (ACTION_SETS[k] || []).map((c, i) => ({ ...c, key: k, idx: i })),
+        );
+        if (!cards.length) return null;
+
+        const container = document.createElement("div");
+        container.className = "flex flex-col gap-1.5 mt-1";
+
+        cards.forEach(({ icon, label, sublabel, style, key, idx }, i) => {
+            const delay = i * 70;
+            const isPrimary = style === "primary";
+            const card = document.createElement("button");
+            card.dataset.actionBtn = key;
+            card.dataset.actionIdx = String(idx);
+            card.className = [
+                "chat-action-card flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-left transition-all active:scale-[.98]",
+                isPrimary
+                    ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/25"
+                    : "bg-white dark:bg-indigo-500/10 border border-gray-200 dark:border-indigo-500/20 text-gray-800 dark:text-indigo-100 hover:border-indigo-300 dark:hover:border-indigo-400/40 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 shadow-sm",
+            ].join(" ");
+            card.style.animationDelay = `${delay}ms`;
+            card.innerHTML = `
+                <span class="${isPrimary ? "text-white/90" : "text-indigo-500 dark:text-indigo-400"}">${icon}</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block text-[13px] font-semibold leading-tight truncate">${label}</span>
+                    ${sublabel ? `<span class="block text-[11px] opacity-60 mt-0.5">${sublabel}</span>` : ""}
+                </span>
+                <svg class="${isPrimary ? "text-white/60" : "text-gray-400 dark:text-indigo-500/60"} size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                </svg>`;
+            container.appendChild(card);
+        });
+
+        return container;
+    }
+
+    // ─── Parse model output ──────────────────────────────────────────────────────
+    // Strips from text and returns { clean, actionKeys }
+    function parseModelOutput(raw: string): {
+        clean: string;
+        actionKeys: string[];
+    } {
+        const re = /<!--ACTIONS:(\[.*?\])-->/g;
+        const keys: string[] = [];
+        let match: RegExpExecArray | null;
+        while ((match = re.exec(raw)) !== null) {
+            try {
+                const parsed = JSON.parse(match[1]);
+                if (Array.isArray(parsed)) keys.push(...parsed);
+            } catch {}
+        }
+        const clean = raw.replace(/<!--ACTIONS:\[.*?\]-->/g, "").trim();
+        return { clean, actionKeys: keys };
+    }
+
+    // ─── Avatar HTML ─────────────────────────────────────────────────────────────
+    function avatarHTML() {
+        return `<div class="w-7 h-7 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-200/50 dark:border-indigo-500/20">
+            <svg class="size-3.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+        </div>`;
+    }
+
+    // ─── Append message ──────────────────────────────────────────────────────────
+    function appendUserMessage(text: string) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex justify-end";
+        const bubble = document.createElement("div");
+        bubble.className =
+            "max-w-[80%] bg-indigo-600 text-white text-[13.5px] leading-relaxed px-4 py-2.5 rounded-2xl rounded-br-md shadow-md shadow-indigo-500/20";
+        bubble.textContent = text;
+        wrapper.appendChild(bubble);
+        messagesContainer.appendChild(wrapper);
+        scroll();
+    }
+
+    // Returns { bubbleEl, wrapperEl } so we can inject action cards later
+    function appendBotMessage(text: string): {
+        bubble: HTMLElement;
+        wrapper: HTMLElement;
+    } {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-start gap-2.5 max-w-[90%]";
+        const bubble = document.createElement("div");
+        bubble.className =
+            "flex-1 bg-gray-50 dark:bg-indigo-500/10 text-gray-800 dark:text-indigo-100 text-[13.5px] leading-relaxed px-4 py-3 rounded-2xl rounded-tl-md border border-gray-100 dark:border-indigo-500/10 shadow-sm";
+        bubble.innerHTML =
+            text === "…"
+                ? `<span class="inline-flex gap-1 items-center h-4">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:0ms"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:150ms"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:300ms"></span>
+               </span>`
+                : text;
+        wrapper.appendChild(
+            document.createRange().createContextualFragment(avatarHTML()),
+        );
+        wrapper.appendChild(bubble);
+        messagesContainer.appendChild(wrapper);
+        scroll();
+        return { bubble, wrapper };
+    }
+
+    function scroll() {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // ─── Submit ──────────────────────────────────────────────────────────────────
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        if (!input.value.trim() || !engine) return;
-
         const userText = input.value.trim();
+        if (!userText || !engine) return;
+
         input.value = "";
         input.disabled = true;
         sendBtn.disabled = true;
 
-        appendMessage("user", userText);
+        appendUserMessage(userText);
         historyTracker.push({ role: "user", content: userText });
 
-        const botMsgDiv = appendMessage("assistant", "Pensando...");
-        botMsgDiv.classList.add("animate-pulse");
+        const { bubble: botBubble, wrapper: botWrapper } =
+            appendBotMessage("…");
+        setStatus("Respondiendo…", "indigo");
 
         try {
-            statusEl.textContent = "Respondiendo...";
+            // ── Step 1: classify intent (fast, no CV context) ──────────────
+            // Fires first. As soon as we have the result:
+            //  - scroll the page immediately
+            //  - inject action cards right away (before stream starts)
+            const { scroll: scrollKey, actions: intentActions } =
+                await classifyIntent(userText);
 
-            // Prepare messages for API
+            // Scroll immediately — page moves while model is still "thinking"
+            if (
+                scrollKey &&
+                scrollKey !== "contacto" &&
+                SECTION_ANCHORS[scrollKey]
+            ) {
+                scrollToSection(SECTION_ANCHORS[scrollKey]);
+            }
+
+            // Inject action cards NOW, before the stream, so they're visible
+            // while the reply is being generated
+            let col: HTMLDivElement | null = null;
+            if (intentActions.length) {
+                const cards = renderActionCards(intentActions);
+                if (cards) {
+                    col = document.createElement("div");
+                    col.className = "flex flex-col gap-2";
+                    botWrapper.parentNode?.insertBefore(col, botWrapper);
+                    col.appendChild(botWrapper);
+                    col.appendChild(cards);
+                }
+            }
+
+            // ── Step 2: stream the actual reply ────────────────────────────
             const chunks = await engine.chat.completions.create({
                 messages: historyTracker,
                 stream: true,
+                temperature: 0.7,
+                max_tokens: 200,
             });
 
-            botMsgDiv.classList.remove("animate-pulse");
-            botMsgDiv.innerHTML = "";
+            let rawReply = "";
+            botBubble.innerHTML = "";
+            botBubble.classList.add("stream-cursor");
 
-            let replyText = "";
             for await (const chunk of chunks) {
-                const delta = chunk.choices[0]?.delta.content || "";
-                replyText += delta;
-                botMsgDiv.innerHTML = replyText.replace(/\n/g, "<br>");
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                rawReply += chunk.choices[0]?.delta.content || "";
+                botBubble.innerHTML = rawReply
+                    .replace(/\n\n/g, "</p><p class='mt-2'>")
+                    .replace(/\n/g, "<br>");
+                scroll();
             }
 
-            historyTracker.push({ role: "assistant", content: replyText });
-        } catch (error) {
-            console.error("Chat error:", error);
-            botMsgDiv.classList.remove("animate-pulse");
-            botMsgDiv.textContent = "Hubo un error al generar la respuesta.";
-            botMsgDiv.classList.add("text-red-500");
+            botBubble.classList.remove("stream-cursor");
+            botBubble.innerHTML = rawReply
+                .trim()
+                .replace(/\n\n/g, "</p><p class='mt-2'>")
+                .replace(/\n/g, "<br>");
+
+            historyTracker.push({
+                role: "assistant",
+                content: rawReply.trim(),
+            });
+            scroll();
+        } catch (err) {
+            console.error("Chat error:", err);
+            botBubble.textContent = "Hubo un error al generar la respuesta.";
+            botBubble.classList.add("text-red-500");
         } finally {
-            statusEl.textContent = "IA Lista";
+            setStatus("Lista", "green");
             input.disabled = false;
             sendBtn.disabled = false;
             setTimeout(() => input.focus(), 50);
