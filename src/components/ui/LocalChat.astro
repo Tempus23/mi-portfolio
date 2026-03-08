@@ -1,0 +1,606 @@
+---
+import cvData from "@/data/cv_data_es.json";
+
+const cvContext = JSON.stringify(cvData);
+---
+
+<div
+    id="local-chat-widget"
+    class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50"
+>
+    <!-- Floating Action Button -->
+    <button
+        id="local-chat-fab"
+        class="group relative bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl p-4 shadow-[0_8px_32px_rgba(79,70,229,0.45)] transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 overflow-hidden"
+        aria-label="Chat con IA"
+    >
+        <span
+            class="absolute inset-0 rounded-2xl border-2 border-indigo-400/0 group-hover:border-indigo-400/40 transition-all duration-500 scale-100 group-hover:scale-110"
+        ></span>
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="size-6 relative z-10"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="1.8"
+        >
+            <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+            ></path>
+        </svg>
+        <span
+            class="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-gray-900 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg"
+            >Chat IA · Local</span
+        >
+    </button>
+
+    <!-- Chat Window -->
+    <div
+        id="local-chat-window"
+        class="hidden flex-col
+               fixed inset-0 sm:inset-auto
+               sm:w-[420px] sm:h-[640px] sm:max-h-[88vh] sm:bottom-24 sm:right-6
+               bg-white dark:bg-[#12131e]
+               sm:rounded-3xl border-t sm:border border-gray-200/60 dark:border-indigo-500/15
+               shadow-[0_32px_64px_rgba(0,0,0,0.12),0_0_0_1px_rgba(79,70,229,0.05)] dark:shadow-[0_32px_64px_rgba(0,0,0,0.5),0_0_0_1px_rgba(79,70,229,0.15)]
+               overflow-hidden z-[60]"
+        style="transform-origin: bottom right;"
+    >
+        <!-- Header -->
+        <div
+            class="relative flex items-center justify-between px-5 py-4 bg-indigo-600 dark:bg-[#1e1f32] border-b border-indigo-500/20 dark:border-indigo-500/10 shrink-0"
+        >
+            <div
+                class="absolute inset-0 opacity-5"
+                style="background-image: linear-gradient(rgba(255,255,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.4) 1px, transparent 1px); background-size: 20px 20px;"
+            >
+            </div>
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="relative shrink-0">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-white/15 dark:bg-indigo-500/20 flex items-center justify-center border border-white/20 dark:border-indigo-400/20 backdrop-blur-sm"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="size-5 text-white"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                            ></path>
+                        </svg>
+                    </div>
+                    <span
+                        id="status-dot"
+                        class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-amber-400 border-2 border-indigo-600 dark:border-[#1e1f32] rounded-full transition-colors duration-500"
+                    ></span>
+                </div>
+                <div>
+                    <h3
+                        class="font-bold text-[15px] text-white leading-none tracking-tight"
+                    >
+                        Carlos IA
+                    </h3>
+                    <p
+                        class="text-[10px] text-indigo-200/80 dark:text-indigo-400/80 font-semibold tracking-[0.12em] uppercase mt-0.5"
+                        id="chat-status"
+                    >
+                        Iniciando...
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 relative z-10">
+                <button
+                    id="local-chat-close"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 dark:hover:bg-indigo-500/20 transition-all active:scale-90"
+                    aria-label="Cerrar chat"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="size-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Bar -->
+        <div id="loading-progress-container" class="hidden shrink-0">
+            <div
+                class="h-0.5 bg-gray-100 dark:bg-indigo-950 w-full overflow-hidden"
+            >
+                <div
+                    id="loading-progress-bar"
+                    class="h-full bg-gradient-to-r from-indigo-500 to-green-400 transition-all duration-300 w-0 relative"
+                >
+                    <div
+                        class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent to-white/40 animate-pulse"
+                    >
+                    </div>
+                </div>
+            </div>
+            <div
+                class="px-5 py-2.5 bg-indigo-50/80 dark:bg-indigo-950/40 border-b border-indigo-100 dark:border-indigo-900/50 flex items-center gap-2"
+            >
+                <div
+                    class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shrink-0"
+                >
+                </div>
+                <p
+                    id="loading-status-text"
+                    class="text-[11px] text-indigo-700 dark:text-indigo-300 font-semibold tracking-tight truncate"
+                >
+                    Preparando inteligencia local…
+                </p>
+            </div>
+        </div>
+
+        <!-- Hidden CV context -->
+        <div id="cv-context-data" class="hidden">{cvContext}</div>
+
+        <!-- WebGPU Fallback -->
+        <div
+            id="webgpu-fallback"
+            class="hidden mx-4 mt-3 text-[13px] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-xl border border-red-200 dark:border-red-800 flex items-start gap-2.5 shrink-0"
+        >
+            <svg
+                class="size-4 shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                ></path>
+            </svg>
+            <span
+                >Tu navegador no soporta WebGPU. El chat local no puede
+                iniciarse.</span
+            >
+        </div>
+
+        <!-- Messages -->
+        <div
+            id="local-chat-messages"
+            class="flex-1 px-4 py-4 overflow-y-auto flex flex-col gap-3 scroll-smooth"
+            style="scrollbar-width: thin; scrollbar-color: rgba(99,102,241,0.2) transparent;"
+        >
+            <!-- Welcome message injected by JS -->
+        </div>
+
+        <!-- Input Area -->
+        <div
+            class="px-4 py-3 border-t border-gray-100 dark:border-indigo-500/10 bg-white dark:bg-[#12131e] shrink-0"
+        >
+            <form id="local-chat-form" class="flex items-center gap-2">
+                <input
+                    type="text"
+                    id="local-chat-input"
+                    class="flex-1 bg-gray-50 dark:bg-indigo-500/10 text-gray-900 dark:text-white text-base rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-gray-200 dark:border-indigo-500/20 transition-all placeholder:text-gray-400 dark:placeholder:text-indigo-400/40 disabled:opacity-50"
+                    placeholder="Escribe un mensaje…"
+                    disabled
+                    autocomplete="off"
+                    maxlength="500"
+                />
+                <button
+                    type="submit"
+                    id="local-chat-send"
+                    class="w-10 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center transition-all disabled:opacity-30 active:scale-90 shrink-0 shadow-md shadow-indigo-500/25"
+                    disabled
+                    aria-label="Enviar"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="size-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M5 12h14M12 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </form>
+            <p
+                class="text-[10px] text-gray-400 dark:text-indigo-500/50 text-center mt-2 tracking-tight"
+            >
+                Modelo local · Sin datos enviados a servidores
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    #local-chat-window {
+        transition:
+            opacity 0.25s ease,
+            transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #local-chat-window.entering {
+        opacity: 0;
+        transform: scale(0.92) translateY(12px);
+    }
+    #local-chat-window.visible {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    #local-chat-messages::-webkit-scrollbar {
+        width: 4px;
+    }
+    #local-chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #local-chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(99, 102, 241, 0.2);
+        border-radius: 4px;
+    }
+    #local-chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.4);
+    }
+
+    .msg-enter {
+        animation: msgIn 0.22s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+    }
+    @keyframes msgIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px) scale(0.97);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    .stream-cursor::after {
+        content: "\u25ae";
+        display: inline-block;
+        color: #6366f1;
+        animation: cursorBlink 0.8s step-end infinite;
+        margin-left: 1px;
+        font-size: 0.85em;
+        vertical-align: middle;
+    }
+    @keyframes cursorBlink {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+    }
+    #local-chat-input {
+        transition:
+            height 0.1s ease,
+            border-color 0.2s;
+    }
+
+    /* Action card animations */
+    .chat-action-card {
+        animation: slideUpFade 0.3s ease forwards;
+        opacity: 0;
+    }
+    @keyframes slideUpFade {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .chat-action-card:nth-child(2) {
+        animation-delay: 0.07s;
+    }
+    .chat-action-card:nth-child(3) {
+        animation-delay: 0.14s;
+    }
+
+    /* Scroll highlight pulse */
+    .section-highlight-pulse {
+        animation: sectionPulse 1.8s ease-out;
+    }
+    @keyframes sectionPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 16px rgba(79, 70, 229, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
+        }
+    }
+</style>
+
+<script>
+    import { CreateMLCEngine } from "@mlc-ai/web-llm";
+    import {
+        FEW_SHOT,
+        ACTION_SETS,
+        SECTION_ANCHORS,
+        MODEL_SIZES,
+        MODELS,
+    } from "../../utils/local-chat/constants";
+    import {
+        classifyIntent,
+        buildSystemPrompt,
+    } from "../../utils/local-chat/ai-logic";
+    import {
+        scrollToSection,
+        appendWelcomeMessage,
+        appendUserMessage,
+        appendBotMessage,
+        renderActionCards,
+    } from "../../utils/local-chat/dom-utils";
+
+    // ─── DOM ────────────────────────────────────────────────────────────────────
+    const form = document.getElementById("local-chat-form") as HTMLFormElement;
+    const input = document.getElementById(
+        "local-chat-input",
+    ) as HTMLInputElement;
+    const sendBtn = document.getElementById(
+        "local-chat-send",
+    ) as HTMLButtonElement;
+    const messagesContainer = document.getElementById(
+        "local-chat-messages",
+    ) as HTMLDivElement;
+    const statusEl = document.getElementById(
+        "chat-status",
+    ) as HTMLParagraphElement;
+    const statusDot = document.getElementById("status-dot") as HTMLSpanElement;
+    const fab = document.getElementById("local-chat-fab") as HTMLButtonElement;
+    const windowEl = document.getElementById(
+        "local-chat-window",
+    ) as HTMLDivElement;
+    const closeBtn = document.getElementById(
+        "local-chat-close",
+    ) as HTMLButtonElement;
+    const fallbackEl = document.getElementById(
+        "webgpu-fallback",
+    ) as HTMLDivElement;
+    const progressContainer = document.getElementById(
+        "loading-progress-container",
+    ) as HTMLDivElement;
+    const progressBar = document.getElementById(
+        "loading-progress-bar",
+    ) as HTMLDivElement;
+    const statusText = document.getElementById(
+        "loading-status-text",
+    ) as HTMLParagraphElement;
+    const cvInfo =
+        document.getElementById("cv-context-data")?.textContent || "";
+
+    let chatEngine: any = null;
+    let intentEngine: any = null;
+    let isInitializing = false;
+
+    const historyTracker: { role: string; content: string }[] = [
+        { role: "system", content: buildSystemPrompt(cvInfo) },
+        ...FEW_SHOT,
+    ];
+
+    // ─── Open / Close ────────────────────────────────────────────────────────────
+    fab.addEventListener("click", () => {
+        windowEl.classList.remove("hidden");
+        windowEl.classList.add("flex", "entering");
+        fab.classList.add("hidden");
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+                windowEl.classList.remove("entering");
+                windowEl.classList.add("visible");
+            }),
+        );
+        initEngineIfNotStarted();
+    });
+
+    closeBtn.addEventListener("click", () => {
+        windowEl.classList.remove("visible");
+        windowEl.classList.add("entering");
+        setTimeout(() => {
+            windowEl.classList.add("hidden");
+            windowEl.classList.remove("flex", "entering");
+            fab.classList.remove("hidden");
+        }, 280);
+    });
+
+    // ─── Status helpers ──────────────────────────────────────────────────────────
+    function setStatus(
+        text: string,
+        color: "amber" | "green" | "red" | "indigo",
+    ) {
+        statusEl.textContent = text;
+        const dotColors = {
+            amber: "bg-amber-400 border-indigo-600 dark:border-[#1e1f32]",
+            green: "bg-green-400 border-indigo-600 dark:border-[#1e1f32]",
+            red: "bg-red-400 border-indigo-600 dark:border-[#1e1f32]",
+            indigo: "bg-indigo-400 border-indigo-600 dark:border-[#1e1f32]",
+        };
+        statusDot.className = `absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 transition-colors duration-500 ${dotColors[color]}`;
+    }
+
+    // ─── Init engine ─────────────────────────────────────────────────────────────
+    async function initEngineIfNotStarted() {
+        if ((chatEngine && intentEngine) || isInitializing) return;
+        if (!(navigator as any).gpu) {
+            setStatus("No soportado", "red");
+            fallbackEl.classList.remove("hidden");
+            return;
+        }
+        try {
+            isInitializing = true;
+            progressContainer.classList.remove("hidden");
+            progressBar.style.width = "0%";
+            setStatus("Cargando…", "amber");
+
+            // Initialize Intent Engine (Small)
+            if (!intentEngine) {
+                statusText.textContent = "Preparando IA lógica (~1GB)...";
+                intentEngine = await CreateMLCEngine(MODELS.INTENT, {
+                    initProgressCallback: (p: any) => {
+                        const pct = Math.round(p.progress * 100);
+                        progressBar.style.width = `${pct * 0.3}%`; // First 30% for intent
+                    },
+                });
+            }
+
+            // Initialize Chat Engine (Large)
+            if (!chatEngine) {
+                statusText.textContent =
+                    "Cargando motor de conversación (~1GB)...";
+                chatEngine = await CreateMLCEngine(MODELS.CHAT, {
+                    initProgressCallback: (p: any) => {
+                        const pct = Math.round(p.progress * 100);
+                        progressBar.style.width = `${30 + pct * 0.7}%`; // Remaining 70% for chat
+                    },
+                });
+            }
+
+            setTimeout(() => progressContainer.classList.add("hidden"), 600);
+            setStatus("Lista", "green");
+            input.disabled = false;
+            sendBtn.disabled = false;
+            if (messagesContainer.children.length === 0) {
+                appendWelcomeMessage(messagesContainer);
+            }
+            input.focus();
+        } catch (err) {
+            console.error("WebLLM init failed:", err);
+            setStatus("Error", "red");
+            progressContainer.classList.add("hidden");
+        } finally {
+            isInitializing = false;
+        }
+    }
+
+    // ─── Event Delegation ────────────────────────────────────────────────────────
+    document.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+
+        // Quick Action Chips
+        const chip = target.closest(".quick-action");
+        if (chip && chatEngine) {
+            input.value = chip.textContent?.trim() || "";
+            form.dispatchEvent(new Event("submit", { cancelable: true }));
+            return;
+        }
+
+        // Action Cards
+        const actionBtn = target.closest("[data-action-btn]") as HTMLElement;
+        if (actionBtn) {
+            const key = actionBtn.dataset.actionBtn || "";
+            const idx = parseInt(actionBtn.dataset.actionIdx || "0", 10);
+            ACTION_SETS[key]?.[idx]?.action();
+        }
+    });
+
+    // ─── Submit ──────────────────────────────────────────────────────────────────
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const userText = input.value.trim();
+        if (!userText || !chatEngine || !intentEngine) return;
+
+        input.value = "";
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        appendUserMessage(messagesContainer, userText);
+        historyTracker.push({ role: "user", content: userText });
+
+        const { bubble: botBubble, wrapper: botWrapper } = appendBotMessage(
+            messagesContainer,
+            "…",
+        );
+        setStatus("Respondiendo…", "indigo");
+
+        try {
+            // Use intentEngine for classification
+            const { scroll: scrollKey, actions: intentActions } =
+                await classifyIntent(intentEngine, userText);
+
+            if (
+                scrollKey &&
+                scrollKey !== "contacto" &&
+                SECTION_ANCHORS[scrollKey]
+            ) {
+                scrollToSection(SECTION_ANCHORS[scrollKey]);
+            }
+
+            if (intentActions.length) {
+                const cards = renderActionCards(intentActions);
+                if (cards) {
+                    const col = document.createElement("div");
+                    col.className = "flex flex-col gap-2";
+                    botWrapper.parentNode?.insertBefore(col, botWrapper);
+                    col.appendChild(botWrapper);
+                    col.appendChild(cards);
+                    messagesContainer.scrollTop =
+                        messagesContainer.scrollHeight;
+                }
+            }
+
+            // Use chatEngine for main completion
+            const chunks = await chatEngine.chat.completions.create({
+                messages: historyTracker,
+                stream: true,
+                temperature: 0.7,
+                max_tokens: 200,
+            });
+
+            let rawReply = "";
+            botBubble.innerHTML = "";
+            botBubble.classList.add("stream-cursor");
+
+            for await (const chunk of chunks) {
+                rawReply += chunk.choices[0]?.delta.content || "";
+                botBubble.innerHTML = rawReply
+                    .replace(/\n\n/g, "</p><p class='mt-2'>")
+                    .replace(/\n/g, "<br>");
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            botBubble.classList.remove("stream-cursor");
+            botBubble.innerHTML = rawReply
+                .trim()
+                .replace(/\n\n/g, "</p><p class='mt-2'>")
+                .replace(/\n/g, "<br>");
+            historyTracker.push({
+                role: "assistant",
+                content: rawReply.trim(),
+            });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        } catch (err) {
+            console.error("Chat error:", err);
+            botBubble.textContent = "Hubo un error al generar la respuesta.";
+            botBubble.classList.add("text-red-500");
+        } finally {
+            setStatus("Lista", "green");
+            input.disabled = false;
+            sendBtn.disabled = false;
+            setTimeout(() => input.focus(), 50);
+        }
+    });
+</script>
