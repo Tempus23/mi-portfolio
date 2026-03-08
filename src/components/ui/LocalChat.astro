@@ -4,7 +4,10 @@ import cvData from "@/data/cv_data_es.json";
 const cvContext = JSON.stringify(cvData);
 ---
 
-<div id="local-chat-widget" class="fixed bottom-6 right-6 z-50">
+<div
+    id="local-chat-widget"
+    class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50"
+>
     <!-- Floating Action Button -->
     <button
         id="local-chat-fab"
@@ -38,12 +41,12 @@ const cvContext = JSON.stringify(cvData);
     <div
         id="local-chat-window"
         class="hidden flex-col
-               w-full h-full bottom-0 right-0 rounded-none sm:rounded-3xl
-               sm:w-[420px] sm:h-[640px] sm:max-h-[88vh] sm:bottom-24 sm:right-0
+               fixed inset-0 sm:inset-auto
+               sm:w-[420px] sm:h-[640px] sm:max-h-[88vh] sm:bottom-24 sm:right-6
                bg-white dark:bg-[#12131e]
-               border-t sm:border border-gray-200/60 dark:border-indigo-500/15
+               sm:rounded-3xl border-t sm:border border-gray-200/60 dark:border-indigo-500/15
                shadow-[0_32px_64px_rgba(0,0,0,0.12),0_0_0_1px_rgba(79,70,229,0.05)] dark:shadow-[0_32px_64px_rgba(0,0,0,0.5),0_0_0_1px_rgba(79,70,229,0.15)]
-               absolute overflow-hidden"
+               overflow-hidden z-[60]"
         style="transform-origin: bottom right;"
     >
         <!-- Header -->
@@ -192,7 +195,7 @@ const cvContext = JSON.stringify(cvData);
                 <input
                     type="text"
                     id="local-chat-input"
-                    class="flex-1 bg-gray-50 dark:bg-indigo-500/10 text-gray-900 dark:text-white text-[13.5px] rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-gray-200 dark:border-indigo-500/20 transition-all placeholder:text-gray-400 dark:placeholder:text-indigo-400/40 disabled:opacity-50"
+                    class="flex-1 bg-gray-50 dark:bg-indigo-500/10 text-gray-900 dark:text-white text-base rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-gray-200 dark:border-indigo-500/20 transition-all placeholder:text-gray-400 dark:placeholder:text-indigo-400/40 disabled:opacity-50"
                     placeholder="Escribe un mensaje…"
                     disabled
                     autocomplete="off"
