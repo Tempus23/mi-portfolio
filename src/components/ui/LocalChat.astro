@@ -95,44 +95,6 @@ const cvContext = JSON.stringify(cvData);
                 </div>
             </div>
             <div class="flex items-center gap-2 relative z-10">
-                <div class="relative">
-                    <select
-                        id="model-selector"
-                        class="text-[11px] bg-white/10 dark:bg-indigo-950/60 border border-white/15 dark:border-indigo-500/20 rounded-lg pl-3 pr-6 py-1.5 text-white font-semibold appearance-none outline-none cursor-pointer hover:bg-white/20 dark:hover:bg-indigo-900/40 transition-colors"
-                    >
-                        <option
-                            value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
-                            class="bg-indigo-800 text-white"
-                            >Qwen2.5 0.5B ⚡</option
-                        >
-                        <option
-                            value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
-                            selected
-                            class="bg-indigo-800 text-white"
-                            >Qwen2.5 1.5B ★</option
-                        >
-                        <option
-                            value="Qwen2.5-3B-Instruct-q4f16_1-MLC"
-                            class="bg-indigo-800 text-white">Qwen2.5 3B</option
-                        >
-                        <option
-                            value="gemma-2-2b-it-q4f16_1-MLC"
-                            class="bg-indigo-800 text-white">Gemma 2 2B</option
-                        >
-                    </select>
-                    <svg
-                        class="absolute right-2 top-1/2 -translate-y-1/2 size-2.5 text-white/60 pointer-events-none"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="3"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
                 <button
                     id="local-chat-close"
                     class="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10 dark:hover:bg-indigo-500/20 transition-all active:scale-90"
@@ -373,6 +335,24 @@ const cvContext = JSON.stringify(cvData);
 
 <script>
     import { CreateMLCEngine } from "@mlc-ai/web-llm";
+    import {
+        FEW_SHOT,
+        ACTION_SETS,
+        SECTION_ANCHORS,
+        MODEL_SIZES,
+        MODELS,
+    } from "../../utils/local-chat/constants";
+    import {
+        classifyIntent,
+        buildSystemPrompt,
+    } from "../../utils/local-chat/ai-logic";
+    import {
+        scrollToSection,
+        appendWelcomeMessage,
+        appendUserMessage,
+        appendBotMessage,
+        renderActionCards,
+    } from "../../utils/local-chat/dom-utils";
 
     // ─── DOM ────────────────────────────────────────────────────────────────────
     const form = document.getElementById("local-chat-form") as HTMLFormElement;
@@ -399,9 +379,6 @@ const cvContext = JSON.stringify(cvData);
     const fallbackEl = document.getElementById(
         "webgpu-fallback",
     ) as HTMLDivElement;
-    const modelSelector = document.getElementById(
-        "model-selector",
-    ) as HTMLSelectElement;
     const progressContainer = document.getElementById(
         "loading-progress-container",
     ) as HTMLDivElement;
@@ -414,278 +391,12 @@ const cvContext = JSON.stringify(cvData);
     const cvInfo =
         document.getElementById("cv-context-data")?.textContent || "";
 
-    let engine: any = null;
+    let chatEngine: any = null;
+    let intentEngine: any = null;
     let isInitializing = false;
 
-    // ─── ACTION REGISTRY ────────────────────────────────────────────────────────
-    // Maps action keys the model can emit → what the UI does.
-    // Sections: use data-section="xxx" attributes on your page elements.
-    // Contact: well-known external links.
-
-    type ActionCard = {
-        icon: string;
-        label: string;
-        sublabel?: string;
-        action: () => void;
-        style?: "primary" | "ghost" | "danger";
-    };
-
-    const SECTION_ANCHORS: Record<string, string> = {
-        experiencia:
-            "#experiencia,#experience,[data-section='experience'],[data-section='experiencia']",
-        proyectos:
-            "#proyectos,#projects,[data-section='projects'],[data-section='proyectos']",
-        habilidades:
-            "#habilidades,#skills,[data-section='skills'],[data-section='habilidades']",
-        contacto:
-            "#contacto,#contact,[data-section='contact'],[data-section='contacto']",
-        educacion:
-            "#educacion,#education,[data-section='education'],[data-section='educacion']",
-        sobre: "#sobre,#about,[data-section='about'],[data-section='sobre']",
-    };
-
-    // Maps action key → section anchor key (for auto-scroll on response)
-    const ACTION_SCROLL_MAP: Record<string, keyof typeof SECTION_ANCHORS> = {
-        experience: "experiencia",
-        projects: "proyectos",
-        skills: "habilidades",
-        education: "educacion",
-        contact: "contacto",
-    };
-
-    // ─── Model-based intent classification ──────────────────────────────────────
-    // A fast, no-context call to the model that returns JSON with:
-    //   { scroll: "experiencia"|"proyectos"|"habilidades"|"educacion"|"contacto"|"sobre"|null,
-    //     actions: string[] }
-    // This fires in parallel with (or just before) the main response call.
-
-    const INTENT_SYSTEM = `You are a routing classifier. Reply with ONLY a JSON object, no markdown, no explanation.
-Format: {"scroll":"VALUE_OR_NULL","actions":["key1","key2"]}
-
-SCROLL field — use one of these exact strings, or null:
-"experiencia" = user asks about work experience, jobs, career, Mercadona, Urobora
-"proyectos"   = user asks about projects, portfolio, TFG, thesis, research
-"habilidades" = user asks about skills, technologies, stack, Python, Java, tools
-"educacion"   = user asks about studies, university, UPV, TUM, Erasmus, degree
-"sobre"       = user asks who Carlos is, introduction, about him
-null          = contact intent, greeting, or unclear
-
-ACTIONS field — array, include ALL that apply:
-"contact"    = include whenever user asks how to contact, reach out, hire, get email, LinkedIn, collaborate, write
-"experience" = user asks about work experience
-"projects"   = user asks about projects
-"skills"     = user asks about skills or technologies  
-"github"     = user asks about code, repos, GitHub
-"education"  = user asks about studies or education
-
-EXAMPLES (follow these exactly):
-"hola" -> {"scroll":null,"actions":[]}
-"cuéntame tu experiencia" -> {"scroll":"experiencia","actions":[]}
-"¿cómo contactarte?" -> {"scroll":null,"actions":["contact"]}
-"¿cómo puedo contactarte?" -> {"scroll":null,"actions":["contact"]}
-"¿tienes email?" -> {"scroll":null,"actions":["contact"]}
-"¿qué tecnologías usas?" -> {"scroll":"habilidades","actions":[]}
-"¿tienes GitHub?" -> {"scroll":"proyectos","actions":["github","projects"]}
-"¿dónde estudiaste?" -> {"scroll":"educacion","actions":[]}
-"¿quién eres?" -> {"scroll":"sobre","actions":[]}
-
-Return ONLY the JSON. No extra text.`;
-
-    async function classifyIntent(
-        userText: string,
-    ): Promise<{ scroll: string | null; actions: string[] }> {
-        try {
-            const result = await engine.chat.completions.create({
-                messages: [
-                    { role: "system", content: INTENT_SYSTEM },
-                    { role: "user", content: userText },
-                ],
-                stream: false,
-                temperature: 0,
-                max_tokens: 60,
-            });
-            const raw = result.choices[0]?.message?.content?.trim() || "{}";
-            // Strip possible markdown fences
-            const clean = raw
-                .replace(/^```json?\s*/i, "")
-                .replace(/\s*```$/, "")
-                .trim();
-            const parsed = JSON.parse(clean);
-            return {
-                scroll: parsed.scroll ?? null,
-                actions: Array.isArray(parsed.actions) ? parsed.actions : [],
-            };
-        } catch {
-            return { scroll: null, actions: [] };
-        }
-    }
-
-    function scrollToSection(selectorList: string) {
-        const selectors = selectorList.split(",");
-        let el: Element | null = null;
-        for (const s of selectors) {
-            el = document.querySelector(s.trim());
-            if (el) break;
-        }
-        if (!el) return;
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        // Highlight pulse
-        el.classList.add("section-highlight-pulse");
-        setTimeout(() => el!.classList.remove("section-highlight-pulse"), 2000);
-    }
-
-    // Predefined action cards grouped by intent
-    const ACTION_SETS: Record<string, ActionCard[]> = {
-        contact: [
-            {
-                icon: `<svg class="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>`,
-                label: "LinkedIn",
-                sublabel: "linkedin.com/in/carl0shdez",
-                action: () =>
-                    window.open("https://linkedin.com/in/carl0shdez", "_blank"),
-                style: "primary",
-            },
-            {
-                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
-                label: "Email",
-                sublabel: "chermar.pro@gmail.com",
-                action: () =>
-                    (window.location.href = "mailto:chermar.pro@gmail.com"),
-                style: "ghost",
-            },
-        ],
-        experience: [
-            {
-                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
-                label: "Ver experiencia",
-                sublabel: "Mercadona IT · Urobora SL",
-                action: () => scrollToSection(SECTION_ANCHORS.experiencia),
-                style: "ghost",
-            },
-        ],
-        projects: [
-            {
-                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>`,
-                label: "Ver proyectos",
-                sublabel: "TFG · TUM Research",
-                action: () => scrollToSection(SECTION_ANCHORS.proyectos),
-                style: "ghost",
-            },
-        ],
-        skills: [
-            {
-                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>`,
-                label: "Ver habilidades",
-                sublabel: "Python · Java · Spring · AI",
-                action: () => scrollToSection(SECTION_ANCHORS.habilidades),
-                style: "ghost",
-            },
-        ],
-        github: [
-            {
-                icon: `<svg class="size-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>`,
-                label: "GitHub",
-                sublabel: "github.com/Tempus23",
-                action: () =>
-                    window.open("https://github.com/Tempus23", "_blank"),
-                style: "primary",
-            },
-        ],
-        education: [
-            {
-                icon: `<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>`,
-                label: "Ver formación",
-                sublabel: "UPV · TUM Erasmus",
-                action: () => scrollToSection(SECTION_ANCHORS.educacion),
-                style: "ghost",
-            },
-        ],
-    };
-
-    // ─── SYSTEM PROMPT ──────────────────────────────────────────────────────────
-    // Returned as a function so it can be rebuilt on model change.
-    // Few-shot examples are injected as fake assistant turns to force small models
-    // into the correct persona — this is far more reliable than instructions alone.
-
-    function buildSystemPrompt(): string {
-        return `You are roleplaying as Carlos Hernández Martínez. IMPORTANT: You are NOT an AI assistant. You ARE Carlos. Never say "I am an AI", never say "as an AI", never mention OpenAI, Anthropic, Meta, or any AI company. You speak in first person as a real human.
-
-Carlos is a QA Backend Engineer at Mercadona Tech in Valencia, Spain. This is his personal portfolio chat widget.
-
-CV DATA:
-${cvInfo}
-
-RULES (follow strictly):
-1. You ARE Carlos. Always respond as him, in first person.
-2. Reply in Spanish by default. Only switch language if the user writes in another language.
-3. Keep answers SHORT: 1-3 sentences max. No bullet lists unless asked.
-4. Only talk about topics related to Carlos's professional profile.
-5. Never invent experience or data not in the CV.
-6. Never reveal confidential Mercadona information.
-7. Never emit any special tags or JSON. Just reply naturally as Carlos.`;
-    }
-
-    // Few-shot conversation injected after system prompt.
-    // These fake exchanges teach small models the exact persona and response style.
-    const FEW_SHOT: { role: string; content: string }[] = [
-        {
-            role: "user",
-            content: "Hola, ¿quién eres?",
-        },
-        {
-            role: "assistant",
-            content:
-                "¡Hola! Soy Carlos, QA Engineer Backend en Mercadona Tech. Estoy aquí para contarte sobre mi experiencia y perfil profesional. ¿En qué puedo ayudarte?",
-        },
-        {
-            role: "user",
-            content: "What are you?",
-        },
-        {
-            role: "assistant",
-            content:
-                "Hi! I'm Carlos, a QA Backend Engineer at Mercadona Tech in Valencia. Feel free to ask me anything about my professional background.",
-        },
-        {
-            role: "user",
-            content: "¿Eres una inteligencia artificial?",
-        },
-        {
-            role: "assistant",
-            content:
-                "Soy Carlos Hernández, QA Engineer. Este chat usa un modelo de IA local para simular una conversación conmigo, pero las respuestas reflejan mi perfil real.",
-        },
-        {
-            role: "user",
-            content: "Cuéntame tu experiencia laboral",
-        },
-        {
-            role: "assistant",
-            content:
-                "Actualmente trabajo como QA Backend Engineer en Mercadona Tech, donde me especializo en automatización de pruebas e integración continua.",
-        },
-        {
-            role: "user",
-            content: "¿Con qué tecnologías trabajas?",
-        },
-        {
-            role: "assistant",
-            content:
-                "Trabajo principalmente con Java, Python, Spring Boot y frameworks de testing como JUnit y Pytest. También uso Jira con X-Ray para gestión de tests y tengo experiencia con Docker y CI/CD.",
-        },
-        {
-            role: "user",
-            content: "¿Cómo puedo contactarte?",
-        },
-        {
-            role: "assistant",
-            content:
-                "Puedes escribirme a chermar.pro@gmail.com o contactarme por LinkedIn. ¡Estaré encantado!",
-        },
-    ];
-
     const historyTracker: { role: string; content: string }[] = [
-        { role: "system", content: buildSystemPrompt() },
+        { role: "system", content: buildSystemPrompt(cvInfo) },
         ...FEW_SHOT,
     ];
 
@@ -730,7 +441,7 @@ RULES (follow strictly):
 
     // ─── Init engine ─────────────────────────────────────────────────────────────
     async function initEngineIfNotStarted() {
-        if (engine || isInitializing) return;
+        if ((chatEngine && intentEngine) || isInitializing) return;
         if (!(navigator as any).gpu) {
             setStatus("No soportado", "red");
             fallbackEl.classList.remove("hidden");
@@ -741,30 +452,37 @@ RULES (follow strictly):
             progressContainer.classList.remove("hidden");
             progressBar.style.width = "0%";
             setStatus("Cargando…", "amber");
-            const selectedModel = modelSelector.value;
-            const MODEL_SIZES: Record<string, string> = {
-                "Qwen2.5-0.5B-Instruct-q4f16_1-MLC": "~0.5 GB",
-                "Qwen2.5-1.5B-Instruct-q4f16_1-MLC": "~1 GB",
-                "Qwen2.5-3B-Instruct-q4f16_1-MLC": "~2 GB",
-                "gemma-2-2b-it-q4f16_1-MLC": "~1.9 GB",
-            };
-            const sizeLabel = MODEL_SIZES[selectedModel] ?? "";
-            engine = await CreateMLCEngine(selectedModel, {
-                initProgressCallback: (p: any) => {
-                    const pct = Math.round(p.progress * 100);
-                    progressBar.style.width = `${pct}%`;
-                    statusText.textContent =
-                        pct < 100
-                            ? `Descargando ${sizeLabel}… ${pct}%`
-                            : "Inicializando…";
-                },
-            });
+
+            // Initialize Intent Engine (Small)
+            if (!intentEngine) {
+                statusText.textContent = "Preparando IA lógica (~1GB)...";
+                intentEngine = await CreateMLCEngine(MODELS.INTENT, {
+                    initProgressCallback: (p: any) => {
+                        const pct = Math.round(p.progress * 100);
+                        progressBar.style.width = `${pct * 0.3}%`; // First 30% for intent
+                    },
+                });
+            }
+
+            // Initialize Chat Engine (Large)
+            if (!chatEngine) {
+                statusText.textContent =
+                    "Cargando motor de conversación (~1GB)...";
+                chatEngine = await CreateMLCEngine(MODELS.CHAT, {
+                    initProgressCallback: (p: any) => {
+                        const pct = Math.round(p.progress * 100);
+                        progressBar.style.width = `${30 + pct * 0.7}%`; // Remaining 70% for chat
+                    },
+                });
+            }
+
             setTimeout(() => progressContainer.classList.add("hidden"), 600);
             setStatus("Lista", "green");
             input.disabled = false;
             sendBtn.disabled = false;
-            // Inject welcome message now that engine is ready
-            appendWelcomeMessage();
+            if (messagesContainer.children.length === 0) {
+                appendWelcomeMessage(messagesContainer);
+            }
             input.focus();
         } catch (err) {
             console.error("WebLLM init failed:", err);
@@ -775,203 +493,51 @@ RULES (follow strictly):
         }
     }
 
-    // ─── Model change ────────────────────────────────────────────────────────────
-    modelSelector.addEventListener("change", async () => {
-        if (isInitializing) return;
-        if (engine) {
-            try {
-                await engine.unload();
-            } catch {}
-            engine = null;
-        }
-        // Clear chat UI and history
-        messagesContainer.innerHTML = "";
-        historyTracker.length = 0;
-        historyTracker.push({ role: "system", content: buildSystemPrompt() });
-        input.disabled = true;
-        sendBtn.disabled = true;
-        await initEngineIfNotStarted();
-    });
-
-    // ─── Welcome message ─────────────────────────────────────────────────────────
-    function appendWelcomeMessage() {
-        const wrapper = document.createElement("div");
-        wrapper.className = "flex items-start gap-2.5 max-w-[88%]";
-        wrapper.innerHTML = `
-            ${avatarHTML()}
-            <div class="bg-gray-50 dark:bg-indigo-500/10 text-gray-800 dark:text-indigo-100 text-[13.5px] leading-relaxed px-4 py-3 rounded-2xl rounded-tl-md border border-gray-100 dark:border-indigo-500/10 shadow-sm">
-                Hola, soy Carlos. Ejecuto 100% en tu navegador vía WebGPU, sin servidores externos. ¿En qué puedo ayudarte?
-                <div class="mt-2.5 flex flex-wrap gap-1.5">
-                    ${quickChip("¿Con qué tecnologías trabajas?")}
-                    ${quickChip("¿Cómo contactarte?")}
-                    ${quickChip("Cuéntame tu experiencia")}
-                </div>
-            </div>`;
-        messagesContainer.appendChild(wrapper);
-        scroll();
-    }
-
-    function quickChip(text: string) {
-        return `<button class="quick-action text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/15 border border-indigo-200/60 dark:border-indigo-500/20 rounded-full px-2.5 py-1 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 transition-colors">${text}</button>`;
-    }
-
-    // ─── Quick action chips ───────────────────────────────────────────────────────
+    // ─── Event Delegation ────────────────────────────────────────────────────────
     document.addEventListener("click", (e) => {
-        const btn = (e.target as HTMLElement).closest(".quick-action");
-        if (!btn || !engine) return;
-        const text = btn.textContent?.trim() || "";
-        input.value = text;
-        form.dispatchEvent(new Event("submit", { cancelable: true }));
-    });
+        const target = e.target as HTMLElement;
 
-    // ─── Action card click handler ────────────────────────────────────────────────
-    document.addEventListener("click", (e) => {
-        const btn = (e.target as HTMLElement).closest("[data-action-btn]");
-        if (!btn) return;
-        const key = (btn as HTMLElement).dataset.actionBtn || "";
-        const set = ACTION_SETS[key];
-        if (!set) return;
-        // Find which card index
-        const idx = parseInt((btn as HTMLElement).dataset.actionIdx || "0", 10);
-        set[idx]?.action();
-    });
-
-    // ─── Render action cards ─────────────────────────────────────────────────────
-    function renderActionCards(keys: string[]) {
-        const cards = keys.flatMap((k) =>
-            (ACTION_SETS[k] || []).map((c, i) => ({ ...c, key: k, idx: i })),
-        );
-        if (!cards.length) return null;
-
-        const container = document.createElement("div");
-        container.className = "flex flex-col gap-1.5 mt-1";
-
-        cards.forEach(({ icon, label, sublabel, style, key, idx }, i) => {
-            const delay = i * 70;
-            const isPrimary = style === "primary";
-            const card = document.createElement("button");
-            card.dataset.actionBtn = key;
-            card.dataset.actionIdx = String(idx);
-            card.className = [
-                "chat-action-card flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-left transition-all active:scale-[.98]",
-                isPrimary
-                    ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/25"
-                    : "bg-white dark:bg-indigo-500/10 border border-gray-200 dark:border-indigo-500/20 text-gray-800 dark:text-indigo-100 hover:border-indigo-300 dark:hover:border-indigo-400/40 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 shadow-sm",
-            ].join(" ");
-            card.style.animationDelay = `${delay}ms`;
-            card.innerHTML = `
-                <span class="${isPrimary ? "text-white/90" : "text-indigo-500 dark:text-indigo-400"}">${icon}</span>
-                <span class="flex-1 min-w-0">
-                    <span class="block text-[13px] font-semibold leading-tight truncate">${label}</span>
-                    ${sublabel ? `<span class="block text-[11px] opacity-60 mt-0.5">${sublabel}</span>` : ""}
-                </span>
-                <svg class="${isPrimary ? "text-white/60" : "text-gray-400 dark:text-indigo-500/60"} size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                </svg>`;
-            container.appendChild(card);
-        });
-
-        return container;
-    }
-
-    // ─── Parse model output ──────────────────────────────────────────────────────
-    // Strips from text and returns { clean, actionKeys }
-    function parseModelOutput(raw: string): {
-        clean: string;
-        actionKeys: string[];
-    } {
-        const re = /<!--ACTIONS:(\[.*?\])-->/g;
-        const keys: string[] = [];
-        let match: RegExpExecArray | null;
-        while ((match = re.exec(raw)) !== null) {
-            try {
-                const parsed = JSON.parse(match[1]);
-                if (Array.isArray(parsed)) keys.push(...parsed);
-            } catch {}
+        // Quick Action Chips
+        const chip = target.closest(".quick-action");
+        if (chip && chatEngine) {
+            input.value = chip.textContent?.trim() || "";
+            form.dispatchEvent(new Event("submit", { cancelable: true }));
+            return;
         }
-        const clean = raw.replace(/<!--ACTIONS:\[.*?\]-->/g, "").trim();
-        return { clean, actionKeys: keys };
-    }
 
-    // ─── Avatar HTML ─────────────────────────────────────────────────────────────
-    function avatarHTML() {
-        return `<div class="w-7 h-7 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center shrink-0 mt-0.5 border border-indigo-200/50 dark:border-indigo-500/20">
-            <svg class="size-3.5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-            </svg>
-        </div>`;
-    }
-
-    // ─── Append message ──────────────────────────────────────────────────────────
-    function appendUserMessage(text: string) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "flex justify-end";
-        const bubble = document.createElement("div");
-        bubble.className =
-            "max-w-[80%] bg-indigo-600 text-white text-[13.5px] leading-relaxed px-4 py-2.5 rounded-2xl rounded-br-md shadow-md shadow-indigo-500/20";
-        bubble.textContent = text;
-        wrapper.appendChild(bubble);
-        messagesContainer.appendChild(wrapper);
-        scroll();
-    }
-
-    // Returns { bubbleEl, wrapperEl } so we can inject action cards later
-    function appendBotMessage(text: string): {
-        bubble: HTMLElement;
-        wrapper: HTMLElement;
-    } {
-        const wrapper = document.createElement("div");
-        wrapper.className = "flex items-start gap-2.5 max-w-[90%]";
-        const bubble = document.createElement("div");
-        bubble.className =
-            "flex-1 bg-gray-50 dark:bg-indigo-500/10 text-gray-800 dark:text-indigo-100 text-[13.5px] leading-relaxed px-4 py-3 rounded-2xl rounded-tl-md border border-gray-100 dark:border-indigo-500/10 shadow-sm";
-        bubble.innerHTML =
-            text === "…"
-                ? `<span class="inline-flex gap-1 items-center h-4">
-                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:0ms"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:150ms"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" style="animation-delay:300ms"></span>
-               </span>`
-                : text;
-        wrapper.appendChild(
-            document.createRange().createContextualFragment(avatarHTML()),
-        );
-        wrapper.appendChild(bubble);
-        messagesContainer.appendChild(wrapper);
-        scroll();
-        return { bubble, wrapper };
-    }
-
-    function scroll() {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+        // Action Cards
+        const actionBtn = target.closest("[data-action-btn]") as HTMLElement;
+        if (actionBtn) {
+            const key = actionBtn.dataset.actionBtn || "";
+            const idx = parseInt(actionBtn.dataset.actionIdx || "0", 10);
+            ACTION_SETS[key]?.[idx]?.action();
+        }
+    });
 
     // ─── Submit ──────────────────────────────────────────────────────────────────
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const userText = input.value.trim();
-        if (!userText || !engine) return;
+        if (!userText || !chatEngine || !intentEngine) return;
 
         input.value = "";
         input.disabled = true;
         sendBtn.disabled = true;
 
-        appendUserMessage(userText);
+        appendUserMessage(messagesContainer, userText);
         historyTracker.push({ role: "user", content: userText });
 
-        const { bubble: botBubble, wrapper: botWrapper } =
-            appendBotMessage("…");
+        const { bubble: botBubble, wrapper: botWrapper } = appendBotMessage(
+            messagesContainer,
+            "…",
+        );
         setStatus("Respondiendo…", "indigo");
 
         try {
-            // ── Step 1: classify intent (fast, no CV context) ──────────────
-            // Fires first. As soon as we have the result:
-            //  - scroll the page immediately
-            //  - inject action cards right away (before stream starts)
+            // Use intentEngine for classification
             const { scroll: scrollKey, actions: intentActions } =
-                await classifyIntent(userText);
+                await classifyIntent(intentEngine, userText);
 
-            // Scroll immediately — page moves while model is still "thinking"
             if (
                 scrollKey &&
                 scrollKey !== "contacto" &&
@@ -980,22 +546,21 @@ RULES (follow strictly):
                 scrollToSection(SECTION_ANCHORS[scrollKey]);
             }
 
-            // Inject action cards NOW, before the stream, so they're visible
-            // while the reply is being generated
-            let col: HTMLDivElement | null = null;
             if (intentActions.length) {
                 const cards = renderActionCards(intentActions);
                 if (cards) {
-                    col = document.createElement("div");
+                    const col = document.createElement("div");
                     col.className = "flex flex-col gap-2";
                     botWrapper.parentNode?.insertBefore(col, botWrapper);
                     col.appendChild(botWrapper);
                     col.appendChild(cards);
+                    messagesContainer.scrollTop =
+                        messagesContainer.scrollHeight;
                 }
             }
 
-            // ── Step 2: stream the actual reply ────────────────────────────
-            const chunks = await engine.chat.completions.create({
+            // Use chatEngine for main completion
+            const chunks = await chatEngine.chat.completions.create({
                 messages: historyTracker,
                 stream: true,
                 temperature: 0.7,
@@ -1011,7 +576,7 @@ RULES (follow strictly):
                 botBubble.innerHTML = rawReply
                     .replace(/\n\n/g, "</p><p class='mt-2'>")
                     .replace(/\n/g, "<br>");
-                scroll();
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
 
             botBubble.classList.remove("stream-cursor");
@@ -1019,12 +584,11 @@ RULES (follow strictly):
                 .trim()
                 .replace(/\n\n/g, "</p><p class='mt-2'>")
                 .replace(/\n/g, "<br>");
-
             historyTracker.push({
                 role: "assistant",
                 content: rawReply.trim(),
             });
-            scroll();
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (err) {
             console.error("Chat error:", err);
             botBubble.textContent = "Hubo un error al generar la respuesta.";
