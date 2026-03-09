@@ -18,13 +18,13 @@ export const MODELS = {
     INTENT: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
     CHAT: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
 
-    MOBILE: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+    MOBILE: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
 };
 
 export const MODEL_SIZES: Record<string, string> = {
     [MODELS.INTENT]: "~1 GB",
     [MODELS.CHAT]: "~1 GB",
-    [MODELS.MOBILE]: "~1 GB",
+    [MODELS.MOBILE]: "~380 MB",
 };
 
 export const isMobileDevice = () => {
