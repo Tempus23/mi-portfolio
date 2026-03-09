@@ -24,7 +24,7 @@ export const MODELS = {
 export const MODEL_SIZES: Record<string, string> = {
     [MODELS.INTENT]: "~1 GB",
     [MODELS.CHAT]: "~1 GB",
-    [MODELS.MOBILE]: "~380 MB",
+    [MODELS.MOBILE]: "~1 GB",
 };
 
 export const isMobileDevice = () => {
