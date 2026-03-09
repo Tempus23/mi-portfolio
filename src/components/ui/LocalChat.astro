@@ -344,6 +344,7 @@ const cvContext = JSON.stringify(cvData);
         SECTION_ANCHORS,
         MODEL_SIZES,
         MODELS,
+        getModelConfig,
     } from "../../utils/local-chat/constants";
     import {
         classifyIntent,
@@ -456,25 +457,32 @@ const cvContext = JSON.stringify(cvData);
             progressBar.style.width = "0%";
             setStatus("Cargando…", "amber");
 
-            // Initialize Intent Engine (Small)
+            const config = getModelConfig();
+            const sameModel = config.intent === config.chat;
+            const modelLabel = config.isMobile ? "(Móvil)" : "";
+
+            // Initialize Intent Engine
             if (!intentEngine) {
-                statusText.textContent = "Preparando IA lógica (~1GB)...";
-                intentEngine = await CreateMLCEngine(MODELS.INTENT, {
+                statusText.textContent = `Preparando IA lógica ${modelLabel}...`;
+                intentEngine = await CreateMLCEngine(config.intent, {
                     initProgressCallback: (p: any) => {
                         const pct = Math.round(p.progress * 100);
-                        progressBar.style.width = `${pct * 0.3}%`; // First 30% for intent
+                        progressBar.style.width = sameModel
+                            ? `${pct}%`
+                            : `${pct * 0.3}%`;
                     },
                 });
             }
 
-            // Initialize Chat Engine (Large)
-            if (!chatEngine) {
-                statusText.textContent =
-                    "Cargando motor de conversación (~1GB)...";
-                chatEngine = await CreateMLCEngine(MODELS.CHAT, {
+            // Initialize Chat Engine
+            if (sameModel) {
+                chatEngine = intentEngine;
+            } else if (!chatEngine) {
+                statusText.textContent = `Cargando motor de conversación ${modelLabel}...`;
+                chatEngine = await CreateMLCEngine(config.chat, {
                     initProgressCallback: (p: any) => {
                         const pct = Math.round(p.progress * 100);
-                        progressBar.style.width = `${30 + pct * 0.7}%`; // Remaining 70% for chat
+                        progressBar.style.width = `${30 + pct * 0.7}%`;
                     },
                 });
             }

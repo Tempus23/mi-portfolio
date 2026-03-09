@@ -16,12 +16,33 @@ export const SECTION_ANCHORS: Record<string, string> = {
 
 export const MODELS = {
     INTENT: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-    CHAT: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+    CHAT: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+
+    MOBILE: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
 };
 
 export const MODEL_SIZES: Record<string, string> = {
     [MODELS.INTENT]: "~1 GB",
     [MODELS.CHAT]: "~1 GB",
+    [MODELS.MOBILE]: "~380 MB",
+};
+
+export const isMobileDevice = () => {
+    if (typeof window === "undefined") return false;
+    return (
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent,
+        ) || window.innerWidth < 768
+    );
+};
+
+export const getModelConfig = () => {
+    const isMobile = isMobileDevice();
+    return {
+        intent: isMobile ? MODELS.MOBILE : MODELS.INTENT,
+        chat: isMobile ? MODELS.MOBILE : MODELS.CHAT,
+        isMobile,
+    };
 };
 
 export const FEW_SHOT = [
