@@ -121,30 +121,13 @@ export function buildTargetEditPolicy({
     const windowEnd = new Date(lastUpdate.getTime() + windowHours * 60 * 60 * 1000);
     const nextUnlockDate = addMonths(lastUpdate, lockMonths);
     const inCurrentWindow = now <= windowEnd;
-    const unlockedByTime = now >= nextUnlockDate;
-
-    if (inCurrentWindow) {
-        return {
-            canEdit: true,
-            lockMessage: `Ventana de edición abierta hasta ${windowEnd.toLocaleDateString('es-ES')}`,
-            shouldStartNewWindow: false,
-            nextUnlockDate
-        };
-    }
-
-    if (unlockedByTime) {
-        return {
-            canEdit: true,
-            lockMessage: 'Objetivos editables',
-            shouldStartNewWindow: true,
-            nextUnlockDate
-        };
-    }
 
     return {
-        canEdit: false,
-        lockMessage: `Objetivos bloqueados hasta ${nextUnlockDate.toLocaleDateString('es-ES')}`,
-        shouldStartNewWindow: false,
+        canEdit: true,
+        lockMessage: inCurrentWindow
+            ? `Ventana de edición abierta hasta ${windowEnd.toLocaleDateString('es-ES')}`
+            : 'Objetivos editables',
+        shouldStartNewWindow: !inCurrentWindow,
         nextUnlockDate
     };
 }

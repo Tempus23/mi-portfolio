@@ -618,6 +618,8 @@ function updateViewMode() {
     updateDistributionCharts();
     updateAnalytics();
     updateCompositionList();
+    updateHistoryTable();
+    updateTargetsTable();
 }
 
 function toggleEditModal(show) {
@@ -625,7 +627,7 @@ function toggleEditModal(show) {
 }
 
 function openEditSnapshot(snapshotId) {
-    const snapshot = snapshots.find((s) => s.id === snapshotId);
+    const snapshot = store.snapshots.find((s) => s.id === snapshotId);
     if (!snapshot) return;
 
     document.getElementById("editSnapshotId").value = snapshotId;
