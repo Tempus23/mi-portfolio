@@ -337,7 +337,7 @@ const cvContext = JSON.stringify(cvData);
 </style>
 
 <script>
-    import { CreateMLCEngine } from "@mlc-ai/web-llm";
+    import { pipeline, env, TextStreamer } from "@huggingface/transformers";
     import {
         FEW_SHOT,
         ACTION_SETS,
@@ -349,6 +349,7 @@ const cvContext = JSON.stringify(cvData);
     import {
         classifyIntent,
         buildSystemPrompt,
+        stripThinkingTags,
     } from "../../utils/local-chat/ai-logic";
     import {
         scrollToSection,
@@ -357,6 +358,9 @@ const cvContext = JSON.stringify(cvData);
         appendBotMessage,
         renderActionCards,
     } from "../../utils/local-chat/dom-utils";
+
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
 
     // ─── DOM ────────────────────────────────────────────────────────────────────
     const form = document.getElementById("local-chat-form") as HTMLFormElement;
@@ -395,8 +399,7 @@ const cvContext = JSON.stringify(cvData);
     const cvInfo =
         document.getElementById("cv-context-data")?.textContent || "";
 
-    let chatEngine: any = null;
-    let intentEngine: any = null;
+    let generator: any = null;
     let isInitializing = false;
 
     const historyTracker: { role: string; content: string }[] = [
@@ -445,7 +448,7 @@ const cvContext = JSON.stringify(cvData);
 
     // ─── Init engine ─────────────────────────────────────────────────────────────
     async function initEngineIfNotStarted() {
-        if ((chatEngine && intentEngine) || isInitializing) return;
+        if (generator || isInitializing) return;
         if (!(navigator as any).gpu) {
             setStatus("No soportado", "red");
             fallbackEl.classList.remove("hidden");
@@ -454,39 +457,30 @@ const cvContext = JSON.stringify(cvData);
         try {
             isInitializing = true;
             progressContainer.classList.remove("hidden");
-            progressBar.style.width = "0%";
+            progressBar.style.width = "5%";
             setStatus("Cargando…", "amber");
 
             const config = getModelConfig();
-            const sameModel = config.intent === config.chat;
-            const modelLabel = config.isMobile ? "(Móvil)" : "";
+            const modelSize = MODEL_SIZES[config.model] ?? "~700 MB";
+            statusText.textContent = `Descargando Liquid AI LFM (${modelSize})…`;
 
-            // Initialize Intent Engine
-            if (!intentEngine) {
-                statusText.textContent = `Preparando IA lógica ${modelLabel}...`;
-                intentEngine = await CreateMLCEngine(config.intent, {
-                    initProgressCallback: (p: any) => {
-                        const pct = Math.round(p.progress * 100);
-                        progressBar.style.width = sameModel
-                            ? `${pct}%`
-                            : `${pct * 0.3}%`;
+            generator = await pipeline(
+                "text-generation",
+                config.model,
+                {
+                    device: "webgpu",
+                    dtype: "q4f16",
+                    progress_callback: (p: any) => {
+                        if (p.status === "progress" && p.total) {
+                            const pct = Math.round((p.loaded / p.total) * 90);
+                            progressBar.style.width = `${5 + pct}%`;
+                            statusText.textContent = `Descargando… ${pct}%`;
+                        }
                     },
-                });
-            }
+                },
+            );
 
-            // Initialize Chat Engine
-            if (sameModel) {
-                chatEngine = intentEngine;
-            } else if (!chatEngine) {
-                statusText.textContent = `Cargando motor de conversación ${modelLabel}...`;
-                chatEngine = await CreateMLCEngine(config.chat, {
-                    initProgressCallback: (p: any) => {
-                        const pct = Math.round(p.progress * 100);
-                        progressBar.style.width = `${30 + pct * 0.7}%`;
-                    },
-                });
-            }
-
+            progressBar.style.width = "100%";
             setTimeout(() => progressContainer.classList.add("hidden"), 600);
             setStatus("Lista", "green");
             input.disabled = false;
@@ -496,7 +490,7 @@ const cvContext = JSON.stringify(cvData);
             }
             input.focus();
         } catch (err) {
-            console.error("WebLLM init failed:", err);
+            console.error("Transformers.js init failed:", err);
             setStatus("Error", "red");
             progressContainer.classList.add("hidden");
         } finally {
@@ -508,15 +502,13 @@ const cvContext = JSON.stringify(cvData);
     document.addEventListener("click", (e) => {
         const target = e.target as HTMLElement;
 
-        // Quick Action Chips
         const chip = target.closest(".quick-action");
-        if (chip && chatEngine) {
+        if (chip && generator) {
             input.value = chip.textContent?.trim() || "";
             form.dispatchEvent(new Event("submit", { cancelable: true }));
             return;
         }
 
-        // Action Cards
         const actionBtn = target.closest("[data-action-btn]") as HTMLElement;
         if (actionBtn) {
             const key = actionBtn.dataset.actionBtn || "";
@@ -529,7 +521,7 @@ const cvContext = JSON.stringify(cvData);
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const userText = input.value.trim();
-        if (!userText || !chatEngine || !intentEngine) return;
+        if (!userText || !generator) return;
 
         input.value = "";
         input.disabled = true;
@@ -545,9 +537,8 @@ const cvContext = JSON.stringify(cvData);
         setStatus("Respondiendo…", "indigo");
 
         try {
-            // Use intentEngine for classification
             const { scroll: scrollKey, actions: intentActions } =
-                await classifyIntent(intentEngine, userText);
+                await classifyIntent(generator, userText);
 
             if (
                 scrollKey &&
@@ -570,34 +561,47 @@ const cvContext = JSON.stringify(cvData);
                 }
             }
 
-            // Use chatEngine for main completion
-            const chunks = await chatEngine.chat.completions.create({
-                messages: historyTracker,
-                stream: true,
-                temperature: 0.7,
-                max_tokens: 200,
-            });
-
-            let rawReply = "";
             botBubble.innerHTML = "";
             botBubble.classList.add("stream-cursor");
 
-            for await (const chunk of chunks) {
-                rawReply += chunk.choices[0]?.delta.content || "";
-                botBubble.innerHTML = rawReply
-                    .replace(/\n\n/g, "</p><p class='mt-2'>")
-                    .replace(/\n/g, "<br>");
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
+            let rawReply = "";
+            let insideThink = false;
 
+            const streamer = new TextStreamer(generator.tokenizer, {
+                skip_prompt: true,
+                callback_function: (token: string) => {
+                    rawReply += token;
+
+                    if (rawReply.includes("<think>")) insideThink = true;
+                    if (rawReply.includes("</think>")) insideThink = false;
+
+                    const visible = stripThinkingTags(rawReply);
+                    if (!insideThink && visible) {
+                        botBubble.innerHTML = visible
+                            .replace(/\n\n/g, "</p><p class='mt-2'>")
+                            .replace(/\n/g, "<br>");
+                        messagesContainer.scrollTop =
+                            messagesContainer.scrollHeight;
+                    }
+                },
+            });
+
+            await generator(historyTracker, {
+                max_new_tokens: 300,
+                temperature: 0.7,
+                do_sample: true,
+                streamer,
+            });
+
+            const finalText = stripThinkingTags(rawReply).trim();
             botBubble.classList.remove("stream-cursor");
-            botBubble.innerHTML = rawReply
-                .trim()
+            botBubble.innerHTML = finalText
                 .replace(/\n\n/g, "</p><p class='mt-2'>")
                 .replace(/\n/g, "<br>");
+
             historyTracker.push({
                 role: "assistant",
-                content: rawReply.trim(),
+                content: finalText,
             });
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (err) {

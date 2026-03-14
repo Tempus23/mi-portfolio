@@ -15,16 +15,11 @@ export const SECTION_ANCHORS: Record<string, string> = {
 };
 
 export const MODELS = {
-    INTENT: "Llama-3.2-1B-Instruct-q4f16_1-MLC",
-    CHAT: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-
-    MOBILE: "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+    LIQUID: "LiquidAI/LFM2.5-1.2B-Thinking-WebGPU",
 };
 
 export const MODEL_SIZES: Record<string, string> = {
-    [MODELS.INTENT]: "~1 GB",
-    [MODELS.CHAT]: "~1 GB",
-    [MODELS.MOBILE]: "~380 MB",
+    [MODELS.LIQUID]: "~700 MB",
 };
 
 export const isMobileDevice = () => {
@@ -37,11 +32,9 @@ export const isMobileDevice = () => {
 };
 
 export const getModelConfig = () => {
-    const isMobile = isMobileDevice();
     return {
-        intent: isMobile ? MODELS.MOBILE : MODELS.INTENT,
-        chat: isMobile ? MODELS.MOBILE : MODELS.CHAT,
-        isMobile,
+        model: MODELS.LIQUID,
+        isMobile: isMobileDevice(),
     };
 };
 

@@ -48,26 +48,35 @@ const FEW_SHOT_INTENT = [
     { role: "assistant", content: '{"scroll":"proyectos","actions":[]}' },
 ];
 
+export function stripThinkingTags(text: string): string {
+    return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+}
+
 export async function classifyIntent(
-    engine: any,
+    generator: any,
     userText: string,
 ): Promise<IntentResult> {
     try {
-        const result = await engine.chat.completions.create({
-            messages: [
-                { role: "system", content: INTENT_SYSTEM },
-                ...FEW_SHOT_INTENT,
-                { role: "user", content: userText },
-            ],
-            stream: false,
-            temperature: 0,
-            max_tokens: 60,
+        const messages = [
+            { role: "system", content: INTENT_SYSTEM },
+            ...FEW_SHOT_INTENT,
+            { role: "user", content: userText },
+        ];
+
+        const output = await generator(messages, {
+            max_new_tokens: 80,
+            temperature: 0.01,
+            do_sample: false,
         });
-        const raw = result.choices[0]?.message?.content?.trim() || "{}";
-        const clean = raw
+
+        const raw: string =
+            output?.[0]?.generated_text?.at(-1)?.content?.trim() ?? "{}";
+
+        const clean = stripThinkingTags(raw)
             .replace(/^```json?\s*/i, "")
             .replace(/\s*```$/, "")
             .trim();
+
         const parsed = JSON.parse(clean);
         return {
             scroll: parsed.scroll ?? null,
