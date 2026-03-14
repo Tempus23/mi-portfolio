@@ -473,7 +473,8 @@ function saveTargetsEditMode() {
         targetsMetaDraft.lastObjectiveUpdateAt = new Date().toISOString();
     }
 
-    store.updateTargets(cloneDeep(targetsDraft), cloneDeep(targetsMetaDraft));
+    store.saveTargets(cloneDeep(targetsDraft));
+    store.saveTargetsMeta(cloneDeep(targetsMetaDraft));
 
     targetsEditMode = false;
     targetsDraft = null;
