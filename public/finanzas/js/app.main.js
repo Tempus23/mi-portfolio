@@ -600,17 +600,17 @@ function updateViewMode() {
     const diversificationTitle = document.getElementById("diversificationTitle");
 
     if (selectedCategory) {
-        heroLabel.textContent = selectedCategory;
-        evolutionTitle.textContent = "Evolución de " + selectedCategory;
-        topItemsTitle.textContent = "Top 5 Activos";
-        topItemsHead.innerHTML = `<tr><th>Activo</th><th>Valor</th><th>Invertido</th><th>ROI</th></tr>`;
-        diversificationTitle.textContent = "Composición de " + selectedCategory;
+        if (heroLabel) heroLabel.textContent = selectedCategory;
+        if (evolutionTitle) evolutionTitle.textContent = "Evolución de " + selectedCategory;
+        if (topItemsTitle) topItemsTitle.textContent = "Top 5 Activos";
+        if (topItemsHead) topItemsHead.innerHTML = `<tr><th>Activo</th><th>Valor</th><th>Invertido</th><th>ROI</th></tr>`;
+        if (diversificationTitle) diversificationTitle.textContent = "Composición de " + selectedCategory;
     } else {
-        heroLabel.textContent = "Valor Total";
-        evolutionTitle.textContent = "Evolución";
-        topItemsTitle.textContent = "Top 5 Categorías";
-        topItemsHead.innerHTML = `<tr><th>Categoría</th><th>Valor</th><th>Invertido</th><th>ROI</th></tr>`;
-        diversificationTitle.textContent = "Diversificación Histórica";
+        if (heroLabel) heroLabel.textContent = "Valor Total";
+        if (evolutionTitle) evolutionTitle.textContent = "Evolución";
+        if (topItemsTitle) topItemsTitle.textContent = "Top 5 Categorías";
+        if (topItemsHead) topItemsHead.innerHTML = `<tr><th>Categoría</th><th>Valor</th><th>Invertido</th><th>ROI</th></tr>`;
+        if (diversificationTitle) diversificationTitle.textContent = "Diversificación Histórica";
     }
 
     updateSummary();
