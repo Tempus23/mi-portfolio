@@ -15,11 +15,11 @@ export const SECTION_ANCHORS: Record<string, string> = {
 };
 
 export const MODELS = {
-    LIQUID: "LiquidAI/LFM2.5-1.2B-Thinking-WebGPU",
+    LIQUID: "LiquidAI/LFM2.5-1.2B-Instruct-ONNX",
 };
 
 export const MODEL_SIZES: Record<string, string> = {
-    [MODELS.LIQUID]: "~700 MB",
+    [MODELS.LIQUID]: "~760 MB",
 };
 
 export const isMobileDevice = () => {

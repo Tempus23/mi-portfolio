@@ -2114,7 +2114,7 @@ function updateRoiEvolutionChart(snapshotData) {
     let datasets = [];
     const isBreakdownMode =
         currentRoiMode === "breakdown" || currentRoiMode === "breakdown-period";
-    const isCashflowMode = currentRoiMode === "cashflow";
+
 
     const roiCumulativeByCategoryInput = document.getElementById(
         "roiCumulativeByCategory",
@@ -2448,89 +2448,6 @@ function updateRoiEvolutionChart(snapshotData) {
         }
 
         delete roiEvolutionChart.options.scales.y1;
-    } else if (isCashflowMode) {
-        const periodSource = monthlyData.length ? monthlyData : snapshotData;
-        const flowPoints = periodSource.map((s, i) => {
-            const { value, invested } = getValues(s);
-            if (i === 0) {
-                return {
-                    x: new Date(s.date).getTime(),
-                    netInvestment: 0,
-                    realGain: 0,
-                    cumulativeGain: 0,
-                };
-            }
-
-            const prev = periodSource[i - 1];
-            const { value: prevValue, invested: prevInvested } = getValues(prev);
-            const netInvestment = invested - prevInvested;
-            const realGain = value - prevValue - netInvestment;
-            return {
-                x: new Date(s.date).getTime(),
-                netInvestment,
-                realGain,
-                cumulativeGain: 0,
-            };
-        });
-
-        let runningGain = 0;
-        flowPoints.forEach((point, index) => {
-            if (index === 0) {
-                point.cumulativeGain = 0;
-                return;
-            }
-            runningGain += point.realGain;
-            point.cumulativeGain = runningGain;
-        });
-
-        datasets = [
-            {
-                type: "bar",
-                label: "Aporte neto €",
-                data: flowPoints.map((p) => ({ x: p.x, y: p.netInvestment })),
-                backgroundColor: flowPoints.map((p) =>
-                    p.netInvestment >= 0
-                        ? "rgba(0, 113, 227, 0.45)"
-                        : "rgba(255, 159, 10, 0.45)",
-                ),
-                borderColor: flowPoints.map((p) =>
-                    p.netInvestment >= 0 ? "#0071e3" : "#ff9f0a",
-                ),
-                borderWidth: 1,
-                borderRadius: 4,
-                yAxisID: "y",
-            },
-            {
-                type: "bar",
-                label: "Ganancia real €",
-                data: flowPoints.map((p) => ({ x: p.x, y: p.realGain })),
-                backgroundColor: flowPoints.map((p) =>
-                    p.realGain >= 0
-                        ? "rgba(50, 215, 75, 0.45)"
-                        : "rgba(255, 69, 58, 0.45)",
-                ),
-                borderColor: flowPoints.map((p) =>
-                    p.realGain >= 0 ? "#32d74b" : "#ff453a",
-                ),
-                borderWidth: 1,
-                borderRadius: 4,
-                yAxisID: "y",
-            },
-            {
-                type: "line",
-                label: "Ganancia acumulada €",
-                data: flowPoints.map((p) => ({ x: p.x, y: p.cumulativeGain })),
-                borderColor: "#bf5af2",
-                backgroundColor: "transparent",
-                borderWidth: 2,
-                fill: false,
-                tension: 0.3,
-                pointRadius: 0,
-                pointHoverRadius: 3,
-                yAxisID: "y",
-            },
-        ];
-
         delete roiEvolutionChart.options.scales.y1;
     } else {
         const periodSource = monthlyData.length ? monthlyData : snapshotData;
@@ -2765,36 +2682,49 @@ function updateDistributionCharts() {
                 }
             };
         }
-    } else if (distributionMode === "term") {
-        const allTerms = new Set();
-        snapshotData.forEach((s) =>
-            Object.keys(s.termTotals || {}).forEach((term) => allTerms.add(term)),
-        );
-        const sortedTerms = Array.from(allTerms).sort((a, b) => a.localeCompare(b));
+    } else if (distributionMode === "asset") {
+        const latestSnapshot = snapshotData.at(-1);
+        const assetsToShow = selectedCategory
+            ? latestSnapshot.assets.filter((a) => a[AssetIndex.CATEGORY] === selectedCategory)
+            : latestSnapshot.assets;
 
-        if (!selectedCategory) {
-            finalDatasets = sortedTerms.map((term) => {
-                const data = snapshotData.map((s) => {
-                    const totalValue = s.totalCurrentValue || 1;
-                    const value = s.termTotals[term] || 0;
-                    return {
-                        x: new Date(s.date).getTime(),
-                        y: (value / totalValue) * 100,
-                    };
-                });
+        const topAssets = assetsToShow
+            .slice()
+            .sort((a, b) => b[AssetIndex.CURRENT_VALUE] - a[AssetIndex.CURRENT_VALUE])
+            .slice(0, 8)
+            .map((a) => a[AssetIndex.NAME]);
 
-                return {
-                    label: term,
-                    data: data,
-                    borderColor: termColors[term] || "#888",
-                    backgroundColor: (termColors[term] || "#888") + "20",
-                    fill: false,
-                    tension: 0.4,
-                    pointRadius: 0,
-                    pointHoverRadius: 3,
-                };
+        const assetColors = [
+            "#0071e3", "#32d74b", "#ff9f0a", "#bf5af2",
+            "#ff375f", "#64d2ff", "#30d158", "#ff6542",
+        ];
+
+        finalDatasets = topAssets.map((assetName, i) => {
+            const data = snapshotData.map((s) => {
+                const totalValue = selectedCategory
+                    ? (s.assets
+                        .filter((a) => a[AssetIndex.CATEGORY] === selectedCategory)
+                        .reduce((sum, a) => sum + a[AssetIndex.CURRENT_VALUE], 0) || 1)
+                    : (s.totalCurrentValue || 1);
+                const found = s.assets.find(
+                    (a) => a[AssetIndex.NAME] === assetName &&
+                        (!selectedCategory || a[AssetIndex.CATEGORY] === selectedCategory),
+                );
+                const value = found ? found[AssetIndex.CURRENT_VALUE] : 0;
+                return { x: new Date(s.date).getTime(), y: (value / totalValue) * 100 };
             });
-        }
+
+            return {
+                label: assetName.length > 20 ? assetName.substring(0, 17) + "..." : assetName,
+                data,
+                borderColor: assetColors[i % assetColors.length],
+                backgroundColor: assetColors[i % assetColors.length] + "20",
+                fill: false,
+                tension: 0.4,
+                pointRadius: 0,
+                pointHoverRadius: 3,
+            };
+        });
         distributionChart.options.onClick = null;
     }
 
