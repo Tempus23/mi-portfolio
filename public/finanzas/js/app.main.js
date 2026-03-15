@@ -9,7 +9,7 @@ import { showToast } from "./shared/toast.js";
 import { syncPull, syncPush, setSyncCallback } from "./shared/sync.js";
 import { store } from "./core/data-store.js";
 import { initCharts } from "./ui/chart-manager.js";
-import { $, on, setText } from "./ui/ui-shared.js";
+import { $, on, setText, showConfirmModal } from "./ui/ui-shared.js";
 import { exportToJson, exportLatestSnapshotToClipboard, processImportedJson } from "./core/portfolio-export.js";
 
 import * as SnapshotManager from "./logic/snapshot-manager.js";
@@ -131,18 +131,104 @@ function setupEventListeners() {
         const btn = $("refreshPricesBtn");
         const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<span class="icon spin">↻</span> <span>Actualizando...</span>';
+        btn.innerHTML = '<span class="icon spin">↻</span> <span>Analizando impacto...</span>';
         
-        const result = await store.refreshPrices();
-        
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        
-        if (result.success) {
-            showToast(result.message, 'success');
-            updateUI();
-        } else {
-            showToast(result.message, 'error');
+        try {
+            const impact = await store.getRefreshImpact();
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+
+            if (!impact) {
+                showToast('No se pudo analizar el impacto de la actualización', 'error');
+                return;
+            }
+
+            if (impact.changes.length === 0) {
+                showToast('No hay cambios detectados en los precios de tus activos', 'info');
+                return;
+            }
+
+            // Build impact message with refined classes
+            const changeRows = impact.changes.map(c => {
+                const varClass = c.variation >= 0 ? 'impact-pos' : 'impact-neg';
+                return `
+                <tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td style="text-align: right;">${formatCurrency(c.oldPrice)}</td>
+                    <td style="text-align: right;">${formatCurrency(c.newPrice)}</td>
+                    <td style="text-align: right;" class="${varClass}">
+                        ${c.variation >= 0 ? '+' : ''}${c.variation.toFixed(2)}%
+                    </td>
+                </tr>
+            `}).join('');
+
+            const totalDiff = impact.newTotal - impact.oldTotal;
+            const totalDiffPct = (totalDiff / (impact.oldTotal || 1)) * 100;
+            const totalClass = totalDiff >= 0 ? 'impact-pos' : 'impact-neg';
+
+            const messageHtml = `
+                <div style="margin-bottom: 12px; font-size: 0.95rem; text-align: left;">
+                    Se han detectado cambios en <strong>${impact.changes.length}</strong> activos.
+                </div>
+                
+                <div class="impact-table-container">
+                    <table class="impact-table">
+                        <thead>
+                            <tr>
+                                <th>Activo</th>
+                                <th style="text-align: right;">Anterior</th>
+                                <th style="text-align: right;">Nuevo</th>
+                                <th style="text-align: right;">Var.</th>
+                            </tr>
+                        </thead>
+                        <tbody>${changeRows}</tbody>
+                    </table>
+                </div>
+
+                <div class="impact-summary">
+                    <div class="impact-row">
+                        <span class="impact-label">Valor Total Actual:</span>
+                        <span class="impact-value">${formatCurrency(impact.oldTotal)}</span>
+                    </div>
+                    <div class="impact-row">
+                        <span class="impact-label">Nuevo Valor Proyectado:</span>
+                        <span class="impact-value">${formatCurrency(impact.newTotal)}</span>
+                    </div>
+                    <div class="impact-row">
+                        <span class="impact-label">Diferencia Neta:</span>
+                        <span class="impact-value ${totalClass}">
+                            ${totalDiff >= 0 ? '+' : ''}${formatCurrency(totalDiff)} (${totalDiff >= 0 ? '+' : ''}${totalDiffPct.toFixed(2)}%)
+                        </span>
+                    </div>
+                </div>
+                <p style="margin-top: 16px; font-size: 0.85rem; opacity: 0.7; text-align: left;">
+                    Se creará un nuevo snapshot con estos precios actualizados.
+                </p>
+            `;
+
+            const confirmed = await showConfirmModal({
+                title: 'Impacto de la actualización',
+                message: messageHtml,
+                icon: '📈',
+                confirmText: 'Aplicar y Guardar',
+                cancelText: 'Cancelar',
+                wide: true
+            });
+
+            if (confirmed) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="icon spin">↻</span> <span>Guardando...</span>';
+                const result = await store.refreshPrices(impact.prices);
+                showToast(result.message, result.success ? 'success' : 'error');
+                if (result.success) updateUI();
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        } catch (error) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            showToast('Error al conectar con la API de precios', 'error');
+            console.error(error);
         }
     });
 

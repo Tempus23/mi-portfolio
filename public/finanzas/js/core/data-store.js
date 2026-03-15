@@ -120,26 +120,79 @@ class DataStore {
         return this._snapshots.at(-1) || null;
     }
 
-    async refreshPrices() {
+    async getRefreshImpact() {
+        const latest = this.latestSnapshot;
+        if (!latest) return null;
+
+        try {
+            const response = await fetch('/api/finanzas/prices?refresh=true');
+            if (!response.ok) throw new Error('Error al obtener precios');
+            const prices = await response.json();
+            
+            const pricesLower = Object.keys(prices).reduce((acc, key) => {
+                acc[key.toLowerCase()] = prices[key];
+                return acc;
+            }, {});
+
+            const changes = [];
+            let newTotalValue = 0;
+
+            latest.assets.forEach(asset => {
+                const name = asset[AssetIndex.NAME];
+                const nameLower = name.toLowerCase();
+                const quantity = toSafeNumber(asset[AssetIndex.QUANTITY]);
+                const oldPrice = toSafeNumber(asset[AssetIndex.CURRENT_PRICE]);
+                
+                if (pricesLower[nameLower]) {
+                    const newPrice = pricesLower[nameLower];
+                    newTotalValue += newPrice * quantity;
+                    if (Math.abs(newPrice - oldPrice) > 0.00000001) {
+                        changes.push({
+                            name,
+                            oldPrice,
+                            newPrice,
+                            variation: ((newPrice - oldPrice) / (oldPrice || 1)) * 100
+                        });
+                    }
+                } else {
+                    newTotalValue += toSafeNumber(asset[AssetIndex.CURRENT_VALUE]);
+                }
+            });
+
+            return {
+                changes,
+                oldTotal: latest.totalCurrentValue,
+                newTotal: newTotalValue,
+                prices // Return prices to avoid re-fetching later
+            };
+        } catch (error) {
+            console.error('[DataStore] Error calculating impact:', error);
+            return null;
+        }
+    }
+
+    async refreshPrices(preFetchedPrices = null) {
         const latest = this.latestSnapshot;
         if (!latest) return { success: false, message: 'No hay snapshots para actualizar' };
 
         try {
-            const response = await fetch('/api/finanzas/prices?refresh=true');
-            if (!response.ok) {
-                let message = `Error HTTP ${response.status}`;
-                try {
-                    const errorBody = await response.json();
-                    if (typeof errorBody?.error === 'string' && errorBody.error.trim()) {
-                        message = `${message}: ${errorBody.error}`;
+            let prices = preFetchedPrices;
+            if (!prices) {
+                const response = await fetch('/api/finanzas/prices?refresh=true');
+                if (!response.ok) {
+                    let message = `Error HTTP ${response.status}`;
+                    try {
+                        const errorBody = await response.json();
+                        if (typeof errorBody?.error === 'string' && errorBody.error.trim()) {
+                            message = `${message}: ${errorBody.error}`;
+                        }
+                    } catch {
+                        // Ignore JSON parsing errors and keep fallback message
                     }
-                } catch {
-                    // Ignore JSON parsing errors and keep fallback message
+                    throw new Error(message);
                 }
-                throw new Error(message);
+                prices = await response.json();
             }
-            
-            const prices = await response.json();
             
             // Create a lowercase map for case-insensitive lookup
             const pricesLower = Object.keys(prices).reduce((acc, key) => {

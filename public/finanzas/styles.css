@@ -1400,32 +1400,113 @@ body {
 }
 
 .modal {
-    width: 320px;
-    background: radial-gradient(120% 120% at 50% 0%, rgba(0, 113, 227, 0.15) 0%, rgba(17, 17, 20, 0.9) 55%, rgba(10, 10, 12, 0.95) 100%);
-    border-radius: 18px;
-    padding: 24px;
-    text-align: center;
+    width: 95%;
+    max-width: 26rem;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(120% 120% at 50% 0%, rgba(0, 113, 227, 0.15) 0%, rgba(17, 17, 20, 0.93) 55%, rgba(10, 10, 12, 0.98) 100%);
+    border-radius: 1.25rem;
+    padding: 1.5rem;
     transform: scale(0.95);
     transition: transform 0.25s ease;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.6);
+    overflow: hidden;
 }
+
+.modal.wide {
+    max-width: 44rem;
+}
+
+/* Impact Dialog refined styles */
+.impact-table-container {
+    max-height: 35vh;
+    overflow-y: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.impact-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+}
+
+.impact-table th {
+    background: var(--gray-800);
+    padding: 0.625rem 0.75rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.impact-table td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.impact-table tr:last-child td {
+    border-bottom: none;
+}
+
+.impact-summary {
+    background: var(--surface-elevated);
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    margin-top: 1rem;
+}
+
+.impact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.impact-row:last-child {
+    margin-bottom: 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.impact-label {
+    color: var(--text-secondary);
+    font-size: 0.825rem;
+}
+
+.impact-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.impact-pos { color: var(--green); }
+.impact-neg { color: var(--pink); }
 
 .modal-overlay.show .modal {
     transform: scale(1);
 }
 
 .modal h3 {
-    font-size: 17px;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 0.5rem;
+    text-align: center;
 }
 
 .modal p {
-    font-size: 14px;
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
     white-space: pre-line;
+    max-height: 50vh;
+    overflow-y: auto;
 }
 
 .modal-icon {
