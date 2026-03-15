@@ -1,4 +1,7 @@
 import { AssetIndex } from './constants.js';
+import { formatCurrency } from './format.js';
+
+export { formatCurrency };
 
 export function calculateSnapshotMetrics(snapshot) {
     const assets = snapshot.assets || [];
@@ -317,3 +320,77 @@ export function getYearStartSnapshot(snapshots, currentSnapshot) {
 
     return null;
 }
+
+export function getAssetTotals(snapshot, selectedCategory = null) {
+    if (!snapshot) return { value: 0, invested: 0 };
+    
+    // If it's a raw assets array wrapped in an object
+    const assets = snapshot.assets || [];
+    const filtered = selectedCategory 
+        ? assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory)
+        : assets;
+
+    const value = filtered.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0);
+    const invested = filtered.reduce((sum, a) => sum + (a[AssetIndex.PURCHASE_VALUE] || 0), 0);
+    
+    return { value, invested };
+}
+
+export function getSelectedAssets(snapshot, selectedCategory = null) {
+    if (!snapshot) return [];
+    const assets = snapshot.assets || [];
+    if (!selectedCategory) return assets;
+    return assets.filter(a => a[AssetIndex.CATEGORY] === selectedCategory);
+}
+
+/**
+ * Distributes monthly budget across categories based on targets and current deviation.
+ */
+export function distributeMonthlyBudget({
+    categories,
+    categoryTotals,
+    totalValue,
+    targets,
+    monthlyBudget,
+    adjustmentHardness
+}) {
+    const sumTargets = categories.reduce((s, c) => s + (targets[c]?.target || 0), 0) || 1;
+    const hardness = adjustmentHardness ?? 50;
+
+    const rows = categories.map(cat => {
+        const val = categoryTotals[cat] || 0;
+        const currentPct = totalValue > 0 ? (val / totalValue) * 100 : 0;
+        const target = targets[cat]?.target || 0;
+        const gap = target - currentPct; // positive = underweight
+        
+        const baseMonthly = (target / sumTargets) * monthlyBudget;
+        
+        // Suggested allocation scales with gap and total portfolio value
+        const gapAdjustment = (gap / 100) * totalValue * (hardness / 1000); 
+        const suggestedMonthly = Math.max(0, baseMonthly + gapAdjustment);
+        
+        const monthly = targets[cat]?.monthly !== undefined && targets[cat]?.monthly !== null 
+            ? targets[cat].monthly 
+            : baseMonthly;
+
+        return {
+            cat,
+            currentPct,
+            target,
+            monthly,
+            baseMonthly,
+            suggestedMonthly,
+            adjustmentAmount: suggestedMonthly - baseMonthly,
+            adjustmentPp: gap
+        };
+    });
+
+    return { rows };
+}
+
+/**
+ * Empty placeholders for unused imports in targets-manager to avoid SyntaxErrors
+ */
+export function calculateAssetProximity() { return 0; }
+export function getTargetAdjustmentAdvice() { return ""; }
+export function calculatePeriodMetrics() { return {}; }

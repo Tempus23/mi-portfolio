@@ -5,6 +5,12 @@ export const STORAGE_KEYS = {
     HOLDINGS_CHANGES: 'portfolio_holdings_changes',
     SELECTED_CATEGORY: 'portfolio_selected_category'
 };
+export const SELECTED_CATEGORY_KEY = STORAGE_KEYS.SELECTED_CATEGORY;
+
+// Target Management Constants
+export const TARGET_EDIT_LOCK_MONTHS = 1;      // Months to wait before re-editing a specific target
+export const TARGET_EDIT_WINDOW_HOURS = 24;    // Window to edit a target without locking
+export const TARGET_ADJUSTMENT_HARDNESS_DEFAULT = 50; // Default hardness for budget distribution
 
 export const AssetIndex = {
     NAME: 0,

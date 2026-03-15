@@ -8,12 +8,12 @@ import { showToast } from '../shared/toast.js';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function toSafeNumber(value) {
+export function toSafeNumber(value) {
     const parsed = Number.parseFloat(value);
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function normalizeAsset(asset) {
+export function normalizeAsset(asset) {
     if (Array.isArray(asset)) {
         return [
             String(asset[AssetIndex.NAME] || '').trim(),
@@ -38,7 +38,7 @@ function normalizeAsset(asset) {
     ];
 }
 
-function normalizeSnapshot(snapshot) {
+export function normalizeSnapshot(snapshot) {
     const parsedDate = snapshot?.date ? new Date(snapshot.date) : null;
     const isDateValid = parsedDate && Number.isFinite(parsedDate.getTime());
     return {
@@ -50,13 +50,13 @@ function normalizeSnapshot(snapshot) {
     };
 }
 
-function clampAdjustmentHardness(value) {
+export function clampAdjustmentHardness(value) {
     const parsed = Number.parseFloat(value);
     if (!Number.isFinite(parsed)) return 0.5;
     return Math.max(0, Math.min(1, parsed));
 }
 
-function normalizeTargetsMeta(meta) {
+export function normalizeTargetsMeta(meta) {
     return {
         monthlyBudget: Math.max(0, Number.parseFloat(meta?.monthlyBudget) || 0),
         adjustmentHardness: clampAdjustmentHardness(meta?.adjustmentHardness),
@@ -361,4 +361,3 @@ class DataStore {
 
 // ── Singleton export ──
 export const store = new DataStore();
-export { normalizeAsset, normalizeSnapshot, normalizeTargetsMeta, clampAdjustmentHardness, toSafeNumber };
