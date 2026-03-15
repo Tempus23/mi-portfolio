@@ -127,6 +127,25 @@ function setupEventListeners() {
     on("exportTsvBtn", "click", () => exportLatestSnapshotToClipboard(store.snapshots));
     on("importJsonInput", "change", handleImportFromJson);
 
+    on("refreshPricesBtn", "click", async () => {
+        const btn = $("refreshPricesBtn");
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="icon spin">↻</span> <span>Actualizando...</span>';
+        
+        const result = await store.refreshPrices();
+        
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            updateUI();
+        } else {
+            showToast(result.message, 'error');
+        }
+    });
+
     // Capture & Edit
     on("captureBtn", "click", () => SnapshotManager.toggleCaptureModal(true));
     on("cancelCapture", "click", () => SnapshotManager.toggleCaptureModal(false));

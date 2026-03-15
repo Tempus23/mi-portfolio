@@ -5,11 +5,9 @@
 
 import { AssetIndex } from "../shared/constants.js";
 import { store } from "../core/data-store.js";
-import { 
-    formatCurrency, 
-    getAssetTotals,
-    getSelectedAssets,
-    calculatePeriodMetrics
+import {
+    formatCurrency,
+    getAssetTotals
 } from "../shared/portfolio-utils.js";
 import { $, setText, escapeHtml } from "../ui/ui-shared.js";
 import { selectedCategory, getSnapshotsForRange, getMonthlySnapshotsForRange } from "./snapshot-manager.js";
@@ -19,7 +17,7 @@ import { selectedCategory, getSnapshotsForRange, getMonthlySnapshotsForRange } f
  */
 export function updateAnalytics(currentRange) {
     if (store.snapshots.length === 0) return;
-    
+
     const latestSnapshot = store.snapshots[store.snapshots.length - 1];
     const rangeSnapshots = getSnapshotsForRange(currentRange);
     const monthlyData = getMonthlySnapshotsForRange(currentRange);
@@ -42,7 +40,7 @@ export function updateAnalytics(currentRange) {
     // 1. Max Drawdown
     let peakRoi = -Infinity;
     let maxDrawdown = 0;
-    
+
     monthlyData.forEach((s) => {
         let val, invested;
         if (selectedCategory) {

@@ -97,7 +97,7 @@ export function viewSnapshot(id) {
                 <td><span class="term-badge term-${termClass}">${escapeHtml(asset[AssetIndex.TERM])}</span></td>
                 <td><span class="category-badge category-${categoryClass}">${escapeHtml(asset[AssetIndex.CATEGORY])}</span></td>
                 <td>${formatCurrency(asset[AssetIndex.PURCHASE_PRICE])}</td>
-                <td>${(asset[AssetIndex.QUANTITY] || 0).toLocaleString("es-ES", { minimumFractionDigits: 3 })}</td>
+                <td>${(asset[AssetIndex.QUANTITY] || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 8 })}</td>
                 <td>${formatCurrency(asset[AssetIndex.CURRENT_PRICE])}</td>
                 <td>${formatCurrency(asset[AssetIndex.PURCHASE_VALUE])}</td>
                 <td>${formatCurrency(asset[AssetIndex.CURRENT_VALUE])}</td>

@@ -1,0 +1,22 @@
+{
+  "BTC": {
+    "id": "bitcoin",
+    "provider": "coingecko"
+  },
+  "Bitcoin": {
+    "id": "bitcoin",
+    "provider": "coingecko"
+  },
+  "XRP": {
+    "id": "ripple",
+    "provider": "coingecko"
+  },
+  "Oro - MYINV": {
+    "id": "PPFB.DE",
+    "provider": "yahoo-finance"
+  },
+  "Oro - TR": {
+    "id": "PPFB.DE",
+    "provider": "yahoo-finance"
+  }
+}

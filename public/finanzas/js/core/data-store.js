@@ -9,7 +9,13 @@ import { showToast } from '../shared/toast.js';
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 export function toSafeNumber(value) {
-    const parsed = Number.parseFloat(value);
+    if (value === null || value === undefined) return 0;
+    if (typeof value === 'number') return value;
+    // Handle European format: "1.234,56" -> "1234.56"
+    const cleaned = String(value)
+        .replace(/\./g, '')       // Remove thousands separator
+        .replace(',', '.');       // Replace decimal comma with dot
+    const parsed = Number.parseFloat(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
@@ -102,6 +108,80 @@ class DataStore {
 
     get latestSnapshot() {
         return this._snapshots.length > 0 ? this._snapshots[this._snapshots.length - 1] : null;
+    }
+
+    async refreshPrices() {
+        const latest = this.latestSnapshot;
+        if (!latest) return { success: false, message: 'No hay snapshots para actualizar' };
+
+        try {
+            const response = await fetch('/api/finanzas/prices?refresh=true');
+            if (!response.ok) throw new Error('Error al obtener precios de la API');
+            
+            const prices = await response.json();
+            
+            // Create a lowercase map for case-insensitive lookup
+            const pricesLower = Object.keys(prices).reduce((acc, key) => {
+                acc[key.toLowerCase()] = prices[key];
+                return acc;
+            }, {});
+            
+            let updatedCount = 0;
+
+            const updatedAssets = latest.assets.map(asset => {
+                const name = asset[AssetIndex.NAME];
+                const nameLower = name.toLowerCase();
+
+                // Use high precision for calculations
+                const quantity = toSafeNumber(asset[AssetIndex.QUANTITY]);
+                const oldPrice = toSafeNumber(asset[AssetIndex.CURRENT_PRICE]);
+                const oldValue = toSafeNumber(asset[AssetIndex.CURRENT_VALUE]);
+
+                // Calculate what the value SHOULD be based on quantity and old price
+                const theoreticalOldValue = quantity * oldPrice;
+                const desync = Math.abs(oldValue - theoreticalOldValue) > 0.01;
+
+                if (pricesLower[nameLower]) {
+                    const newPrice = pricesLower[nameLower];
+                    const newValue = newPrice * quantity;
+
+                    if (desync) {
+                        console.warn(`[DataStore] ${name} value was desynced! Was ${oldValue.toFixed(2)}, set to ${newValue.toFixed(2)}`);
+                    }
+
+                    const newAsset = [...asset];
+                    newAsset[AssetIndex.CURRENT_PRICE] = newPrice;
+                    newAsset[AssetIndex.CURRENT_VALUE] = newValue;
+
+                    updatedCount++;
+                    return newAsset;
+                }
+                return asset;
+            });
+
+            if (updatedCount === 0) {
+                return { success: false, message: 'No se encontraron precios para actualizar' };
+            }
+
+            // Create a NEW snapshot
+            const newSnapshot = {
+                id: Date.now(),
+                date: new Date().toISOString(),
+                assets: updatedAssets.map(a => normalizeAsset(a)),
+                tag: 'Actualización automática',
+                note: `Precios actualizados automáticamente basándose en el snapshot previo.`
+            };
+
+            const finalSnapshot = calculateSnapshotMetrics(newSnapshot);
+            this.addSnapshot(finalSnapshot);
+
+            return { success: true, message: `Nuevo snapshot creado con ${updatedCount} activos actualizados` };
+
+            return { success: true, message: `Nuevo snapshot creado con ${updatedCount} activos actualizados` };
+        } catch (error) {
+            console.error('[DataStore] Error refreshing prices:', error);
+            return { success: false, message: 'Error en la conexión con la API' };
+        }
     }
 
     get categories() {

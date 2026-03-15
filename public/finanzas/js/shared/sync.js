@@ -104,7 +104,7 @@ function applyRemoteData(data) {
 
 function runInSyncQueue(task) {
     const run = _syncQueue.then(() => task());
-    _syncQueue = run.catch(() => {});
+    _syncQueue = run.catch(() => { });
     return run;
 }
 
@@ -155,9 +155,6 @@ async function pushToCloud() {
     if (targets) body.targets = JSON.parse(targets);
     if (targetsMeta) body.targetsMeta = JSON.parse(targetsMeta);
 
-    console.log('[Sync Push] Sending:', Object.keys(body));
-
-    console.info('[Sync Push] PUT', SYNC_API);
     const res = await fetch(SYNC_API, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },

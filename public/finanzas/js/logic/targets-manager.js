@@ -14,11 +14,8 @@ import {
     cloneDeep, 
     hasObjectiveChanges, 
     buildTargetEditPolicy,
-    calculateAssetProximity,
     distributeMonthlyBudget,
-    getTargetAdjustmentAdvice,
     formatCurrency,
-    calculatePeriodMetrics
 } from "../shared/portfolio-utils.js";
 import { showToast } from "../shared/toast.js";
 import { $, setText, escapeHtml } from "../ui/ui-shared.js";

@@ -157,7 +157,7 @@ function renderHoldingsTable() {
                 <td>${category}</td>
                 <td>${term}</td>
                 <td>
-                    <input class="table-input qty-input" type="number" min="0" step="0.0001" value="${quantity}">
+                    <input class="table-input qty-input" type="number" min="0" step="0.00000001" value="${quantity}">
                 </td>
                 <td>
                     <input class="table-input buy-price-input" type="number" min="0" step="0.01" value="${purchasePrice}">

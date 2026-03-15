@@ -99,8 +99,7 @@ export function captureSnapshot(onUpdate) {
  */
 export function deleteSnapshot(id, onUpdate) {
     if (!confirm("¿Seguro que quieres eliminar este snapshot?")) return;
-    store.snapshots = store.snapshots.filter((s) => s.id !== id);
-    saveSnapshots();
+    store.deleteSnapshot(id);
     showToast("Snapshot eliminado", "success");
     if (onUpdate) onUpdate();
 }
