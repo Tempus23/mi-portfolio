@@ -70,19 +70,6 @@ function setupAdvancedControls() {
             renderHoldingsTable();
         });
     }
-
-    document.querySelectorAll('[data-holdings-pct]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const pct = Number.parseFloat(btn.dataset.holdingsPct);
-            if (!Number.isFinite(pct) || pct === 0) return;
-            applyBulkCurrentPriceAdjustment(pct);
-        });
-    });
-
-    const resetBtn = document.getElementById('resetHoldingsChanges');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', resetAllHoldingsChanges);
-    }
 }
 
 function loadSnapshots() {
@@ -228,45 +215,6 @@ function handleRowUpdate(e) {
     queueDraftAutosave();
 }
 
-function applyBulkCurrentPriceAdjustment(pct) {
-    if (!editedAssets.length) return;
-
-    const factor = 1 + (pct / 100);
-    const matcher = holdingsFilterText
-        ? (asset) => {
-            const name = (asset[AssetIndex.NAME] || '').toLowerCase();
-            const category = (asset[AssetIndex.CATEGORY] || '').toLowerCase();
-            const term = (asset[AssetIndex.TERM] || '').toLowerCase();
-            return name.includes(holdingsFilterText) || category.includes(holdingsFilterText) || term.includes(holdingsFilterText);
-        }
-        : () => true;
-
-    let adjusted = 0;
-    editedAssets.forEach(asset => {
-        if (!matcher(asset)) return;
-        const quantity = asset[AssetIndex.QUANTITY] || 0;
-        const nextPrice = Math.max(0, Number(((asset[AssetIndex.CURRENT_PRICE] || 0) * factor).toFixed(8)));
-        asset[AssetIndex.CURRENT_PRICE] = nextPrice;
-        asset[AssetIndex.CURRENT_VALUE] = nextPrice * quantity;
-        adjusted += 1;
-    });
-
-    renderHoldingsTable();
-    renderHoldingsProfitability();
-    updateHoldingsInsights();
-    queueDraftAutosave();
-    showToast(`Ajuste aplicado: ${pct >= 0 ? '+' : ''}${pct}% en ${adjusted} activos.`, 'success');
-}
-
-function resetAllHoldingsChanges() {
-    if (!originalAssets.length) return;
-    editedAssets = originalAssets.map(a => [...a]);
-    clearDraft();
-    renderHoldingsTable();
-    renderHoldingsProfitability();
-    updateHoldingsInsights();
-    showToast('Cambios descartados. Se restauró el snapshot base.', 'success');
-}
 
 function getChangedAssetsCount() {
     return editedAssets.reduce((count, asset, i) => {
