@@ -10,10 +10,14 @@ import { showToast } from '../shared/toast.js';
 
 export function toSafeNumber(value) {
     if (value === null || value === undefined) return 0;
+    if (typeof value === 'string') {
+        const trimmed = value.trim().toLowerCase();
+        if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined') return 0;
+    }
     if (typeof value === 'number') return value;
     // Handle European format: "1.234,56" -> "1234.56"
     const cleaned = String(value)
-        .replace(/\./g, '')       // Remove thousands separator
+        .replaceAll('.', '')       // Remove thousands separator
         .replace(',', '.');       // Replace decimal comma with dot
     const parsed = Number.parseFloat(cleaned);
     return Number.isFinite(parsed) ? parsed : 0;
@@ -70,6 +74,12 @@ export function normalizeTargetsMeta(meta) {
     };
 }
 
+function areCloseNumbers(a, b, epsilon = 1e-6) {
+    const diff = Math.abs(a - b);
+    const scale = Math.max(1, Math.abs(a), Math.abs(b));
+    return diff <= epsilon * scale;
+}
+
 // ─── DataStore Class ────────────────────────────────────────────────────────
 
 class DataStore {
@@ -107,7 +117,7 @@ class DataStore {
     get selectedCategory() { return this._selectedCategory; }
 
     get latestSnapshot() {
-        return this._snapshots.length > 0 ? this._snapshots[this._snapshots.length - 1] : null;
+        return this._snapshots.at(-1) || null;
     }
 
     async refreshPrices() {
@@ -116,7 +126,18 @@ class DataStore {
 
         try {
             const response = await fetch('/api/finanzas/prices?refresh=true');
-            if (!response.ok) throw new Error('Error al obtener precios de la API');
+            if (!response.ok) {
+                let message = `Error HTTP ${response.status}`;
+                try {
+                    const errorBody = await response.json();
+                    if (typeof errorBody?.error === 'string' && errorBody.error.trim()) {
+                        message = `${message}: ${errorBody.error}`;
+                    }
+                } catch {
+                    // Ignore JSON parsing errors and keep fallback message
+                }
+                throw new Error(message);
+            }
             
             const prices = await response.json();
             
@@ -139,7 +160,7 @@ class DataStore {
 
                 // Calculate what the value SHOULD be based on quantity and old price
                 const theoreticalOldValue = quantity * oldPrice;
-                const desync = Math.abs(oldValue - theoreticalOldValue) > 0.01;
+                const desync = !areCloseNumbers(oldValue, theoreticalOldValue);
 
                 if (pricesLower[nameLower]) {
                     const newPrice = pricesLower[nameLower];
@@ -176,11 +197,12 @@ class DataStore {
             this.addSnapshot(finalSnapshot);
 
             return { success: true, message: `Nuevo snapshot creado con ${updatedCount} activos actualizados` };
-
-            return { success: true, message: `Nuevo snapshot creado con ${updatedCount} activos actualizados` };
         } catch (error) {
             console.error('[DataStore] Error refreshing prices:', error);
-            return { success: false, message: 'Error en la conexión con la API' };
+            return {
+                success: false,
+                message: error instanceof Error ? error.message : 'Error en la conexión con la API'
+            };
         }
     }
 

@@ -18,5 +18,9 @@
   "Oro - TR": {
     "id": "PPFB.DE",
     "provider": "yahoo-finance"
+  },
+  "Xtrackers MSCI World Utilities UCITS ETF 1C": {
+    "id": "XDWU.DE",
+    "provider": "yahoo-finance"
   }
 }

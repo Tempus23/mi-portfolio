@@ -3,19 +3,129 @@ import assetRegistry from '../../../data/asset_registry.json';
 
 const CACHE_KEY = 'latest_asset_prices_v3'; // Increased version to clear old cache
 const CACHE_TTL = 3600; // 1 hour
+const RATE_LIMIT_WINDOW_SECONDS = 60;
+const RATE_LIMIT_MAX_REQUESTS = 8;
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function getClientIdentifier(request: Request): string {
+  const ip =
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown';
+  return ip;
+}
+
+function hasKv(kv: any): boolean {
+  return Boolean(kv && typeof kv.get === 'function' && typeof kv.put === 'function');
+}
+
+async function isRateLimited(kv: any, clientId: string): Promise<boolean> {
+  if (!hasKv(kv)) return false;
+  try {
+    const key = `finanzas:prices:ratelimit:${clientId}`;
+    const current = await kv.get(key);
+    const nextCount = (Number.parseInt(current || '0', 10) || 0) + 1;
+    await kv.put(key, String(nextCount), { expirationTtl: RATE_LIMIT_WINDOW_SECONDS });
+    return nextCount > RATE_LIMIT_MAX_REQUESTS;
+  } catch (error) {
+    // Fail-open so transient KV issues do not block price refresh.
+    console.warn('Rate limit KV unavailable, skipping rate limit check:', error);
+    return false;
+  }
+}
+
+async function readCachedPrices(kv: any, forceRefresh: boolean): Promise<Record<string, number> | null> {
+  if (forceRefresh || !hasKv(kv)) return null;
+  try {
+    const cached = await kv.get(CACHE_KEY, { type: 'json' });
+    if (!cached || typeof cached !== 'object') return null;
+    return cached as Record<string, number>;
+  } catch (error) {
+    console.warn('Cache read failed, continuing without cache:', error);
+    return null;
+  }
+}
+
+async function writeCachedPrices(kv: any, prices: Record<string, number>): Promise<void> {
+  if (!hasKv(kv)) return;
+  try {
+    await kv.put(CACHE_KEY, JSON.stringify(prices), { expirationTtl: CACHE_TTL });
+  } catch (error) {
+    console.warn('Cache write failed, returning uncached prices:', error);
+  }
+}
+
+function collectProvidersFromRegistry() {
+  const cgIds = new Set<string>();
+  const yahooTickers = new Set<string>();
+
+  for (const info of Object.values(assetRegistry)) {
+    if (info.provider === 'coingecko') cgIds.add(info.id);
+    else if (info.provider === 'yahoo-finance') yahooTickers.add(info.id);
+  }
+
+  return { cgIds: Array.from(cgIds), yahooTickers: Array.from(yahooTickers) };
+}
+
+async function fetchYahooPricesMap(tickers: string[]): Promise<Record<string, number>> {
+  const pricesArray = await Promise.all(
+    tickers.map(async t => ({ ticker: t, price: await fetchYahooPrice(t) }))
+  );
+
+  return pricesArray.reduce(
+    (acc, { ticker, price }) => {
+      if (price !== null) acc[ticker] = price;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+}
+
+function buildAssetPriceMap(
+  cgPricesMap: Record<string, number>,
+  yahooPricesMap: Record<string, number>
+): Record<string, number> {
+  const prices: Record<string, number> = {};
+
+  for (const [name, info] of Object.entries(assetRegistry)) {
+    if (info.provider === 'coingecko' && cgPricesMap[info.id] !== undefined) {
+      prices[name] = cgPricesMap[info.id];
+      continue;
+    }
+
+    if (info.provider === 'yahoo-finance' && yahooPricesMap[info.id] !== undefined) {
+      prices[name] = yahooPricesMap[info.id];
+    }
+  }
+
+  return prices;
+}
 
 async function fetchCoinGeckoPrices(ids: string[]) {
   if (ids.length === 0) return {};
-  const response = await fetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=eur`
-  );
-  if (!response.ok) return {};
-  const data = await response.json();
-  const prices: Record<string, number> = {};
-  for (const id of ids) {
-    if (data[id]) prices[id] = data[id].eur;
+  try {
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=eur`
+    );
+    if (!response.ok) return {};
+
+    const raw = await response.json();
+    if (!raw || typeof raw !== 'object') return {};
+
+    const data = raw as Record<string, { eur?: unknown }>;
+    const prices: Record<string, number> = {};
+    for (const id of ids) {
+      const eur = data[id]?.eur;
+      if (isFiniteNumber(eur)) prices[id] = eur;
+    }
+    return prices;
+  } catch (e) {
+    console.error('Error fetching CoinGecko prices:', e);
+    return {};
   }
-  return prices;
 }
 
 async function fetchYahooPrice(ticker: string) {
@@ -25,55 +135,57 @@ async function fetchYahooPrice(ticker: string) {
     );
     if (!response.ok) return null;
     const data = await response.json();
-    const result = data.chart?.result?.[0];
-    return result?.meta?.regularMarketPrice || null;
+    const chart = data && typeof data === 'object' ? (data as { chart?: unknown }).chart : null;
+    const result =
+      chart &&
+      typeof chart === 'object' &&
+      Array.isArray((chart as { result?: unknown }).result) &&
+      (chart as { result?: unknown[] }).result
+        ? (chart as { result?: unknown[] }).result?.[0]
+        : null;
+
+    if (!result || typeof result !== 'object') return null;
+
+    const regularMarketPrice = (result as { meta?: { regularMarketPrice?: unknown } }).meta
+      ?.regularMarketPrice;
+
+    return isFiniteNumber(regularMarketPrice) ? regularMarketPrice : null;
   } catch (e) {
     console.error(`Error fetching Yahoo price for ${ticker}:`, e);
     return null;
   }
 }
 
-export const GET: APIRoute = async ({ locals, url }) => {
+export const GET: APIRoute = async ({ locals, url, request }) => {
   try {
-    const runtime = locals.runtime;
-    const kv = runtime.env.FINANZAS_KV;
+    const kv: any = (locals as any).runtime?.env?.FINANZAS_KV;
     const forceRefresh = url.searchParams.get('refresh') === 'true';
 
-    if (!forceRefresh) {
-      const cached = await kv.get(CACHE_KEY, { type: 'json' });
-      if (cached) return new Response(JSON.stringify(cached), { status: 200 });
+    const clientId = getClientIdentifier(request);
+    const limited = await isRateLimited(kv, clientId);
+    if (limited) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    const prices: Record<string, number> = {};
-    const cgIds = new Set<string>();
-    const yahooTickers = new Set<string>();
-
-    for (const info of Object.values(assetRegistry)) {
-      if (info.provider === 'coingecko') cgIds.add(info.id);
-      if (info.provider === 'yahoo-finance') yahooTickers.add(info.id);
+    const cached = await readCachedPrices(kv, forceRefresh);
+    if (cached) {
+      return new Response(JSON.stringify(cached), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
-    // Fetch CoinGecko prices
-    const cgPricesMap = await fetchCoinGeckoPrices(Array.from(cgIds));
-    
-    // Fetch Yahoo Finance prices (in parallel)
-    const yahooPricesArray = await Promise.all(
-      Array.from(yahooTickers).map(async t => ({ ticker: t, price: await fetchYahooPrice(t) }))
-    );
-    const yahooPricesMap = yahooPricesArray.reduce((acc, { ticker, price }) => {
-      if (price !== null) acc[ticker] = price;
-      return acc;
-    }, {} as Record<string, number>);
+    const { cgIds, yahooTickers } = collectProvidersFromRegistry();
+    const [cgPricesMap, yahooPricesMap] = await Promise.all([
+      fetchCoinGeckoPrices(cgIds),
+      fetchYahooPricesMap(yahooTickers)
+    ]);
+    const prices = buildAssetPriceMap(cgPricesMap, yahooPricesMap);
 
-    for (const [name, info] of Object.entries(assetRegistry)) {
-      if (info.provider === 'coingecko' && cgPricesMap[info.id]) {
-        prices[name] = cgPricesMap[info.id];
-      } else if (info.provider === 'yahoo-finance' && yahooPricesMap[info.id]) {
-        prices[name] = yahooPricesMap[info.id];
-      }
-    }
-
-    await kv.put(CACHE_KEY, JSON.stringify(prices), { expirationTtl: CACHE_TTL });
+    await writeCachedPrices(kv, prices);
 
     return new Response(JSON.stringify(prices), {
       status: 200,
