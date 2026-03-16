@@ -98,6 +98,8 @@ function setupEventListeners() {
             updateDistributionCharts();
         };
     });
+    
+
 
     // Chart Options (Log, Min)
     $("roiCumulativeByCategory")?.addEventListener("change", (e) => {
@@ -110,10 +112,7 @@ function setupEventListeners() {
         updateEvolutionChart();
     });
 
-    $("evolutionMinScale")?.addEventListener("change", (e) => {
-        ChartLogic.setChartModes({ evolutionMinMode: e.target.checked ? "min" : "zero" });
-        updateEvolutionChart();
-    });
+
 
     // Category Selector
     on("categorySelector", "change", (e) => {
@@ -264,10 +263,7 @@ function setupEventListeners() {
         CompositionUI.updateCompositionList(compositionCompareMonths);
     });
 
-    $("opportunityRange")?.addEventListener("change", (e) => {
-        AnalyticsCore.setOpportunityRangeMonths(parseInt(e.target.value, 10) || 1);
-        AnalyticsCore.updateOpportunities();
-    });
+
 
     // Navigation
     on("openHoldingsBtn", "click", () => { globalThis.location.href = "/finanzas/investments.html"; });
@@ -307,6 +303,16 @@ function updateEvolutionChart() {
 }
 
 function updateRoiEvolutionChart() {
+    const roiInput = $("roiCumulativeByCategory");
+    if (roiInput) {
+        const isCumulative = ChartLogic.currentRoiMode === "cumulative";
+        const hasNoCategorySelected = !SnapshotManager.selectedCategory;
+        roiInput.disabled = !(isCumulative && hasNoCategorySelected);
+        if (roiInput.disabled && ChartLogic.roiCumulativeByCategory) {
+            ChartLogic.setChartModes({ roiCumulativeByCategory: false });
+            roiInput.checked = false;
+        }
+    }
     ChartLogic.updateRoiEvolutionChart(roiEvolutionChart, currentRange, SnapshotManager.selectedCategory);
 }
 
@@ -317,7 +323,6 @@ function updateDistributionCharts() {
 function updateAnalytics() {
     AnalyticsCore.updateAnalytics(currentRange);
     CompositionUI.updateCompositionList(compositionCompareMonths);
-    AnalyticsCore.updateOpportunities();
 }
 
 async function handleImportFromJson(event) {

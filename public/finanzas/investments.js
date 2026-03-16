@@ -342,7 +342,7 @@ function renderHoldingsProfitability() {
 
     if (holdingsProfitabilityMode === 'asset') {
         title.textContent = 'Rentabilidad por activo';
-        thead.innerHTML = '<tr><th>Activo</th><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>';
+        thead.innerHTML = '<tr><th>Activo</th><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI %</th><th>ROI €</th><th>Peso</th></tr>';
 
         const grouped = new Map();
         editedAssets.forEach(asset => {
@@ -364,8 +364,9 @@ function renderHoldingsProfitability() {
         const rows = Array.from(grouped.values())
             .map(row => {
                 const roi = row.invested > 0 ? ((row.current - row.invested) / row.invested) * 100 : 0;
+                const absoluteRoi = row.current - row.invested;
                 const allocation = (row.current / totalCurrent) * 100;
-                return { ...row, roi, allocation };
+                return { ...row, roi, absoluteRoi, allocation };
             })
             .sort((a, b) => {
                 if (b.roi !== a.roi) return b.roi - a.roi;
@@ -381,18 +382,19 @@ function renderHoldingsProfitability() {
                     <td>${formatCurrency(row.invested)}</td>
                     <td>${formatCurrency(row.current)}</td>
                     <td class="${roiClass}"><strong>${row.roi >= 0 ? '+' : ''}${row.roi.toFixed(2)}%</strong></td>
+                    <td class="${roiClass}">${formatCurrency(row.absoluteRoi)}</td>
                     <td class="metric-muted">${row.allocation.toFixed(1)}%</td>
                 </tr>
             `;
         }).join('');
         return;
-    }
+        }
 
-    title.textContent = 'Rentabilidad por categoría';
-    thead.innerHTML = '<tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI</th><th>Peso</th></tr>';
+        title.textContent = 'Rentabilidad por categoría';
+        thead.innerHTML = '<tr><th>Categoría</th><th>Invertido</th><th>Valor</th><th>ROI %</th><th>ROI €</th><th>Peso</th></tr>';
 
-    const groupedByCategory = new Map();
-    editedAssets.forEach(asset => {
+        const groupedByCategory = new Map();
+        editedAssets.forEach(asset => {
         const category = asset[AssetIndex.CATEGORY] || 'Sin categoría';
         const invested = asset[AssetIndex.PURCHASE_VALUE] || 0;
         const current = asset[AssetIndex.CURRENT_VALUE] || 0;
@@ -402,20 +404,21 @@ function renderHoldingsProfitability() {
         const row = groupedByCategory.get(category);
         row.invested += invested;
         row.current += current;
-    });
+        });
 
-    const categoryRows = Array.from(groupedByCategory.values())
+        const categoryRows = Array.from(groupedByCategory.values())
         .map(row => {
             const roi = row.invested > 0 ? ((row.current - row.invested) / row.invested) * 100 : 0;
+            const absoluteRoi = row.current - row.invested;
             const allocation = (row.current / totalCurrent) * 100;
-            return { ...row, roi, allocation };
+            return { ...row, roi, absoluteRoi, allocation };
         })
         .sort((a, b) => {
             if (b.roi !== a.roi) return b.roi - a.roi;
             return b.current - a.current;
         });
 
-    tbody.innerHTML = categoryRows.map(row => {
+        tbody.innerHTML = categoryRows.map(row => {
         const roiClass = row.roi >= 0 ? 'positive' : 'negative';
         return `
             <tr>
@@ -423,11 +426,11 @@ function renderHoldingsProfitability() {
                 <td>${formatCurrency(row.invested)}</td>
                 <td>${formatCurrency(row.current)}</td>
                 <td class="${roiClass}"><strong>${row.roi >= 0 ? '+' : ''}${row.roi.toFixed(2)}%</strong></td>
+                <td class="${roiClass}">${formatCurrency(row.absoluteRoi)}</td>
                 <td class="metric-muted">${row.allocation.toFixed(1)}%</td>
             </tr>
         `;
-    }).join('');
-}
+        }).join('');}
 
 function truncate(value, max) {
     if (!value) return '';

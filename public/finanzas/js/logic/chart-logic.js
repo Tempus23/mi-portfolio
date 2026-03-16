@@ -13,7 +13,7 @@ export let currentChartMode = "total";
 export let currentRoiMode = "cumulative"; 
 export let roiCumulativeByCategory = false;
 export let evolutionScaleMode = "linear";
-export let evolutionMinMode = "zero";
+
 export let currentDistributionMode = "category";
 
 // Helpers
@@ -30,8 +30,9 @@ export function setChartModes(modes) {
     if (modes.currentRoiMode) currentRoiMode = modes.currentRoiMode;
     if (modes.roiCumulativeByCategory !== undefined) roiCumulativeByCategory = modes.roiCumulativeByCategory;
     if (modes.evolutionScaleMode) evolutionScaleMode = modes.evolutionScaleMode;
-    if (modes.evolutionMinMode) evolutionMinMode = modes.evolutionMinMode;
+
     if (modes.currentDistributionMode) currentDistributionMode = modes.currentDistributionMode;
+
 }
 
 /**
@@ -100,9 +101,9 @@ export function updateEvolutionChart(chart, currentRange, selectedCategory) {
                     data,
                     borderColor: colors[i % colors.length],
                     backgroundColor: colors[i % colors.length] + "60",
-                    fill: true,
+                    fill: false,
                     tension: 0.4,
-                    pointRadius: 0,
+                    pointRadius: 1,
                 };
             });
         } else {
@@ -113,13 +114,13 @@ export function updateEvolutionChart(chart, currentRange, selectedCategory) {
                     data: snapshotData.map(s => ({ x: new Date(s.date).getTime(), y: s.categoryTotals[cat] || 0 })),
                     borderColor: CATEGORY_COLORS[cat] || "#888",
                     backgroundColor: (CATEGORY_COLORS[cat] || "#888") + "60",
-                    fill: true,
+                    fill: false,
                     tension: 0.4,
-                    pointRadius: 0,
+                    pointRadius: 1,
                 });
             });
         }
-        chart.options.scales.y.stacked = evolutionMinMode !== "min";
+        chart.options.scales.y.stacked = false;
     }
 
     chart.data.datasets = datasets;
@@ -132,16 +133,9 @@ export function updateEvolutionChart(chart, currentRange, selectedCategory) {
         chart.options.scales.y.min = (pos.length ? Math.min(...pos) : 1) * 0.8;
     } else {
         chart.options.scales.y.type = "linear";
-        if (evolutionMinMode === "min" && allValues.length) {
-            const pos = allValues.filter(v => v > 0);
-            const min = pos.length ? Math.min(...pos) : 0;
-            chart.options.scales.y.min = min * 0.95;
-            chart.options.scales.y.beginAtZero = false;
-        } else {
             chart.options.scales.y.min = undefined;
             chart.options.scales.y.beginAtZero = true;
         }
-    }
     chart.update();
 }
 
@@ -158,21 +152,86 @@ export function updateRoiEvolutionChart(chart, currentRange, selectedCategory) {
     const isBreakdownMode = currentRoiMode === "breakdown" || currentRoiMode === "breakdown-period";
 
     if (currentRoiMode === "cumulative") {
-        const data = snapshotData.map(s => {
-            const { value, invested } = getAssetTotals(s, selectedCategory);
-            const roi = invested > 0 ? ((value - invested) / invested) * 100 : 0;
-            return { x: new Date(s.date).getTime(), y: roi };
-        });
-        datasets = [{
-            label: "ROI Acumulado %",
-            data,
-            borderColor: "#0071e3",
-            backgroundColor: "rgba(0, 113, 227, 0.15)",
-            fill: true,
-            tension: 0.4,
-            pointRadius: 0,
-        }];
-        delete chart.options.scales.y1;
+        if (roiCumulativeByCategory && !selectedCategory) {
+            const palette = ['#0071e3', '#32d74b', '#ff9f0a', '#bf5af2', '#ff375f', '#64d2ff', '#30d158', '#ff453a'];
+            const latestSnapshot = snapshotData.at(-1);
+            const categories = Object.entries(latestSnapshot?.categoryTotals || {})
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6)
+                .map(([cat]) => cat);
+
+            datasets = categories.map((cat, index) => {
+                const data = snapshotData.map(s => {
+                    const catAssets = (s.assets || []).filter(a => a[AssetIndex.CATEGORY] === cat);
+                    const value = catAssets.reduce((sum, a) => sum + (a[AssetIndex.CURRENT_VALUE] || 0), 0);
+                    const invested = catAssets.reduce((sum, a) => sum + (a[AssetIndex.PURCHASE_VALUE] || 0), 0);
+                    const roi = invested > 0 ? ((value - invested) / invested) * 100 : 0;
+                    return { x: new Date(s.date).getTime(), y: roi };
+                });
+
+                return {
+                    label: cat,
+                    data,
+                    borderColor: CATEGORY_COLORS[cat] || palette[index % palette.length],
+                    backgroundColor: 'transparent',
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    yAxisID: 'y'
+                };
+            });
+
+            delete chart.options.scales.y1;
+        } else {
+            const roiPercent = snapshotData.map(s => {
+                const { value, invested } = getAssetTotals(s, selectedCategory);
+                const roi = invested > 0 ? ((value - invested) / invested) * 100 : 0;
+                return { x: new Date(s.date).getTime(), y: roi };
+            });
+
+            const roiAbsolute = snapshotData.map(s => {
+                const { value, invested } = getAssetTotals(s, selectedCategory);
+                return { x: new Date(s.date).getTime(), y: value - invested };
+            });
+
+            datasets = [
+                {
+                    label: selectedCategory ? `ROI % (${selectedCategory})` : 'ROI %',
+                    data: roiPercent,
+                    borderColor: '#0071e3',
+                    backgroundColor: 'rgba(0, 113, 227, 0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    yAxisID: 'y'
+                },
+                {
+                    label: selectedCategory ? `ROI Absoluto € (${selectedCategory})` : 'ROI Absoluto €',
+                    data: roiAbsolute,
+                    borderColor: '#bf5af2',
+                    backgroundColor: 'transparent',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    yAxisID: 'y1'
+                }
+            ];
+
+            if (!chart.options.scales.y1) {
+                chart.options.scales.y1 = {
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        color: '#6e6e73',
+                        font: { size: 10 },
+                        callback: (v) => formatCurrency(v)
+                    }
+                };
+            }
+        }
     } else if (currentRoiMode === "annualized") {
         const startDate = new Date(snapshotData[0].date);
         const data = snapshotData.map(s => {
@@ -222,7 +281,9 @@ export function updateRoiEvolutionChart(chart, currentRange, selectedCategory) {
 
     // Adjust scales
     chart.options.scales.y.ticks.callback = percentTickFormatter;
-    chart.options.plugins.tooltip.callbacks.label = percentTooltipLabel;
+    if (chart.options.plugins.tooltip.callbacks) {
+        chart.options.plugins.tooltip.callbacks.label = percentTooltipLabel;
+    }
     
     chart.data.datasets = datasets;
     chart.update();
@@ -233,15 +294,17 @@ export function updateRoiEvolutionChart(chart, currentRange, selectedCategory) {
  */
 export function updateDistributionCharts(chart, currentRange, selectedCategory) {
     if (!chart) return;
-    const snapshotData = getSnapshotsForChartRange(currentRange);
+    const snapshotData = getMonthlySnapshotsForRange(currentRange);
     if (snapshotData.length === 0) return;
 
     let datasets = [];
     const latestSnapshot = snapshotData[snapshotData.length - 1];
 
     if (currentDistributionMode === "category") {
-        const categories = Object.keys(latestSnapshot.categoryTotals);
-        datasets = categories.map(cat => {
+        const categoryList = Object.keys(latestSnapshot.categoryTotals);
+        
+        // Prepare raw datasets first to calculate variations
+        datasets = categoryList.map(cat => {
             const data = snapshotData.map(s => {
                 const total = s.totalCurrentValue || 1;
                 return { x: new Date(s.date).getTime(), y: ((s.categoryTotals[cat] || 0) / total) * 100 };
@@ -250,19 +313,31 @@ export function updateDistributionCharts(chart, currentRange, selectedCategory) 
                 label: cat,
                 data,
                 borderColor: CATEGORY_COLORS[cat] || "#888",
-                backgroundColor: (CATEGORY_COLORS[cat] || "#888") + "20",
-                fill: false,
-                tension: 0.4,
-                pointRadius: 0,
+                backgroundColor: (CATEGORY_COLORS[cat] || "#888") + "90"
             };
+        });
+
+        // Sort by variation: abs(last - first). Higher variation last (on top of stack)
+        datasets.sort((a, b) => {
+            const varA = Math.abs(a.data[a.data.length - 1].y - a.data[0].y);
+            const varB = Math.abs(b.data[b.data.length - 1].y - b.data[0].y);
+            return varA - varB;
+        });
+
+        // Apply shared props
+        datasets.forEach(ds => {
+            ds.fill = true;
+            ds.tension = 0.4;
+            ds.pointRadius = 0;
         });
     } else if (currentDistributionMode === "asset") {
         const assetsToShow = getSelectedAssets(latestSnapshot, selectedCategory);
         const topAssets = assetsToShow.sort((a,b) => b[AssetIndex.CURRENT_VALUE] - a[AssetIndex.CURRENT_VALUE]).slice(0, 8);
+        const topNames = topAssets.map(a => a[AssetIndex.NAME]);
         const assetColors = ["#0071e3", "#32d74b", "#ff9f0a", "#bf5af2", "#ff375f", "#64d2ff", "#30d158", "#ff6542"];
 
-        datasets = topAssets.map((asset, i) => {
-            const name = asset[AssetIndex.NAME];
+        // 1. Create datasets for Top Assets
+        datasets = topNames.map((name, i) => {
             const data = snapshotData.map(s => {
                 const { value: totalValue } = getAssetTotals(s, selectedCategory);
                 const found = getSelectedAssets(s, selectedCategory).find(a => a[AssetIndex.NAME] === name);
@@ -273,14 +348,65 @@ export function updateDistributionCharts(chart, currentRange, selectedCategory) 
                 label: name.length > 20 ? name.substring(0, 17) + "..." : name,
                 data,
                 borderColor: assetColors[i % assetColors.length],
-                fill: false,
-                tension: 0.4,
-                pointRadius: 0,
+                backgroundColor: assetColors[i % assetColors.length] + "90"
             };
+        });
+
+        // 2. Add "Otros" dataset to complete 100%
+        const othersData = snapshotData.map((s, si) => {
+            const sumTop = datasets.reduce((sum, ds) => sum + ds.data[si].y, 0);
+            return { x: new Date(s.date).getTime(), y: Math.max(0, 100 - sumTop) };
+        });
+
+        datasets.unshift({
+            label: "Otros",
+            data: othersData,
+            borderColor: "#6e6e73",
+            backgroundColor: "rgba(110, 110, 115, 0.7)"
+        });
+
+        // 3. Sort by variation (excluding "Otros" is better for stability, but user said all categories)
+        // Let's sort including "Otros" for now as per instructions "ordenalas por las que mas varian arriba"
+        datasets.sort((a, b) => {
+            const varA = Math.abs(a.data[a.data.length - 1].y - a.data[0].y);
+            const varB = Math.abs(b.data[b.data.length - 1].y - b.data[0].y);
+            return varA - varB;
+        });
+
+        // Apply shared props
+        datasets.forEach(ds => {
+            ds.fill = true;
+            ds.tension = 0.4;
+            ds.pointRadius = 0;
         });
     }
 
     chart.data.datasets = datasets;
+    
+    // Style configuration: Always Stacked Bars (Grouped by Month)
     chart.options.scales.y.ticks.callback = percentTickFormatter;
+    chart.options.plugins.tooltip.callbacks.label = percentTooltipLabel;
+    
+    chart.config.type = 'bar';
+    chart.data.labels = snapshotData.map(s => {
+        const d = new Date(s.date);
+        return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+    });
+    
+    // Configure datasets for discrete bars
+    datasets.forEach(ds => {
+        ds.type = 'bar';
+        ds.data = ds.data.map(p => p.y);
+        ds.borderWidth = 1;
+        ds.borderColor = 'rgba(0,0,0,0.1)';
+        ds.borderRadius = 0;
+        ds.barPercentage = 1.0;
+        ds.categoryPercentage = 1.0;
+    });
+    
+    chart.options.scales.x.type = 'category';
+    chart.options.scales.x.stacked = true;
+    chart.options.scales.y.stacked = true;
+    
     chart.update();
 }
