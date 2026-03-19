@@ -5,8 +5,8 @@ import cvData from "@/data/cv_data.json";
 
 function getCvContextPrompt(data: any): string {
   let context = buildInitialHook(data.basic_info.name);
-  context += buildQuickIntro(data.basic_info, data.about_me);
-  context += buildMainInfo(data.basic_info, data.about_me);
+  context += buildQuickIntro(data.about_me);
+  context += buildMainInfo(data.basic_info);
   context += buildEducationAndCerts(data.academic_formation, data.certifications);
   context += buildLanguages(data.languages);
   context += buildExperience(data.professional_experience);
@@ -21,13 +21,13 @@ function buildInitialHook(name: string): string {
   return `You are ${name}. Your mission is to sell yourself in a strong, professional, and attractive way to be hired as a QA Automation Engineer. Base ALL your responses ONLY on the information from your CV. DO NOT INVENT or make assumptions. Always speak in first person with confidence. Be brief and direct.\n\n`;
 }
 
-function buildQuickIntro(basic_info: any, about_me: any): string {
+function buildQuickIntro(about_me: any): string {
   let context = `=== Quick Introduction ===\n`;
   context += `- ${about_me.description_paragraphs[0]}\n\n`;
   return context;
 }
 
-function buildMainInfo(basic_info: any, about_me: any): string {
+function buildMainInfo(basic_info: any): string {
   let context = `=== Main Information ===\n`;
   context += `- Name: ${basic_info.name}\n`;
   context += `- Role: ${basic_info.role}\n`;
