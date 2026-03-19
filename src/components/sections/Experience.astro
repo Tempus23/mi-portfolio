@@ -22,27 +22,25 @@ const { professional_experience } = cvData as {
           backdrop-blur-sm
           shadow-sm hover:shadow-lg
           transition-all duration-300 hover:-translate-y-1"
-        data-experience
       >
         <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-1 mb-3">
           <div>
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white" data-exp-title>
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
               {experience.title}
             </h3>
-            <p class="text-base font-semibold text-indigo-600 dark:text-indigo-400" data-exp-company>
+            <p class="text-base font-semibold text-indigo-600 dark:text-indigo-400">
               {experience.company}
             </p>
           </div>
           <time
             class="shrink-0 text-sm font-medium text-gray-500 dark:text-gray-400
               bg-gray-100 dark:bg-gray-800/80 px-3 py-1 rounded-full mt-2 md:mt-0 self-start md:self-auto"
-            data-exp-date
           >
             {experience.date}
           </time>
         </div>
         
-        <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4" data-exp-description>
+        <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
           {experience.description}
         </p>
 

@@ -14,23 +14,21 @@ const { academic_formation } = cvData;
           backdrop-blur-sm
           shadow-sm hover:shadow-md
           transition-shadow duration-300"
-        data-formation
       >
         <time
           class="absolute top-4 right-4 text-xs font-medium text-gray-500 dark:text-gray-400
             bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full"
-          data-formation-date
         >
           {formation.date}
         </time>
 
-        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1 pr-16" data-formation-title>
+        <h3 class="text-base font-bold text-gray-900 dark:text-white mb-1 pr-16">
           {formation.title}
         </h3>
-        <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-2" data-formation-company>
+        <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-2">
           {formation.company}
         </p>
-        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed" data-formation-description>
+        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
           {formation.description}
         </p>
       </article>

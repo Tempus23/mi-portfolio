@@ -3,7 +3,7 @@
     "name": "Carlos Hernández Martínez",
     "image_path": "me.jpg",
     "personal_image_alt": "Carlos Hernández Martínez",
-    "availability": "AI QA Engineer & Backend Developer",
+    "role": "AI QA Engineer & Backend Developer",
     "emails": [
       "chermar.pro@gmail.com",
       "carlos.cbm32@gmail.com"
@@ -18,12 +18,12 @@
       "Computer Engineer graduated from the Polytechnic University of Valencia with specialization in Artificial Intelligence and Machine Learning. Professional experience developing AI agents, enterprise testing automation, backend with Python, Spring Boot and Spring Batch, and Deep Learning models applied to real-world problems."
     ],
     "attributes": [
-      "Technical leadership",
-      "Strategic vision",
-      "Complex problem solving",
-      "Cross-functional collaboration",
-      "Effective international communication",
-      "Continuous learning and adaptability"
+      "Research-to-production mindset",
+      "End-to-end ownership",
+      "Autonomous problem-solving",
+      "Cross-disciplinary collaboration",
+      "International team communication",
+      "Fast ramp-up & self-directed learning"
     ]
   },
   "professional_experience": [
@@ -44,7 +44,7 @@
       "date": "Oct. 2024 - Jun. 2025",
       "title": "Backend AI Engineer",
       "company": "Urobora SL (AI Startup)",
-      "description": "Developed autonomous AI agents, RAG systems, and microservices in Python/FastAPI deployed on GCP with Kubernetes.",
+      "description": "Developed core AI infrastructure for an early-stage startup: autonomous agents for task automation, RAG systems for enterprise knowledge management, and microservices architecture on GCP/Kubernetes. Worked end-to-end from research to production deployment.",
       "keywords": [
         "Python",
         "FastAPI",
@@ -58,7 +58,7 @@
       "date": "2021-2025",
       "title": "Bachelor's Degree in Computer Engineering",
       "company": "Polytechnic University of Valencia (UPV)",
-      "description": "Computing specialization. Training in programming, algorithms, databases, and software architectures."
+      "description": "Specialization in Artificial Intelligence and Machine Learning. Training in algorithms, data structures, software architectures, and machine learning systems."
     },
     {
       "date": "6 months, 2024",
@@ -68,7 +68,7 @@
     },
     {
       "date": "2023",
-      "title": "Akademia Bankinter Innovation Foundation",
+      "title": "Akademia Bankinter",
       "company": "Bankinter Innovation Foundation",
       "description": "Training program in innovation and technological entrepreneurship. Development of leadership skills and management of innovative projects."
     },
@@ -96,7 +96,7 @@
           "AI Agents Development",
           "Autonomous Agents Validation",
           "PyTorch",
-          "Tensor Flow"
+          "TensorFlow"
         ]
       },
       {
@@ -114,8 +114,7 @@
         "items": [
           "Google Cloud",
           "CI/CD (GitHub Actions, Jenkins, CloudBees)",
-          "Spinnaker",
-          "CloudBees"
+          "Spinnaker"
         ]
       }
     ],
@@ -135,7 +134,7 @@
     },
     {
       "name": "English",
-      "level": "B2 (Cambridge Certificate)"
+      "level": "B2/C1 (Cambridge Certificate)"
     }
   ],
   "projects": [
