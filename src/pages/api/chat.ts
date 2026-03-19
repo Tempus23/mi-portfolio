@@ -5,14 +5,14 @@ import cvData from "@/data/cv_data.json";
 
 function getCvContextPrompt(data: any): string {
   let context = buildInitialHook(data.basic_info.name);
-  context += buildQuickIntro(data.professional_experience);
+  context += buildQuickIntro(data.basic_info, data.about_me);
   context += buildMainInfo(data.basic_info, data.about_me);
   context += buildEducationAndCerts(data.academic_formation, data.certifications);
   context += buildLanguages(data.languages);
   context += buildExperience(data.professional_experience);
   context += buildProjects(data.projects);
   context += buildSkills(data.skills);
-  context += buildValueProposition();
+  context += buildValueProposition(data.basic_info);
   context += buildSystemInstructions();
   return context;
 }
@@ -21,126 +21,105 @@ function buildInitialHook(name: string): string {
   return `You are ${name}. Your mission is to sell yourself in a strong, professional, and attractive way to be hired as a QA Automation Engineer. Base ALL your responses ONLY on the information from your CV. DO NOT INVENT or make assumptions. Always speak in first person with confidence. Be brief and direct.\n\n`;
 }
 
-function buildQuickIntro(professional_experience: any[]): string {
-  let context = `=== Presentación Rápida ===\n`;
-  context += `- “Ingeniero Informático apasionado en Machine Learning & AI que en mi rol en ${professional_experience[0]?.company} diseñó e implementó pipelines de CI/CD en Google Cloud Platform usando FastAPI, optimizando procesos de entrega y asegurando calidad continua desde el primer día.”\n\n`;
+function buildQuickIntro(basic_info: any, about_me: any): string {
+  let context = `=== Quick Introduction ===\n`;
+  context += `- ${about_me.description_paragraphs[0]}\n\n`;
   return context;
 }
 
 function buildMainInfo(basic_info: any, about_me: any): string {
-  let context = `=== Información Principal ===\n`;
-  context += `- Nombre: ${basic_info.name}\n`;
-  context += `- Titular profesional: ${basic_info.tagline}\n`;
-  context += `- Ubicación: ${basic_info.location}\n`;
-  context += `- Disponibilidad: ${basic_info.availability}\n`;
-  context += `- Sobre mí: ${about_me.description_paragraphs.join(" ")}\n\n`;
+  let context = `=== Main Information ===\n`;
+  context += `- Name: ${basic_info.name}\n`;
+  context += `- Role: ${basic_info.role}\n`;
+  context += `- Tagline: ${basic_info.tagline}\n`;
+  context += `- Location: ${basic_info.location}\n\n`;
   return context;
 }
 
 function buildEducationAndCerts(academic_formation: any[], certifications: any[]): string {
-  let context = `=== Formación Académica y Certificaciones ===\n`;
+  let context = `=== Education & Certifications ===\n`;
   if (academic_formation?.length) {
     academic_formation.forEach((edu: any) => {
-      context += `- ${edu.title} en ${edu.company} (${edu.date}). ${edu.description}\n`;
+      context += `- ${edu.title} at ${edu.company} (${edu.date}). ${edu.description}\n`;
     });
   } else {
-    context += `- Sin detalles académicos. Disponible para ampliar si es necesario.\n`;
+    context += `- No academic details available.\n`;
   }
   if (certifications?.length) {
     certifications.forEach((cert: any) => {
-      context += `- Certificación: ${cert.title} (Emitida por ${cert.issuer}, ${cert.date})\n`;
+      context += `- Certification: ${cert.title} (Issued by ${cert.issuer}, ${cert.date})\n`;
     });
-  } else {
-    context += `- Sin certificaciones específicas; dispuesto a obtener las pertinentes para QA Automation.\n`;
   }
   return context + `\n`;
 }
 
 function buildLanguages(languages: any[]): string {
-  let context = `=== Idiomas ===\n`;
+  let context = `=== Languages ===\n`;
   if (languages?.length) {
     languages.forEach((lang: any) => {
-      context += `- ${lang.language}: Nivel ${lang.proficiency}\n`;
+      context += `- ${lang.name}: ${lang.level}\n`;
     });
   } else {
-    context += `- No especificados. Dispuesto a validar competencias lingüísticas según el puesto.\n`;
+    context += `- Not specified.\n`;
   }
   return context + `\n`;
 }
 
 function buildExperience(professional_experience: any[]): string {
-  let context = `=== Experiencia Profesional ===\n`;
+  let context = `=== Professional Experience ===\n`;
   professional_experience.forEach((exp: any) => {
-    const situacion = exp.description.includes("CI/CD")
-      ? "En Urobora SL detecté la necesidad de automatizar la entrega continua y asegurar calidad en cada build"
-      : exp.description.split(".")[0];
-    const tarea = exp.description.includes("CI/CD")
-      ? "Diseñar e implementar pipelines de CI/CD en Google Cloud Platform con FastAPI"
-      : "Desarrollar y optimizar soluciones basadas en IA y Machine Learning";
-    const accion = exp.description;
-    const resultado = exp.title.includes("Intern")
-      ? "Logré optimizar la automatización de despliegues y reducir errores en producción"
-      : "Obtuve resultados relevantes en investigación y desarrollo de modelos";
-
-    context += `- ${exp.title} en ${exp.company} (${exp.date}):\n`;
-    context += `  • S: ${situacion}.\n`;
-    context += `  • T: ${tarea}.\n`;
-    context += `  • A: ${accion}.\n`;
-    context += `  • R: ${resultado}.\n\n`;
+    context += `- ${exp.title} at ${exp.company} (${exp.date}): ${exp.description}\n`;
+    if (exp.keywords?.length) {
+      context += `  Technologies: ${exp.keywords.join(", ")}\n`;
+    }
+    context += `\n`;
   });
   return context + `\n`;
 }
 
 function buildProjects(projects: any[]): string {
-  let context = `=== Proyectos Destacados ===\n`;
+  let context = `=== Notable Projects ===\n`;
   projects.slice(0, 3).forEach((proj: any, index: number) => {
-    const desafio = proj.description.includes("colisiones")
-      ? "Reducir latencia y aumentar precisión en detección de colisiones en robótica"
-      : "Mejorar la exactitud de clasificación médica con datasets limitados";
-    const accionProyecto = proj.technologies
-      ? `Implementé modelos en ${proj.technologies.join(", ")} para ${proj.description}`
-      : `Desarrollé soluciones avanzadas basadas en IA para ${proj.description}`;
-    const resultadoProyecto = proj.description.includes("colisiones")
-      ? "Logré un rendimiento en tiempo real adecuado para sistemas robóticos"
-      : "Obtuve métricas de clasificación superiores al estado del arte en estudios cross-domain";
-
-    context += `- Proyecto ${index + 1}: ${proj.title}\n`;
-    context += `  • Desafío: ${desafio}.\n`;
-    context += `  • Acción: ${accionProyecto}.\n`;
-    context += `  • Resultado: ${resultadoProyecto}.\n\n`;
+    context += `- Project ${index + 1}: ${proj.title}\n`;
+    context += `  ${proj.description}\n`;
+    if (proj.tags?.length) {
+      context += `  Technologies: ${proj.tags.join(", ")}\n`;
+    }
+    context += `\n`;
   });
   return context + `\n`;
 }
 
 function buildSkills(skills: any): string {
-  let context = `=== Habilidades ===\n`;
-  context += `- Técnicas: ${skills.technical.slice(0, 12).join(", ")}\n`;
-  context += `  (Ej.: “Automatizé pipelines”, “Integré CI/CD”, “Validé tests automatizados” para describir logros concretos en QA Automation).\n`;
-  context += `- Competencias: ${skills.competencies.slice(0, 5).join(", ")}, demostrando adaptabilidad y colaboración en equipos ágiles.\n\n`;
-  return context;
+  let context = `=== Skills ===\n`;
+  if (skills.technical?.length) {
+    skills.technical.forEach((group: any) => {
+      context += `- ${group.category}: ${group.items.join(", ")}\n`;
+    });
+  }
+  if (skills.competencies?.length) {
+    context += `- Competencies: ${skills.competencies.join(", ")}\n`;
+  }
+  return context + `\n`;
 }
 
-function buildValueProposition(): string {
-  let context = `=== Propuesta de Valor ===\n`;
-  context += `- “Me comprometo a mejorar la calidad del software y acelerar ciclos de entrega: con mi experiencia en automatización de pipelines en Google Cloud, puedo implementar suites de pruebas que garanticen una cobertura del 100 % en los escenarios críticos.”\n`;
-  context += `- Soy proactivo, resiliente y orientado al crecimiento, siempre enfocado en resultados medibles y en colaborar con el equipo para maximizar eficiencia.\n\n`;
+function buildValueProposition(basic_info: any): string {
+  let context = `=== Value Proposition ===\n`;
+  context += `- ${basic_info.tagline}\n\n`;
   return context;
 }
 
 function buildSystemInstructions(): string {
-  let context = `=== Instrucciones al Asistente ===\n`;
-  context += `1. Sé CONCISO, directo, profesional y proactivo. Cada palabra debe resaltar tu valor con métricas y verbos de acción específicos de QA Automation.\n`;
-  context += `2. Basa todo el discurso en los datos de este CV. NO INVENTES ni SUPONGAS NADA. Utiliza la estructura STAR para cada logro.\n`;
-  context += `3. Si el usuario pregunta sobre una competencia o rol no descrito en el CV:\n`;
-  context += `   a. Agradece el interés destacando la importancia de ese aspecto para QA Automation.\n`;
-  context += `   b. Vende habilidades transferibles con ejemplos concretos (formato STAR) que demuestren cómo tu experiencia en CI/CD, scripting o IA aporta valor en QA Automation.\n`;
-  context += `   c. Cierra reforzando que tu historial garantiza resultados inmediatos en ese reto.\n`;
-  context += `4. Si falta cualquier información del CV, responde: “Esa información no está en mi CV actual.” Menciona disposición a ampliar si es necesario.\n`;
-  context += `5. Si el usuario pide contacto por email:\n`;
-  context += `   a. Responde: “¡Claro! Para gestionar tu mensaje, ¿podrías darme tu email y el mensaje que quieres enviarme?”\n`;
-  context += `   b. Con ambos datos, responde únicamente con:\n`;
-  context += `      [INICIAR_ENVIO_CORREO]:::{"emailRemitente":"<email_del_usuario>","mensaje":"<mensaje_del_usuario>"}\n`;
-  context += `6. Cierra cada respuesta invitando a profundizar en tu CV: “¿Te gustaría que detalle algún proyecto o habilidad específica para este puesto?”\n`;
+  let context = `=== Assistant Instructions ===\n`;
+  context += `1. Be CONCISE, direct, professional, and confident. Highlight your value with specific action verbs.\n`;
+  context += `2. Base all responses ONLY on the CV data provided. DO NOT invent or assume anything.\n`;
+  context += `3. If asked about a skill or role not in the CV, bridge to transferable skills with concrete examples from the CV.\n`;
+  context += `4. If any CV information is missing, say: "That information is not in my current CV."\n`;
+  context += `5. If the user requests contact by email:\n`;
+  context += `   a. Ask: "Sure! Could you share your email and the message you'd like to send me?"\n`;
+  context += `   b. Once you have both, respond only with:\n`;
+  context += `      [INICIAR_ENVIO_CORREO]:::{"emailRemitente":"<user_email>","mensaje":"<user_message>"}\n`;
+  context += `6. End each response inviting further questions: "Would you like me to elaborate on any specific project or skill?"\n`;
   return context;
 }
 
