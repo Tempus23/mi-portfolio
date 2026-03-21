@@ -23,3 +23,5 @@ bun.*
 
 pnpm-lock.yaml
 package-lock.json
+
+.wrangler/*
