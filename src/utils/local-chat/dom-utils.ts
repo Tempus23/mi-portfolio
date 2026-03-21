@@ -8,7 +8,7 @@ export function scrollToSection(selectorList: string) {
         if (el) break;
     }
     if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.scrollIntoView({ behavior: "auto", block: "start" });
     el.classList.add("section-highlight-pulse");
     setTimeout(() => el?.classList.remove("section-highlight-pulse"), 2000);
 }
