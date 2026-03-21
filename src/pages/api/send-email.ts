@@ -1,46 +1,116 @@
-// src/pages/api/send-email.ts
 import type { APIRoute } from "astro";
+import { Resend } from "resend";
 
-const MY_EMAIL_ADDRESS = "chermar.pro@gmail.com";
+const CONTACT_EMAIL = "chermar.pro@gmail.com";
+const MAX_MESSAGE_LENGTH = 5000;
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+interface SendEmailPayload {
+  emailRemitente: string;
+  mensaje: string;
+}
+
+function jsonResponse(data: object, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: JSON_HEADERS,
+  });
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function sanitizeLine(value: string): string {
+  return value.replace(/[\r\n]+/g, " ").trim();
+}
+
+function parsePayload(body: unknown): SendEmailPayload | null {
+  if (!isObject(body)) {
+    return null;
+  }
+
+  const emailRemitente =
+    typeof body.emailRemitente === "string" ? body.emailRemitente.trim() : "";
+  const mensaje = typeof body.mensaje === "string" ? body.mensaje.trim() : "";
+
+  if (!emailRemitente || !mensaje) {
+    return null;
+  }
+
+  return { emailRemitente, mensaje };
+}
+
+export const prerender = false;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { emailRemitente, mensaje } = body;
+    const resendApiKey = import.meta.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      return jsonResponse({ error: "RESEND_API_KEY not configured." }, 500);
+    }
 
-    if (!emailRemitente || !mensaje) {
-      return new Response(
-        JSON.stringify({ error: "Sender email and message are required." }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return jsonResponse({ error: "Invalid JSON body." }, 400);
+    }
+
+    const payload = parsePayload(body);
+    if (!payload) {
+      return jsonResponse(
+        { error: "Sender email and message are required." },
+        400,
       );
     }
 
-    console.log("---- EMAIL TO SEND ----");
-    console.log("To:", MY_EMAIL_ADDRESS);
-    console.log("From (User):", emailRemitente);
-    console.log(
-      "Subject:",
-      `Mensaje de contacto desde el ChatBot Portfolio: ${emailRemitente}`
-    );
-    console.log("Body:\n", mensaje);
-    console.log("-----------------------");
+    const { emailRemitente, mensaje } = payload;
 
-    // For now, always return success (simulated)
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Email processed (simulated).",
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    if (!isValidEmail(emailRemitente)) {
+      return jsonResponse({ error: "Sender email is invalid." }, 400);
+    }
+
+    if (mensaje.length > MAX_MESSAGE_LENGTH) {
+      return jsonResponse(
+        { error: `Message exceeds ${MAX_MESSAGE_LENGTH} characters.` },
+        400,
+      );
+    }
+
+    const resend = new Resend(resendApiKey);
+    const fromEmail =
+      import.meta.env.RESEND_FROM_EMAIL ||
+      "Portfolio Contact <onboarding@resend.dev>";
+
+    await resend.emails.send({
+      from: fromEmail,
+      to: CONTACT_EMAIL,
+      replyTo: emailRemitente,
+      subject: `Mensaje de contacto desde el portfolio: ${sanitizeLine(emailRemitente)}`,
+      text: [
+        `Remitente: ${emailRemitente}`,
+        "",
+        "Mensaje:",
+        mensaje,
+      ].join("\n"),
+    });
+
+    return jsonResponse({
+      success: true,
+      message: "Email sent successfully.",
+    });
   } catch (error: any) {
     console.error("Error in /api/send-email:", error);
-    return new Response(
-      JSON.stringify({
+    return jsonResponse(
+      {
         error: "Internal Server Error.",
-        details: error.message,
-      }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      },
+      500,
     );
   }
 };
