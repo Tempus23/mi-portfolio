@@ -5,6 +5,27 @@ let _chatHistory = [];
 let _isStreaming = false;
 let _chatOpen = false;
 
+async function getErrorMessage(response, fallbackMessage) {
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+        try {
+            const body = await response.json();
+            if (typeof body?.error === 'string' && body.error.trim()) {
+                return body.error;
+            }
+        } catch {
+            // Keep fallback message.
+        }
+    }
+
+    if (response.status === 401 || response.status === 403) {
+        return 'Acceso denegado. Inicia sesión mediante Cloudflare Access.';
+    }
+
+    return fallbackMessage;
+}
+
 // ─── DOM Creation ───────────────────────────────────────────────────────────
 
 function createChatDOM() {
@@ -138,7 +159,7 @@ async function sendMessage(text) {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+            throw new Error(await getErrorMessage(response, `HTTP ${response.status}`));
         }
 
         const reader = response.body.getReader();
@@ -162,7 +183,8 @@ async function sendMessage(text) {
 
     } catch (err) {
         console.error('[AI Chat] Error:', err);
-        streamEl.innerHTML = '<span class="ai-chat-error">Error al conectar con el asistente. Inténtalo de nuevo.</span>';
+        const message = err instanceof Error ? err.message : 'Error al conectar con el asistente. Inténtalo de nuevo.';
+        streamEl.innerHTML = `<span class="ai-chat-error">${escapeHtml(message)}</span>`;
         streamEl.classList.remove('ai-chat-streaming');
     } finally {
         _isStreaming = false;

@@ -1,6 +1,7 @@
 // src/pages/api/finanzas/analyze.ts — AI-powered portfolio analysis endpoint
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
+import { requireFinanzasAccess } from "@/utils/finanzas-access";
 
 export const prerender = false;
 
@@ -130,6 +131,11 @@ function buildUserPrompt(summary: PortfolioSummary): string {
 }
 
 export const POST: APIRoute = async ({ request }) => {
+    const authError = requireFinanzasAccess(request);
+    if (authError) {
+        return authError;
+    }
+
     try {
         const apiKey = import.meta.env.OPENAI_API_KEY;
         if (!apiKey) {

@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { requireFinanzasAccess } from "@/utils/finanzas-access";
 
 export const prerender = false;
 
@@ -78,6 +79,11 @@ function buildPayload(body: unknown): SyncPayload {
 }
 
 export const GET: APIRoute = async (context) => {
+  const authError = requireFinanzasAccess(context.request);
+  if (authError) {
+    return authError;
+  }
+
   const { kv, error } = getKvOrError(context);
   if (error || !kv) {
     return error as Response;
@@ -103,6 +109,11 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const PUT: APIRoute = async (context) => {
+  const authError = requireFinanzasAccess(context.request);
+  if (authError) {
+    return authError;
+  }
+
   const { kv, error } = getKvOrError(context);
   if (error || !kv) {
     return error as Response;

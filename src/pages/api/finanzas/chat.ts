@@ -1,6 +1,7 @@
 // src/pages/api/finanzas/chat.ts — AI financial chat endpoint with portfolio context
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
+import { requireFinanzasAccess } from "@/utils/finanzas-access";
 
 export const prerender = false;
 
@@ -28,6 +29,11 @@ CAPACIDADES:
 - Evaluar riesgos de concentración`;
 
 export const POST: APIRoute = async ({ request }) => {
+    const authError = requireFinanzasAccess(request);
+    if (authError) {
+        return authError;
+    }
+
     try {
         const apiKey = import.meta.env.OPENAI_API_KEY;
         if (!apiKey) {
