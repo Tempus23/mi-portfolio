@@ -9,7 +9,7 @@ import { showToast } from "./shared/toast.js";
 import { syncPull, syncPush, setSyncCallback } from "./shared/sync.js";
 import { store } from "./core/data-store.js";
 import { initCharts } from "./ui/chart-manager.js";
-import { $, on, setText, showConfirmModal } from "./ui/ui-shared.js";
+import { $, on, setText, showConfirmModal, escapeHtml } from "./ui/ui-shared.js";
 import { exportToJson, exportLatestSnapshotToClipboard, processImportedJson } from "./core/portfolio-export.js";
 
 import * as SnapshotManager from "./logic/snapshot-manager.js";
@@ -150,9 +150,10 @@ function setupEventListeners() {
             // Build impact message with refined classes
             const changeRows = impact.changes.map(c => {
                 const varClass = c.variation >= 0 ? 'impact-pos' : 'impact-neg';
+                const safeName = escapeHtml(c.name);
                 return `
                 <tr>
-                    <td><strong>${c.name}</strong></td>
+                    <td><strong>${safeName}</strong></td>
                     <td style="text-align: right;">${formatCurrency(c.oldPrice)}</td>
                     <td style="text-align: right;">${formatCurrency(c.newPrice)}</td>
                     <td style="text-align: right;" class="${varClass}">
