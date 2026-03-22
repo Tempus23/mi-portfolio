@@ -50,7 +50,7 @@ export function requireFinanzasAccess(request: Request): Response | null {
   }
 
   const accessEmail = getAccessEmail(request);
-  const hasAccessIdentity = hasAccessAssertion(request) || Boolean(accessEmail);
+  const hasAccessIdentity = hasAccessAssertion(request);
   if (!hasAccessIdentity) {
     return jsonResponse(
       {
@@ -61,11 +61,22 @@ export function requireFinanzasAccess(request: Request): Response | null {
     );
   }
 
-  const allowedEmails = normalizeEmailList(
-    import.meta.env.FINANZAS_ALLOWED_EMAILS,
-  );
+  const allowedEmailsRaw = import.meta.env.FINANZAS_ALLOWED_EMAILS;
+  const allowedEmails = normalizeEmailList(allowedEmailsRaw);
   if (allowedEmails.length === 0) {
-    return null;
+    const allowAllAccessUsers =
+      import.meta.env.FINANZAS_ALLOW_ALL_ACCESS === "true";
+    if (allowAllAccessUsers) {
+      return null;
+    }
+
+    return jsonResponse(
+      {
+        error:
+          "Configuración inválida: define FINANZAS_ALLOWED_EMAILS o habilita FINANZAS_ALLOW_ALL_ACCESS.",
+      },
+      500,
+    );
   }
 
   if (!accessEmail) {
