@@ -319,6 +319,167 @@ const cvContext = JSON.stringify(cvData);
         animation-delay: 0.14s;
     }
 
+    /* Markdown rendering */
+    .chat-markdown {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+    .chat-markdown p {
+        margin: 0.4rem 0;
+        line-height: 1.55;
+    }
+    .chat-markdown p + p {
+        margin-top: 0.6rem;
+    }
+    .chat-markdown h1,
+    .chat-markdown h2,
+    .chat-markdown h3,
+    .chat-markdown h4,
+    .chat-markdown h5,
+    .chat-markdown h6 {
+        font-weight: 700;
+        line-height: 1.25;
+        color: inherit;
+        margin: 0.7rem 0 0.35rem 0;
+    }
+    .chat-markdown h1 {
+        font-size: 1.05rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid rgba(99, 102, 241, 0.25);
+    }
+    .chat-markdown h2 {
+        font-size: 0.95rem;
+        padding-bottom: 0.25rem;
+        border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+    }
+    .chat-markdown h3 {
+        font-size: 0.88rem;
+    }
+    .chat-markdown h4 {
+        font-size: 0.85rem;
+    }
+    .chat-markdown ul,
+    .chat-markdown ol {
+        margin: 0.55rem 0;
+        padding-left: 1.4rem;
+    }
+    .chat-markdown ul {
+        list-style: none;
+    }
+    .chat-markdown ul > li {
+        position: relative;
+        padding-left: 0.6rem;
+    }
+    .chat-markdown ul > li::before {
+        content: "◆";
+        position: absolute;
+        left: -0.6rem;
+        color: #6366f1;
+        font-size: 0.65em;
+        top: 0.35em;
+    }
+    .dark .chat-markdown ul > li::before {
+        color: #818cf8;
+    }
+    .chat-markdown ol {
+        list-style: decimal;
+    }
+    .chat-markdown ol > li {
+        padding-left: 0.4rem;
+    }
+    .chat-markdown li + li {
+        margin-top: 0.3rem;
+    }
+    .chat-markdown li {
+        line-height: 1.5;
+    }
+    .chat-markdown blockquote {
+        margin: 0.55rem 0;
+        border-left: 3px solid #6366f1;
+        padding-left: 0.9rem;
+        padding-right: 0.5rem;
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+        background: rgba(99, 102, 241, 0.08);
+        border-radius: 0.35rem;
+        font-style: italic;
+        opacity: 0.95;
+    }
+    .dark .chat-markdown blockquote {
+        border-left-color: #818cf8;
+        background: rgba(129, 140, 248, 0.12);
+    }
+    .chat-markdown a {
+        color: #4f46e5;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        word-break: break-word;
+        font-weight: 500;
+        transition: opacity 0.2s;
+    }
+    .chat-markdown a:hover {
+        opacity: 0.8;
+    }
+    .dark .chat-markdown a {
+        color: #818cf8;
+    }
+    .chat-markdown code {
+        font-family:
+            ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+            "Liberation Mono", "Courier New", monospace;
+        font-size: 0.82em;
+        background: rgba(99, 102, 241, 0.16);
+        color: #5b21b6;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.35rem;
+        border: 0.5px solid rgba(99, 102, 241, 0.2);
+    }
+    .dark .chat-markdown code {
+        background: rgba(129, 140, 248, 0.15);
+        color: #d8d8e8;
+    }
+    .chat-markdown pre {
+        margin: 0.65rem 0;
+        padding: 0.9rem;
+        border-radius: 0.65rem;
+        background: #f8fafc;
+        border: 2px solid #6366f1;
+        overflow-x: auto;
+        line-height: 1.5;
+    }
+    .dark .chat-markdown pre {
+        background: #1e293b;
+        border: 2px solid #818cf8;
+    }
+    .chat-markdown pre code {
+        background: transparent;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        display: block;
+        font-size: 0.8rem;
+        color: inherit;
+    }
+    .dark .chat-markdown pre code {
+        color: #e2e8f0;
+    }
+    .chat-markdown hr {
+        border: 0;
+        border-top: 1.5px solid rgba(99, 102, 241, 0.2);
+        margin: 0.75rem 0;
+    }
+    .dark .chat-markdown hr {
+        border-top-color: rgba(129, 140, 248, 0.25);
+    }
+    .chat-markdown strong {
+        font-weight: 700;
+        color: inherit;
+    }
+    .chat-markdown em {
+        font-style: italic;
+        color: inherit;
+    }
+
     /* Scroll highlight pulse */
     .section-highlight-pulse {
         animation: sectionPulse 1.8s ease-out;
@@ -343,7 +504,6 @@ const cvContext = JSON.stringify(cvData);
         ACTION_SETS,
         SECTION_ANCHORS,
         MODEL_SIZES,
-        MODELS,
         getModelConfig,
     } from "../../utils/local-chat/constants";
     import {
@@ -357,6 +517,7 @@ const cvContext = JSON.stringify(cvData);
         appendUserMessage,
         appendBotMessage,
         renderActionCards,
+        renderChatMarkdown,
     } from "../../utils/local-chat/dom-utils";
 
     env.allowLocalModels = false;
@@ -577,9 +738,7 @@ const cvContext = JSON.stringify(cvData);
 
                     const visible = stripThinkingTags(rawReply);
                     if (!insideThink && visible) {
-                        botBubble.innerHTML = visible
-                            .replace(/\n\n/g, "</p><p class='mt-2'>")
-                            .replace(/\n/g, "<br>");
+                        botBubble.innerHTML = renderChatMarkdown(visible);
                         messagesContainer.scrollTop =
                             messagesContainer.scrollHeight;
                     }
@@ -595,9 +754,7 @@ const cvContext = JSON.stringify(cvData);
 
             const finalText = stripThinkingTags(rawReply).trim();
             botBubble.classList.remove("stream-cursor");
-            botBubble.innerHTML = finalText
-                .replace(/\n\n/g, "</p><p class='mt-2'>")
-                .replace(/\n/g, "<br>");
+            botBubble.innerHTML = renderChatMarkdown(finalText);
 
             historyTracker.push({
                 role: "assistant",
