@@ -353,7 +353,9 @@ async function fetchAIAnalysis(portfolioContext) {
             body: JSON.stringify({ portfolioSummary: portfolioContext })
         });
 
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        if (!response.ok) {
+            throw new Error(await getErrorMessage(response, `HTTP ${response.status}`));
+        }
         const data = await response.json();
         _aiResult = data.analysis || data;
         _lastAnalysisTime = Date.now();
@@ -364,7 +366,8 @@ async function fetchAIAnalysis(portfolioContext) {
         showToast('Análisis IA completado', 'success');
     } catch (err) {
         console.error('[AI] Error:', err);
-        showToast('Error al obtener análisis IA', 'error');
+        const message = err instanceof Error ? err.message : 'Error al obtener análisis IA';
+        showToast(message, 'error');
     } finally {
         _isLoadingAI = false;
         if (btn) {
@@ -372,6 +375,27 @@ async function fetchAIAnalysis(portfolioContext) {
             btn.textContent = '🧠 Analizar con IA';
         }
     }
+}
+
+async function getErrorMessage(response, fallbackMessage) {
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+        try {
+            const body = await response.json();
+            if (typeof body?.error === 'string' && body.error.trim()) {
+                return body.error;
+            }
+        } catch {
+            // Keep fallback message.
+        }
+    }
+
+    if (response.status === 401 || response.status === 403) {
+        return 'Acceso denegado. Inicia sesión mediante Cloudflare Access.';
+    }
+
+    return fallbackMessage;
 }
 
 // ─── Main Render ────────────────────────────────────────────────────────────

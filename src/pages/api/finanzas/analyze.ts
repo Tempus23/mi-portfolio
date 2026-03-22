@@ -1,6 +1,7 @@
 // src/pages/api/finanzas/analyze.ts — AI-powered portfolio analysis endpoint
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
+import { requireFinanzasAccess } from "@/utils/finanzas-access";
 
 export const prerender = false;
 
@@ -37,6 +38,80 @@ interface AnalyticsSummary {
     hhi: number;
     diversificationRatio: number | null;
     avgTargetDeviation: number | null;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+    return typeof value === "number" && Number.isFinite(value);
+}
+
+function isNullableFiniteNumber(value: unknown): value is number | null {
+    return value === null || isFiniteNumber(value);
+}
+
+function isString(value: unknown): value is string {
+    return typeof value === "string";
+}
+
+function isAssetSummary(value: unknown): value is CategorySummary["assets"][number] {
+    return isObject(value) &&
+        isString(value.name) &&
+        isString(value.term) &&
+        isFiniteNumber(value.value) &&
+        isFiniteNumber(value.invested) &&
+        isFiniteNumber(value.roi) &&
+        isFiniteNumber(value.weight);
+}
+
+function isCategorySummary(value: unknown): value is CategorySummary {
+    return isObject(value) &&
+        isString(value.category) &&
+        isFiniteNumber(value.value) &&
+        isFiniteNumber(value.invested) &&
+        isFiniteNumber(value.roi) &&
+        isFiniteNumber(value.weight) &&
+        (value.target === null || isFiniteNumber(value.target)) &&
+        Array.isArray(value.assets) &&
+        value.assets.every(isAssetSummary);
+}
+
+function isHistoryEntry(value: unknown): value is PortfolioSummary["history"][number] {
+    return isObject(value) &&
+        isString(value.date) &&
+        isFiniteNumber(value.value) &&
+        isFiniteNumber(value.invested);
+}
+
+function isAnalyticsSummary(value: unknown): value is AnalyticsSummary {
+    return isObject(value) &&
+        isFiniteNumber(value.healthScore) &&
+        isNullableFiniteNumber(value.sharpe) &&
+        isNullableFiniteNumber(value.sortino) &&
+        isFiniteNumber(value.annualizedVol) &&
+        isFiniteNumber(value.maxDrawdown) &&
+        isNullableFiniteNumber(value.cagr) &&
+        isFiniteNumber(value.hhi) &&
+        isNullableFiniteNumber(value.diversificationRatio) &&
+        isNullableFiniteNumber(value.avgTargetDeviation);
+}
+
+function isPortfolioSummary(value: unknown): value is PortfolioSummary {
+    return isObject(value) &&
+        isString(value.date) &&
+        isFiniteNumber(value.totalValue) &&
+        isFiniteNumber(value.totalInvested) &&
+        isFiniteNumber(value.totalRoi) &&
+        isFiniteNumber(value.assetCount) &&
+        isFiniteNumber(value.categoryCount) &&
+        isFiniteNumber(value.monthlyBudget) &&
+        Array.isArray(value.categories) &&
+        value.categories.every(isCategorySummary) &&
+        Array.isArray(value.history) &&
+        value.history.every(isHistoryEntry) &&
+        (value.analytics === undefined || value.analytics === null || isAnalyticsSummary(value.analytics));
 }
 
 const SYSTEM_PROMPT = `Eres un asesor financiero experto especializado en gestión de patrimonio personal. Analizas portfolios de inversión y proporcionas recomendaciones claras, accionables y en español.
@@ -130,6 +205,11 @@ function buildUserPrompt(summary: PortfolioSummary): string {
 }
 
 export const POST: APIRoute = async ({ request }) => {
+    const authError = requireFinanzasAccess(request);
+    if (authError) {
+        return authError;
+    }
+
     try {
         const apiKey = import.meta.env.OPENAI_API_KEY;
         if (!apiKey) {
@@ -139,15 +219,26 @@ export const POST: APIRoute = async ({ request }) => {
             });
         }
 
-        const body = await request.json();
-        const summary = (body.portfolioSummary ?? body.portfolio) as PortfolioSummary;
-
-        if (!summary || !summary.totalValue) {
+        let body: unknown;
+        try {
+            body = await request.json();
+        } catch {
             return new Response(JSON.stringify({ error: "Portfolio data required" }), {
                 status: 400,
                 headers: { "Content-Type": "application/json" }
             });
         }
+
+        const summaryCandidate = isObject(body) ? (body.portfolioSummary ?? body.portfolio) : null;
+
+        if (!isPortfolioSummary(summaryCandidate)) {
+            return new Response(JSON.stringify({ error: "Portfolio data required" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
+
+        const summary = summaryCandidate;
 
         const openai = new OpenAI({ apiKey });
 

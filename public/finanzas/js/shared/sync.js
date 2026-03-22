@@ -71,6 +71,8 @@ async function getSyncErrorMessage(res, fallbackMessage) {
         }
     } else if (res.status === 401 || res.status === 403) {
         msg = 'Acceso denegado (Cloudflare Access)';
+    } else if (res.status === 409) {
+        msg = 'Conflicto de sincronización: existen cambios remotos más recientes';
     } else if (res.status === 404) {
         msg = 'API no encontrada';
     } else if (res.status >= 500) {
@@ -146,11 +148,14 @@ async function pullFromCloud() {
 
 // Upload localStorage data → cloud
 async function pushToCloud() {
+    const meta = getSyncMeta();
     const snapshots = localStorage.getItem(SYNC_KEYS.SNAPSHOTS);
     const targets = localStorage.getItem(SYNC_KEYS.TARGETS);
     const targetsMeta = localStorage.getItem(SYNC_KEYS.TARGETS_META);
 
-    const body = {};
+    const body = {
+        expectedLastModified: meta.lastCloudSyncAt
+    };
     if (snapshots) body.snapshots = JSON.parse(snapshots);
     if (targets) body.targets = JSON.parse(targets);
     if (targetsMeta) body.targetsMeta = JSON.parse(targetsMeta);
@@ -180,7 +185,9 @@ export async function syncPull(showToast) {
             if (meta.dirty) {
                 if (showToast) showToast('Subiendo cambios locales antes de descargar...', 'success');
                 const pushData = await pushToCloud();
-                markLocalClean(pushData?.lastModified || null);
+                if (!pushData?.skipped) {
+                    markLocalClean(pushData?.lastModified || null);
+                }
             }
 
             if (showToast) showToast('Descargando de la nube...', 'success');
@@ -207,7 +214,9 @@ export async function syncPush(showToast) {
     return runInSyncQueue(async () => {
         try {
             const data = await pushToCloud();
-            markLocalClean(data?.lastModified || null);
+            if (!data?.skipped) {
+                markLocalClean(data?.lastModified || null);
+            }
             if (showToast) showToast('Datos guardados en la nube ☁️↑', 'success');
             return true;
         } catch (e) {

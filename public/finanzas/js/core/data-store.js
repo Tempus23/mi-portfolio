@@ -143,7 +143,7 @@ class DataStore {
                 const quantity = toSafeNumber(asset[AssetIndex.QUANTITY]);
                 const oldPrice = toSafeNumber(asset[AssetIndex.CURRENT_PRICE]);
                 
-                if (pricesLower[nameLower]) {
+                if (Object.hasOwn(pricesLower, nameLower)) {
                     const newPrice = pricesLower[nameLower];
                     newTotalValue += newPrice * quantity;
                     if (Math.abs(newPrice - oldPrice) > 0.00000001) {
@@ -215,7 +215,7 @@ class DataStore {
                 const theoreticalOldValue = quantity * oldPrice;
                 const desync = !areCloseNumbers(oldValue, theoreticalOldValue);
 
-                if (pricesLower[nameLower]) {
+                if (Object.hasOwn(pricesLower, nameLower)) {
                     const newPrice = pricesLower[nameLower];
                     const newValue = newPrice * quantity;
 

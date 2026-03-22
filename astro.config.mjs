@@ -4,6 +4,7 @@ import robotsTxt from "astro-robots-txt";
 import cloudflare from "@astrojs/cloudflare";
 
 export default defineConfig({
+  site: "https://chermar.dev",
   integrations: [tailwind(), robotsTxt()],
   output: "hybrid",
   vite: {

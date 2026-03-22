@@ -1,6 +1,7 @@
 // src/pages/api/finanzas/chat.ts — AI financial chat endpoint with portfolio context
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
+import { requireFinanzasAccess } from "@/utils/finanzas-access";
 
 export const prerender = false;
 
@@ -27,7 +28,20 @@ CAPACIDADES:
 - Proyectar escenarios futuros basándose en datos históricos
 - Evaluar riesgos de concentración`;
 
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+}
+
+function isString(value: unknown): value is string {
+    return typeof value === "string";
+}
+
 export const POST: APIRoute = async ({ request }) => {
+    const authError = requireFinanzasAccess(request);
+    if (authError) {
+        return authError;
+    }
+
     try {
         const apiKey = import.meta.env.OPENAI_API_KEY;
         if (!apiKey) {
@@ -37,15 +51,28 @@ export const POST: APIRoute = async ({ request }) => {
             });
         }
 
-        const body = await request.json();
-        const { message, portfolioContext, conversationHistory } = body;
+        let body: unknown;
+        try {
+            body = await request.json();
+        } catch {
+            return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+                status: 400,
+                headers: { "Content-Type": "application/json" }
+            });
+        }
 
-        if (!message) {
+        if (!isObject(body) || !isString(body.message) || !body.message.trim()) {
             return new Response(JSON.stringify({ error: "Message required" }), {
                 status: 400,
                 headers: { "Content-Type": "application/json" }
             });
         }
+
+        const message = body.message.trim();
+        const portfolioContext = isObject(body.portfolioContext)
+            ? body.portfolioContext as Record<string, any>
+            : null;
+        const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : [];
 
         // Build context from portfolio data
         let contextBlock = "";
@@ -89,7 +116,11 @@ export const POST: APIRoute = async ({ request }) => {
         // Add conversation history (limited to last 10 messages)
         if (Array.isArray(conversationHistory)) {
             const recentHistory = conversationHistory.slice(-10);
-            recentHistory.forEach((msg: { role: string; content: string }) => {
+            recentHistory.forEach((msg: unknown) => {
+                if (!isObject(msg) || !isString(msg.role) || !isString(msg.content)) {
+                    return;
+                }
+
                 if (msg.role === "user" || msg.role === "assistant") {
                     messages.push({ role: msg.role as "user" | "assistant", content: msg.content });
                 }

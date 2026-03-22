@@ -14,6 +14,78 @@ const {
   title = "Carlos Hernández Martínez - AI/ML Engineer & Backend Developer | Python, PyTorch, RAG, LLMs",
   description = "AI/ML Engineer specialized in AI agent development, RAG systems, and backend with Python. Experience at Mercadona IT and AI startups. Available for Machine Learning and technical leadership opportunities.",
 } = Astro.props;
+
+const siteUrl = Astro.site?.toString();
+const ogImageUrl = Astro.site ? new URL("/me.jpg", Astro.site).toString() : undefined;
+const personSchema: Record<string, unknown> = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Carlos Hernández Martínez",
+  jobTitle: "AI/ML Engineer & Backend Developer",
+  description:
+    "Experienced AI/ML Engineer specializing in LLM-based agents, RAG systems, and backend development with Python. Proven track record in enterprise (Mercadona IT) and AI startups (Urobora SL).",
+  email: "chermar.pro@gmail.com",
+  alumniOf: [
+    {
+      "@type": "EducationalOrganization",
+      name: "Universidad Politécnica de Valencia",
+      sameAs: "https://www.upv.es"
+    },
+    {
+      "@type": "EducationalOrganization",
+      name: "Technical University of Munich",
+      sameAs: "https://www.tum.de"
+    }
+  ],
+  knowsAbout: [
+    "Artificial Intelligence",
+    "Machine Learning",
+    "Deep Learning",
+    "Python",
+    "PyTorch",
+    "TensorFlow",
+    "Large Language Models",
+    "RAG Systems",
+    "Backend Development",
+    "FastAPI",
+    "Kubernetes",
+    "Google Cloud Platform",
+    "CI/CD",
+    "Test Automation"
+  ],
+  knowsLanguage: [
+    {
+      "@type": "Language",
+      name: "Spanish",
+      alternateName: "es"
+    },
+    {
+      "@type": "Language",
+      name: "English",
+      alternateName: "en"
+    }
+  ],
+  workLocation: {
+    "@type": "Place",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Valencia",
+      addressCountry: "ES"
+    }
+  },
+  sameAs: [
+    "https://linkedin.com/in/carl0shdez",
+    "https://github.com/Tempus23"
+  ]
+};
+
+if (siteUrl) {
+  personSchema.url = siteUrl;
+}
+
+if (ogImageUrl) {
+  personSchema.image = ogImageUrl;
+}
 ---
 
 <!doctype html>
@@ -28,29 +100,17 @@ const {
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta
-      property="og:url"
-      content="https://tempus23.github.io/mi-portfolio/"
-    />
+    {siteUrl && <meta property="og:url" content={siteUrl} />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta
-      property="og:image"
-      content="https://tempus23.github.io/mi-portfolio/me.jpg"
-    />
+    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
-    <meta
-      property="twitter:url"
-      content="https://tempus23.github.io/mi-portfolio/"
-    />
+    {siteUrl && <meta property="twitter:url" content={siteUrl} />}
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
-    <meta
-      property="twitter:image"
-      content="https://tempus23.github.io/mi-portfolio/me.jpg"
-    />
+    {ogImageUrl && <meta property="twitter:image" content={ogImageUrl} />}
 
     <!-- Keywords for SEO -->
     <meta
@@ -60,69 +120,8 @@ const {
     <meta name="author" content="Carlos Hernández Martínez" />
 
     <!-- Structured Data for AI Scrapers (JSON-LD) -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Carlos Hernández Martínez",
-        "jobTitle": "AI/ML Engineer & Backend Developer",
-        "description": "Experienced AI/ML Engineer specializing in LLM-based agents, RAG systems, and backend development with Python. Proven track record in enterprise (Mercadona IT) and AI startups (Urobora SL).",
-        "url": "https://tempus23.github.io/mi-portfolio/",
-        "email": "chermar.pro@gmail.com",
-        "image": "https://tempus23.github.io/mi-portfolio/me.jpg",
-        "alumniOf": [
-          {
-            "@type": "EducationalOrganization",
-            "name": "Universidad Politécnica de Valencia",
-            "sameAs": "https://www.upv.es"
-          },
-          {
-            "@type": "EducationalOrganization",
-            "name": "Technical University of Munich",
-            "sameAs": "https://www.tum.de"
-          }
-        ],
-        "knowsAbout": [
-          "Artificial Intelligence",
-          "Machine Learning",
-          "Deep Learning",
-          "Python",
-          "PyTorch",
-          "TensorFlow",
-          "Large Language Models",
-          "RAG Systems",
-          "Backend Development",
-          "FastAPI",
-          "Kubernetes",
-          "Google Cloud Platform",
-          "CI/CD",
-          "Test Automation"
-        ],
-        "knowsLanguage": [
-          {
-            "@type": "Language",
-            "name": "Spanish",
-            "alternateName": "es"
-          },
-          {
-            "@type": "Language",
-            "name": "English",
-            "alternateName": "en"
-          }
-        ],
-        "workLocation": {
-          "@type": "Place",
-          "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Valencia",
-            "addressCountry": "ES"
-          }
-        },
-        "sameAs": [
-          "https://linkedin.com/in/carl0shdez",
-          "https://github.com/Tempus23"
-        ]
-      }
+    <script type="application/ld+json" is:inline>
+      {JSON.stringify(personSchema)}
     </script>
 
     <ViewTransitions />
