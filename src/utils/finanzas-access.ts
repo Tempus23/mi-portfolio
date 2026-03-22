@@ -44,8 +44,11 @@ function hasAccessAssertion(request: Request): boolean {
   return Boolean(jwt && jwt.trim());
 }
 
-export function requireFinanzasAccess(request: Request): Response | null {
-  if (import.meta.env.DEV || isLocalRequest(request)) {
+export function requireFinanzasAccess(
+  request: Request,
+  env?: { FINANZAS_ALLOWED_EMAILS?: string; FINANZAS_ALLOW_ALL_ACCESS?: string }
+): Response | null {
+  if (isLocalRequest(request)) {
     return null;
   }
 
@@ -61,11 +64,10 @@ export function requireFinanzasAccess(request: Request): Response | null {
     );
   }
 
-  const allowedEmailsRaw = import.meta.env.FINANZAS_ALLOWED_EMAILS;
+  const allowedEmailsRaw = env?.FINANZAS_ALLOWED_EMAILS;
   const allowedEmails = normalizeEmailList(allowedEmailsRaw);
   if (allowedEmails.length === 0) {
-    const allowAllAccessUsers =
-      import.meta.env.FINANZAS_ALLOW_ALL_ACCESS === "true";
+    const allowAllAccessUsers = env?.FINANZAS_ALLOW_ALL_ACCESS === "true";
     if (allowAllAccessUsers) {
       return null;
     }

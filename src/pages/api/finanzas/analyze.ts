@@ -204,8 +204,9 @@ function buildUserPrompt(summary: PortfolioSummary): string {
     return prompt;
 }
 
-export const POST: APIRoute = async ({ request }) => {
-    const authError = requireFinanzasAccess(request);
+export const POST: APIRoute = async ({ request, locals }) => {
+    const env = (locals as any).runtime?.env ?? {};
+    const authError = requireFinanzasAccess(request, env);
     if (authError) {
         return authError;
     }

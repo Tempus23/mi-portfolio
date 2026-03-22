@@ -158,13 +158,14 @@ async function fetchYahooPrice(ticker: string) {
 }
 
 export const GET: APIRoute = async ({ locals, url, request }) => {
-  const authError = requireFinanzasAccess(request);
+  const env = (locals as any).runtime?.env ?? {};
+  const authError = requireFinanzasAccess(request, env);
   if (authError) {
     return authError;
   }
 
   try {
-    const kv: any = (locals as any).runtime?.env?.FINANZAS_KV;
+    const kv: any = env.FINANZAS_KV;
     const forceRefresh = url.searchParams.get('refresh') === 'true';
 
     const clientId = getClientIdentifier(request);

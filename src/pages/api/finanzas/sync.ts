@@ -12,6 +12,8 @@ interface KvNamespace {
 
 interface RuntimeEnv {
   FINANZAS_KV?: KvNamespace;
+  FINANZAS_ALLOWED_EMAILS?: string;
+  FINANZAS_ALLOW_ALL_ACCESS?: string;
 }
 
 interface SyncPayload {
@@ -219,7 +221,8 @@ function buildPayload(body: unknown): { payload: SyncPayload; error: string | nu
 }
 
 export const GET: APIRoute = async (context) => {
-  const authError = requireFinanzasAccess(context.request);
+  const env = getEnv(context);
+  const authError = requireFinanzasAccess(context.request, env);
   if (authError) {
     return authError;
   }
@@ -249,7 +252,8 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const PUT: APIRoute = async (context) => {
-  const authError = requireFinanzasAccess(context.request);
+  const env = getEnv(context);
+  const authError = requireFinanzasAccess(context.request, env);
   if (authError) {
     return authError;
   }
