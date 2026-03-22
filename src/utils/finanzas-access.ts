@@ -52,7 +52,6 @@ export function requireFinanzasAccess(
     return null;
   }
 
-  const accessEmail = getAccessEmail(request);
   const hasAccessIdentity = hasAccessAssertion(request);
   if (!hasAccessIdentity) {
     return jsonResponse(
@@ -66,12 +65,13 @@ export function requireFinanzasAccess(
 
   const allowedEmailsRaw = env?.FINANZAS_ALLOWED_EMAILS;
   const allowedEmails = normalizeEmailList(allowedEmailsRaw);
-  if (allowedEmails.length === 0) {
-    const allowAllAccessUsers = env?.FINANZAS_ALLOW_ALL_ACCESS === "true";
-    if (allowAllAccessUsers) {
-      return null;
-    }
 
+  const allowAllAccessUsers = env?.FINANZAS_ALLOW_ALL_ACCESS === "true";
+  if (allowAllAccessUsers) {
+    return null;
+  }
+
+  if (allowedEmails.length === 0) {
     return jsonResponse(
       {
         error:
@@ -81,6 +81,7 @@ export function requireFinanzasAccess(
     );
   }
 
+  const accessEmail = getAccessEmail(request);
   if (!accessEmail) {
     return jsonResponse(
       { error: "No se pudo validar la identidad autenticada de Cloudflare Access." },
