@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import assetRegistry from '../../../data/asset_registry.json';
 import { requireFinanzasAccess } from "@/utils/finanzas-access";
+import { getRuntimeEnv } from "@/utils/runtime-env";
 
 const CACHE_KEY = 'latest_asset_prices_v3'; // Increased version to clear old cache
 const CACHE_TTL = 3600; // 1 hour
@@ -158,7 +159,7 @@ async function fetchYahooPrice(ticker: string) {
 }
 
 export const GET: APIRoute = async ({ locals, url, request }) => {
-  const env = (locals as any).runtime?.env ?? {};
+  const env = getRuntimeEnv({ locals });
   const authError = requireFinanzasAccess(request, env);
   if (authError) {
     return authError;

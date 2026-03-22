@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { requireFinanzasAccess } from "@/utils/finanzas-access";
+import { getRuntimeEnv } from "@/utils/runtime-env";
 
 export const prerender = false;
 
@@ -8,12 +9,6 @@ type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string
 interface KvNamespace {
   get(key: string, type: "text"): Promise<string | null>;
   put(key: string, value: string): Promise<void>;
-}
-
-interface RuntimeEnv {
-  FINANZAS_KV?: KvNamespace;
-  FINANZAS_ALLOWED_EMAILS?: string;
-  FINANZAS_ALLOW_ALL_ACCESS?: string;
 }
 
 interface SyncPayload {
@@ -36,14 +31,8 @@ function jsonResponse(data: object, status = 200): Response {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 }
 
-function getEnv(context: Parameters<APIRoute>[0]): RuntimeEnv {
-  const localRuntime = (context.locals as { runtime?: { env?: RuntimeEnv } }).runtime;
-  const platform = context as { platform?: { env?: RuntimeEnv } };
-  return localRuntime?.env ?? platform.platform?.env ?? {};
-}
-
 function getKvOrError(context: Parameters<APIRoute>[0]): { kv: KvNamespace | null; error: Response | null } {
-  const env = getEnv(context);
+  const env = getRuntimeEnv(context);
   const kv = env.FINANZAS_KV ?? null;
 
   if (!kv) {
@@ -221,7 +210,7 @@ function buildPayload(body: unknown): { payload: SyncPayload; error: string | nu
 }
 
 export const GET: APIRoute = async (context) => {
-  const env = getEnv(context);
+  const env = getRuntimeEnv(context);
   const authError = requireFinanzasAccess(context.request, env);
   if (authError) {
     return authError;
@@ -252,7 +241,7 @@ export const GET: APIRoute = async (context) => {
 };
 
 export const PUT: APIRoute = async (context) => {
-  const env = getEnv(context);
+  const env = getRuntimeEnv(context);
   const authError = requireFinanzasAccess(context.request, env);
   if (authError) {
     return authError;

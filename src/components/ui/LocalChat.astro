@@ -727,6 +727,7 @@ const cvContext = JSON.stringify(cvData);
 
             let rawReply = "";
             let insideThink = false;
+            let rafPending = false;
 
             const streamer = new TextStreamer(generator.tokenizer, {
                 skip_prompt: true,
@@ -736,11 +737,16 @@ const cvContext = JSON.stringify(cvData);
                     if (rawReply.includes("<think>")) insideThink = true;
                     if (rawReply.includes("</think>")) insideThink = false;
 
-                    const visible = stripThinkingTags(rawReply);
-                    if (!insideThink && visible) {
-                        botBubble.innerHTML = renderChatMarkdown(visible);
-                        messagesContainer.scrollTop =
-                            messagesContainer.scrollHeight;
+                    if (!insideThink && !rafPending) {
+                        rafPending = true;
+                        requestAnimationFrame(() => {
+                            const visible = stripThinkingTags(rawReply);
+                            if (visible) {
+                                botBubble.innerHTML = renderChatMarkdown(visible);
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            }
+                            rafPending = false;
+                        });
                     }
                 },
             });

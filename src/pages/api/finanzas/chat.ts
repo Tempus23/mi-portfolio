@@ -2,6 +2,7 @@
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
 import { requireFinanzasAccess } from "@/utils/finanzas-access";
+import { getRuntimeEnv } from "@/utils/runtime-env";
 
 export const prerender = false;
 
@@ -37,7 +38,7 @@ function isString(value: unknown): value is string {
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
-    const env = (locals as any).runtime?.env ?? {};
+    const env = getRuntimeEnv({ locals });
     const authError = requireFinanzasAccess(request, env);
     if (authError) {
         return authError;
