@@ -10,6 +10,6 @@
   ],
   "vars": {
     "FINANZAS_ALLOWED_EMAILS": "carlos.cbm32@gmail.com",
-    "FINANZAS_ALLOW_ALL_ACCESS": "true",
+    "FINANZAS_ALLOW_ALL_ACCESS": "true"
   }
 }
