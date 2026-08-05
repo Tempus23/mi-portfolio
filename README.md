@@ -1,4 +1,8 @@
-# Portfolio de Carlos Hernández Martínez
+# Portfolio personal de Carlos Hernández Martínez
+
+Este repositorio contiene mi portfolio personal: la implementación actual, el contenido profesional, los proyectos y las funcionalidades son propios de Carlos Hernández Martínez.
+
+> **Referencia:** el diseño y la estructura inicial parten del proyecto [porfolio.dev de Midudev](https://github.com/midudev/porfolio.dev), que se mantiene como referencia del proyecto original.
 
 <div align="center">
   <img src="./public/porfolio.webp" alt="Captura del portfolio">
