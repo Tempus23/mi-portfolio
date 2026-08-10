@@ -41,6 +41,24 @@ const personalImageAlt = basic_info.personal_image_alt;
   />
 
   <nav class="flex flex-wrap justify-center gap-3 mt-8">
+    <a
+      href="/carlos-hernandez-martinez-cv.pdf"
+      download="Carlos-Hernandez-Martinez-CV.pdf"
+      aria-label="Download CV"
+      class="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-300 hover:bg-indigo-500 hover:shadow-lg hover:shadow-indigo-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-indigo-400"
+    >
+      <svg
+        aria-hidden="true"
+        class="size-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.8"
+        stroke="currentColor"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+      </svg>
+      <span>Download CV</span>
+    </a>
     <SocialPill href={`mailto:${basic_info.emails[0]}`}>
       <Mail class="size-4" />
       <span>Contact Me</span>
