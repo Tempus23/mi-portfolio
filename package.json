@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro check && astro build",
+    "generate:cv": "python3 scripts/generate_cv_pdf.py",
     "preview": "astro preview",
     "astro": "astro"
   },
