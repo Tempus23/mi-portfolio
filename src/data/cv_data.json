@@ -31,7 +31,7 @@
       "date": "Jul. 2025 - Present",
       "title": "QA & AI Engineer",
       "company": "Mercadona IT",
-      "description": "Contributes to two internal projects at Mercadona IT: ATENEA, an AI agent platform built with Google ADK, LiteLLM and Claude, and IntegraT, a Spring Boot integration testing framework. Validates AI agents and develops agents for QA tasks, including generating tests from user stories and automating test cases. Explores access control for skills and MCP server scoping in subagent definitions through an agent definition protocol that extends MCP. Also works on automated test data management, backend integration tests and quality analysis with SonarQube.",
+      "description": "Contributes to two internal projects at Mercadona IT: ATENEA, an AI agent platform built with Google ADK, LiteLLM and Claude, and IntegraT, a Spring Boot integration testing framework. Validates AI agents and develops agents for QA tasks, including generating tests from user stories and automating test cases. Contributes to ongoing work on a framework and methodology for evaluating AI agents, microservices and agent harnesses with tools and skills. Explores access control for skills and MCP server scoping in subagent definitions through an agent definition protocol that extends MCP. Also works on automated test data management, backend integration tests and quality analysis with SonarQube.",
       "keywords": [
         "Python",
         "Spring Boot & Spring Batch",
@@ -40,6 +40,7 @@
         "LiteLLM",
         "Claude",
         "AI Agents for QA",
+        "AI Agent Evaluation",
         "MCP",
         "Subagent Scoping",
         "User Story to Test Generation",
