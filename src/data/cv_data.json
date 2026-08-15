@@ -74,18 +74,15 @@
           "Python",
           "Java",
           "Spring Boot",
-          "Spring Batch"
+          "FastAPI",
+          "REST APIs"
         ]
       },
       {
         "category": "Artificial Intelligence",
         "items": [
-          "AI Agents Development",
-          "Autonomous Agents Validation",
-          "Google ADK",
-          "LiteLLM",
-          "Claude",
-          "Model Context Protocol (MCP)",
+          "LLMs & RAG",
+          "AI Agents",
           "PyTorch",
           "TensorFlow"
         ]
@@ -93,22 +90,18 @@
       {
         "category": "QA & Software Quality",
         "items": [
-          "Integration FWK (Spring Boot)",
-          "IntegraT",
-          "AI QA Automation",
-          "User Story to Test Generation",
-          "Mutant Testing",
-          "SonarQube",
           "Playwright",
-          "Postman"
+          "Postman",
+          "Integration Testing",
+          "Test Automation"
         ]
       },
       {
         "category": "DevOps & Cloud",
         "items": [
-          "Google Cloud",
-          "CI/CD (GitHub Actions, Jenkins, CloudBees)",
-          "Spinnaker"
+          "GCP",
+          "Kubernetes",
+          "CI/CD"
         ]
       }
     ]

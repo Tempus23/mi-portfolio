@@ -22,7 +22,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 9 0 R >>
 endobj
 8 0 obj
-<< /Length 5528 >>
+<< /Length 5461 >>
 stream
 q 0.080 0.160 0.270 rg 0.00 826.89 595.28 15.00 re f Q
 BT /F2 24.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 786.00 Tm (Carlos Hernández Martínez) Tj ET
@@ -71,42 +71,40 @@ BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 155.75 Tm (Program in social i
 BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 130.05 Tm (SKILLS) Tj ET
 q 1.35 w 0.060 0.490 0.520 RG 48.00 122.05 m 547.28 122.05 l S Q
 BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 108.05 Tm (Backend & Core Engineering) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 95.30 Tm (Python - Java - Spring Boot - Spring Batch) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 95.30 Tm (Python - Java - Spring Boot - FastAPI - REST APIs) Tj ET
 BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 78.95 Tm (Artificial Intelligence) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 66.20 Tm (AI Agents Development - Autonomous Agents Validation - Google ADK - LiteLLM - Claude - Model Context Protocol \(MCP\) -) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 66.20 Tm (LLMs & RAG - AI Agents - PyTorch - TensorFlow) Tj ET
 q 0.65 w 0.880 0.900 0.920 RG 48.00 39.00 m 547.28 39.00 l S Q
 BT /F1 7.30 Tf 0.350 0.390 0.440 rg 1 0 0 1 369.81 27.00 Tm (Carlos Hernández Martínez  -  Curriculum Vitae  |  1 / 2) Tj ET
 endstream
 endobj
 9 0 obj
-<< /Length 3181 >>
+<< /Length 2892 >>
 stream
 q 0.060 0.490 0.520 rg 0.00 833.89 595.28 8.00 re f Q
 BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 811.89 Tm (Carlos Hernández Martínez) Tj ET
 BT /F1 7.20 Tf 0.350 0.390 0.440 rg 1 0 0 1 472.28 811.89 Tm (CURRICULUM VITAE) Tj ET
 q 0.80 w 0.880 0.900 0.920 RG 48.00 801.89 m 547.28 801.89 l S Q
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 779.25 Tm (PyTorch - TensorFlow) Tj ET
-BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 762.90 Tm (QA & Software Quality) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 750.15 Tm (Integration FWK \(Spring Boot\) - IntegraT - AI QA Automation - User Story to Test Generation - Mutant Testing - SonarQube -) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 738.05 Tm (Playwright - Postman) Tj ET
-BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 721.70 Tm (DevOps & Cloud) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 708.95 Tm (Google Cloud - CI/CD \(GitHub Actions, Jenkins, CloudBees\) - Spinnaker) Tj ET
-BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 680.60 Tm (PROJECTS) Tj ET
-q 1.35 w 0.060 0.490 0.520 RG 48.00 672.60 m 547.28 672.60 l S Q
-BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 657.10 Tm (Medical Diagnosis with Deep Learning - Bachelor's Thesis) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 642.60 Tm (Built a deep-learning system to classify knee osteoarthritis from medical radiographs using ResNet and EfficientNet with) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 629.90 Tm (PyTorch and TensorFlow. Achieved 80% binary-classification accuracy through fine-tuning, data augmentation, and) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 617.20 Tm (cross-domain validation.) Tj ET
-BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 605.05 Tm (Tags: Python - PyTorch - TensorFlow - Computer Vision - Healthcare AI) Tj ET
-BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 593.35 Tm (Links: https://github.com/Tempus23/Radiography_TFG) Tj ET
-BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 568.50 Tm (Neural Implicit Models for Robotics - TUM Research) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 554.00 Tm (Developed implicit neural models for real-time collision detection in robotic manipulators in collaboration with TUM and KUKA) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 541.30 Tm (Robotics. Implemented swept-volume models in PyTorch and optimized inference for industrial robotics research.) Tj ET
-BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 529.15 Tm (Tags: Python - PyTorch - Robotics - Research - Neural Networks) Tj ET
-BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 517.45 Tm (Links: https://github.com/Amrsaeed/FastCollisionDetection) Tj ET
-BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 492.10 Tm (LANGUAGES) Tj ET
-q 1.35 w 0.060 0.490 0.520 RG 48.00 484.10 m 547.28 484.10 l S Q
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 471.00 Tm (Spanish: Native - English: B2/C1 \(Cambridge Certificate\)) Tj ET
+BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 778.00 Tm (QA & Software Quality) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 765.25 Tm (Playwright - Postman - Integration Testing - Test Automation) Tj ET
+BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 748.90 Tm (DevOps & Cloud) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 736.15 Tm (GCP - Kubernetes - CI/CD) Tj ET
+BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 707.80 Tm (PROJECTS) Tj ET
+q 1.35 w 0.060 0.490 0.520 RG 48.00 699.80 m 547.28 699.80 l S Q
+BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 684.30 Tm (Medical Diagnosis with Deep Learning - Bachelor's Thesis) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 669.80 Tm (Built a deep-learning system to classify knee osteoarthritis from medical radiographs using ResNet and EfficientNet with) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 657.10 Tm (PyTorch and TensorFlow. Achieved 80% binary-classification accuracy through fine-tuning, data augmentation, and) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 644.40 Tm (cross-domain validation.) Tj ET
+BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 632.25 Tm (Tags: Python - PyTorch - TensorFlow - Computer Vision - Healthcare AI) Tj ET
+BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 620.55 Tm (Links: https://github.com/Tempus23/Radiography_TFG) Tj ET
+BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 595.70 Tm (Neural Implicit Models for Robotics - TUM Research) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 581.20 Tm (Developed implicit neural models for real-time collision detection in robotic manipulators in collaboration with TUM and KUKA) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 568.50 Tm (Robotics. Implemented swept-volume models in PyTorch and optimized inference for industrial robotics research.) Tj ET
+BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 556.35 Tm (Tags: Python - PyTorch - Robotics - Research - Neural Networks) Tj ET
+BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 544.65 Tm (Links: https://github.com/Amrsaeed/FastCollisionDetection) Tj ET
+BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 519.30 Tm (LANGUAGES) Tj ET
+q 1.35 w 0.060 0.490 0.520 RG 48.00 511.30 m 547.28 511.30 l S Q
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 498.20 Tm (Spanish: Native - English: B2/C1 \(Cambridge Certificate\)) Tj ET
 q 0.65 w 0.880 0.900 0.920 RG 48.00 39.00 m 547.28 39.00 l S Q
 BT /F1 7.30 Tf 0.350 0.390 0.440 rg 1 0 0 1 369.81 27.00 Tm (Carlos Hernández Martínez  -  Curriculum Vitae  |  2 / 2) Tj ET
 endstream
@@ -125,10 +123,10 @@ xref
 0000000431 00000 n 
 0000000583 00000 n 
 0000000735 00000 n 
-0000006314 00000 n 
-0000009546 00000 n 
+0000006247 00000 n 
+0000009190 00000 n 
 trailer
-<< /Size 11 /Root 1 0 R /ID [<5DBEEBB5B0749417E7A8A36EBB957F6C><5DBEEBB5B0749417E7A8A36EBB957F6C>] >>
+<< /Size 11 /Root 1 0 R /ID [<69F89E3288708952661065B32D315BF0><69F89E3288708952661065B32D315BF0>] >>
 startxref
-9563
+9207
 %%EOF
