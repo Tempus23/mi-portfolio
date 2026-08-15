@@ -7,7 +7,6 @@ const { professional_experience } = cvData as {
     company: string;
     date: string;
     description: string | string[];
-    keywords?: string[];
   }[];
 };
 ---
@@ -50,15 +49,6 @@ const { professional_experience } = cvData as {
           </p>
         )}
 
-        {experience.keywords && experience.keywords.length > 0 && (
-          <div class="flex flex-wrap gap-2 mt-2">
-            {experience.keywords.map((keyword) => (
-              <span class="px-3 py-1 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60">
-                {keyword}
-              </span>
-            ))}
-          </div>
-        )}
       </article>
     ))
   }

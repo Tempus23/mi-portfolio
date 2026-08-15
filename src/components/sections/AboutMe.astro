@@ -35,16 +35,4 @@ function formatParagraph(paragraph: string): string {
     ))}
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-    {about_me.attributes.map(attribute => (
-      <div class="flex items-center gap-2.5 text-sm p-3 rounded-xl
-        bg-white/60 dark:bg-white/[0.03]
-        border border-gray-200/60 dark:border-white/[0.06]">
-        <svg class="size-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span>{attribute}</span>
-      </div>
-    ))}
-  </div>
 </article>
