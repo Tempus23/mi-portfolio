@@ -343,9 +343,6 @@ def build_layout(data: dict[str, Any]) -> FlowLayout:
     for paragraph in about.get("description_paragraphs", []):
         layout.paragraph(paragraph)
         layout.spacer(3.0)
-    attributes = about.get("attributes", [])
-    if attributes:
-        layout.labeled_lines("Core strengths", attributes, size=8.65, color=TEAL)
     layout.spacer(9.0)
 
     experience = data.get("professional_experience", [])
@@ -353,10 +350,11 @@ def build_layout(data: dict[str, Any]) -> FlowLayout:
         layout.section("PROFESSIONAL EXPERIENCE")
         for index, job in enumerate(experience):
             layout.entry_header(job.get("title", ""), job.get("company", ""), job.get("date", ""))
-            layout.paragraph(job.get("description", ""), size=9.1, leading=12.9)
-            keywords = job.get("keywords", [])
-            if keywords:
-                layout.labeled_lines("Technologies", keywords, size=8.45, leading=11.8, color=MUTED)
+            description = job.get("description", "")
+            if isinstance(description, list):
+                layout.bullet_lines(description, size=9.1, leading=12.9)
+            else:
+                layout.paragraph(description, size=9.1, leading=12.9)
             if index != len(experience) - 1:
                 layout.spacer(10.0)
         layout.spacer(9.0)
@@ -373,8 +371,7 @@ def build_layout(data: dict[str, Any]) -> FlowLayout:
 
     skills = data.get("skills", {})
     technical = skills.get("technical", [])
-    competencies = skills.get("competencies", [])
-    if technical or competencies:
+    if technical:
         layout.section("SKILLS")
         for category in technical:
             category_name = safe_text(category.get("category", ""))
@@ -383,9 +380,6 @@ def build_layout(data: dict[str, Any]) -> FlowLayout:
             if items:
                 layout.labeled_lines("", items, size=8.75, leading=12.1, color=DARK)
             layout.spacer(3.0)
-        if competencies:
-            layout.place(Item("skill_category", 14.0, ("Professional competencies",)))
-            layout.bullet_lines(competencies, size=8.8, leading=12.0)
         layout.spacer(9.0)
 
     projects = data.get("projects", [])

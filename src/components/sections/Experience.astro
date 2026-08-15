@@ -6,8 +6,7 @@ const { professional_experience } = cvData as {
     title: string;
     company: string;
     date: string;
-    description: string;
-    keywords?: string[];
+    description: string | string[];
   }[];
 };
 ---
@@ -40,19 +39,16 @@ const { professional_experience } = cvData as {
           </time>
         </div>
         
-        <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
-          {experience.description}
-        </p>
-
-        {experience.keywords && experience.keywords.length > 0 && (
-          <div class="flex flex-wrap gap-2 mt-2">
-            {experience.keywords.map((keyword) => (
-              <span class="px-3 py-1 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/60">
-                {keyword}
-              </span>
-            ))}
-          </div>
+        {Array.isArray(experience.description) ? (
+          <ul class="list-disc space-y-2 pl-5 text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
+            {experience.description.map((item) => <li>{item}</li>)}
+          </ul>
+        ) : (
+          <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
+            {experience.description}
+          </p>
         )}
+
       </article>
     ))
   }

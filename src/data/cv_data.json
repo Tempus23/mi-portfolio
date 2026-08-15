@@ -15,15 +15,7 @@
   },
   "about_me": {
     "description_paragraphs": [
-      "Computer Engineer graduated from the Polytechnic University of Valencia with specialization in Artificial Intelligence and Machine Learning. Professional experience developing and validating AI agents, building QA automation, and working with backend systems using Python, Spring Boot and Spring Batch. At Mercadona IT, he contributes to ATENEA, an AI agent platform, and IntegraT, a Spring Boot integration testing framework."
-    ],
-    "attributes": [
-      "Research-to-production mindset",
-      "End-to-end ownership",
-      "Autonomous problem-solving",
-      "Cross-disciplinary collaboration",
-      "International team communication",
-      "Fast ramp-up & self-directed learning"
+      "Computer Engineer specializing in AI and machine learning, with experience building and validating AI agents, automating QA, and developing backend systems with Python and Spring Boot. At Mercadona IT, he works on an AI-agent platform and an integration-testing framework."
     ]
   },
   "professional_experience": [
@@ -31,36 +23,20 @@
       "date": "Jul. 2025 - Present",
       "title": "QA & AI Engineer",
       "company": "Mercadona IT",
-      "description": "Contributes to two internal projects at Mercadona IT: ATENEA, an AI agent platform built with Google ADK, LiteLLM and Claude, and IntegraT, a Spring Boot integration testing framework. Validates AI agents and develops agents for QA tasks, including generating tests from user stories and automating test cases. Contributes to ongoing work on a framework and methodology for evaluating AI agents, microservices and agent harnesses with tools and skills. Explores access control for skills and MCP server scoping in subagent definitions through an agent definition protocol that extends MCP. Also works on automated test data management, backend integration tests and quality analysis with SonarQube.",
-      "keywords": [
-        "Python",
-        "Spring Boot & Spring Batch",
-        "ATENEA",
-        "Google ADK",
-        "LiteLLM",
-        "Claude",
-        "AI Agents for QA",
-        "AI Agent Evaluation",
-        "MCP",
-        "Subagent Scoping",
-        "User Story to Test Generation",
-        "Test Automation",
-        "IntegraT",
-        "Integration Tests",
-        "Mutant Testing",
-        "SonarQube"
+      "description": [
+        "Develops evaluation workflows to validate the correct behavior and outputs of AI agents.",
+        "Builds AI agents for integration-test development.",
+        "Contributes to an integration-testing framework deployed on Okteto.",
+        "Develops backend services for monitoring automated tests and visualizing their reports."
       ]
     },
     {
       "date": "Oct. 2024 - Jun. 2025",
       "title": "Backend AI Engineer",
       "company": "Urobora SL (AI Startup)",
-      "description": "Developed core AI infrastructure for an early-stage startup: autonomous agents for task automation, RAG systems for enterprise knowledge management, and microservices architecture on GCP/Kubernetes. Worked end-to-end from research to production deployment.",
-      "keywords": [
-        "Python",
-        "FastAPI",
-        "LLMs & RAG",
-        "GCP"
+      "description": [
+        "Built autonomous agents for task automation and enterprise RAG systems.",
+        "Developed microservices deployed on GCP and Kubernetes, from research to production."
       ]
     }
   ],
@@ -69,25 +45,25 @@
       "date": "2021-2025",
       "title": "Bachelor's Degree in Computer Engineering",
       "company": "Polytechnic University of Valencia (UPV)",
-      "description": "Specialization in Artificial Intelligence and Machine Learning. Training in algorithms, data structures, software architectures, and machine learning systems."
+      "description": "Specialization in Artificial Intelligence and Machine Learning."
     },
     {
       "date": "6 months, 2024",
       "title": "Erasmus in Computer Science",
       "company": "Technical University of Munich (TUM)",
-      "description": "International exchange program focused on AI and robotics. Participation in applied research projects on implicit neural models."
+      "description": "AI and robotics exchange program with applied research on implicit neural models."
     },
     {
       "date": "2023",
       "title": "Akademia Bankinter",
       "company": "Bankinter Innovation Foundation",
-      "description": "Training program in innovation and technological entrepreneurship. Development of leadership skills and management of innovative projects."
+      "description": "Program in innovation and technological entrepreneurship."
     },
     {
       "date": "2019-2020",
       "title": "Diploma in Social Innovation",
       "company": "CEU San Pablo Valencia",
-      "description": "Training in social innovation and corporate responsibility in collaboration with Edwards Lifesciences."
+      "description": "Program in social innovation and corporate responsibility."
     }
   ],
   "skills": {
@@ -98,18 +74,15 @@
           "Python",
           "Java",
           "Spring Boot",
-          "Spring Batch"
+          "FastAPI",
+          "REST APIs"
         ]
       },
       {
         "category": "Artificial Intelligence",
         "items": [
-          "AI Agents Development",
-          "Autonomous Agents Validation",
-          "Google ADK",
-          "LiteLLM",
-          "Claude",
-          "Model Context Protocol (MCP)",
+          "LLMs & RAG",
+          "AI Agents",
           "PyTorch",
           "TensorFlow"
         ]
@@ -117,32 +90,20 @@
       {
         "category": "QA & Software Quality",
         "items": [
-          "Integration FWK (Spring Boot)",
-          "IntegraT",
-          "AI QA Automation",
-          "User Story to Test Generation",
-          "Mutant Testing",
-          "SonarQube",
           "Playwright",
-          "Postman"
+          "Postman",
+          "Integration Testing",
+          "Test Automation"
         ]
       },
       {
         "category": "DevOps & Cloud",
         "items": [
-          "Google Cloud",
-          "CI/CD (GitHub Actions, Jenkins, CloudBees)",
-          "Spinnaker"
+          "GCP",
+          "Kubernetes",
+          "CI/CD"
         ]
       }
-    ],
-    "competencies": [
-      "Technical Leadership & Mentoring",
-      "Strategic Product Vision",
-      "Cross-functional Collaboration",
-      "Analytical Thinking & Complex Problem Solving",
-      "Adaptability in Agile & Startup Environments",
-      "International Technical Communication"
     ]
   },
   "languages": [
@@ -157,8 +118,8 @@
   ],
   "projects": [
     {
-      "title": "Medical Diagnosis System with Deep Learning - Bachelor's Thesis",
-      "description": "Bachelor's thesis project developing an automatic classification system for knee osteoarthritis using medical radiographs. Implementation of CNN architectures (ResNet, EfficientNet) with PyTorch and TensorFlow, achieving 80% accuracy in binary classification. Application of fine-tuning techniques, data augmentation, and cross-domain validation. Focus on real clinical utility and scalability of the assisted diagnosis system.",
+      "title": "Medical Diagnosis with Deep Learning - Bachelor's Thesis",
+      "description": "Built a deep-learning system to classify knee osteoarthritis from medical radiographs using ResNet and EfficientNet with PyTorch and TensorFlow. Achieved 80% binary-classification accuracy through fine-tuning, data augmentation, and cross-domain validation.",
       "link": "",
       "github": "https://github.com/Tempus23/Radiography_TFG",
       "image": "projects/rodilla-artrosis.png",
@@ -173,7 +134,7 @@
     },
     {
       "title": "Neural Implicit Models for Robotics - TUM Research",
-      "description": "Collaborative research at the Technical University of Munich (TUM) with KUKA Robotics. Development of implicit neural models for real-time collision detection in robotic manipulators. PyTorch implementation of swept volume models and optimization for efficient inference. Contribution to research paper at the intersection of Deep Learning and industrial robotics.",
+      "description": "Developed implicit neural models for real-time collision detection in robotic manipulators in collaboration with TUM and KUKA Robotics. Implemented swept-volume models in PyTorch and optimized inference for industrial robotics research.",
       "link": "",
       "github": "https://github.com/Amrsaeed/FastCollisionDetection",
       "image": "projects/sweept-volume.png",

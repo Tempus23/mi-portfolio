@@ -22,7 +22,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 9 0 R >>
 endobj
 8 0 obj
-<< /Length 6694 >>
+<< /Length 5461 >>
 stream
 q 0.080 0.160 0.270 rg 0.00 826.89 595.28 15.00 re f Q
 BT /F2 24.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 786.00 Tm (Carlos Hernández Martínez) Tj ET
@@ -33,102 +33,78 @@ BT /F1 8.25 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 704.00 Tm (LinkedIn: https://l
 q 1.00 w 0.880 0.900 0.920 RG 48.00 681.00 m 547.28 681.00 l S Q
 BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 641.00 Tm (SUMMARY) Tj ET
 q 1.35 w 0.060 0.490 0.520 RG 48.00 633.00 m 547.28 633.00 l S Q
-BT /F1 9.25 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 619.75 Tm (Computer Engineer graduated from the Polytechnic University of Valencia with specialization in Artificial Intelligence and) Tj ET
-BT /F1 9.25 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 606.50 Tm (Machine Learning. Professional experience developing and validating AI agents, building QA automation, and working) Tj ET
-BT /F1 9.25 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 593.25 Tm (with backend systems using Python, Spring Boot and Spring Batch. At Mercadona IT, he contributes to ATENEA, an AI) Tj ET
-BT /F1 9.25 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 580.00 Tm (agent platform, and IntegraT, a Spring Boot integration testing framework.) Tj ET
-BT /F1 8.65 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 564.35 Tm (Core strengths: Research-to-production mindset - End-to-end ownership - Autonomous problem-solving - Cross-disciplinary) Tj ET
-BT /F1 8.65 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 552.15 Tm (collaboration - International team communication - Fast ramp-up & self-directed learning) Tj ET
-BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 526.60 Tm (PROFESSIONAL EXPERIENCE) Tj ET
-q 1.35 w 0.060 0.490 0.520 RG 48.00 518.60 m 547.28 518.60 l S Q
-BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 503.10 Tm (QA & AI Engineer) Tj ET
-BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 476.14 503.10 Tm (Jul. 2025 - Present) Tj ET
-BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 488.60 Tm (Mercadona IT) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 471.50 Tm (Contributes to two internal projects at Mercadona IT: ATENEA, an AI agent platform built with Google ADK, LiteLLM and) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 458.60 Tm (Claude, and IntegraT, a Spring Boot integration testing framework. Validates AI agents and develops agents for QA tasks,) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 445.70 Tm (including generating tests from user stories and automating test cases. Contributes to ongoing work on a framework and) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 432.80 Tm (methodology for evaluating AI agents, microservices and agent harnesses with tools and skills. Explores access control for) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 419.90 Tm (skills and MCP server scoping in subagent definitions through an agent definition protocol that extends MCP. Also works on) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 407.00 Tm (automated test data management, backend integration tests and quality analysis with SonarQube.) Tj ET
-BT /F1 8.45 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 394.75 Tm (Technologies: Python - Spring Boot & Spring Batch - ATENEA - Google ADK - LiteLLM - Claude - AI Agents for QA - AI Agent) Tj ET
-BT /F1 8.45 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 382.95 Tm (Evaluation - MCP - Subagent Scoping - User Story to Test Generation - Test Automation - IntegraT - Integration Tests - Mutant) Tj ET
-BT /F1 8.45 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 371.15 Tm (Testing - SonarQube) Tj ET
-BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 346.30 Tm (Backend AI Engineer) Tj ET
-BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 465.94 346.30 Tm (Oct. 2024 - Jun. 2025) Tj ET
-BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 331.80 Tm (Urobora SL \(AI Startup\)) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 314.70 Tm (Developed core AI infrastructure for an early-stage startup: autonomous agents for task automation, RAG systems for) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 301.80 Tm (enterprise knowledge management, and microservices architecture on GCP/Kubernetes. Worked end-to-end from research) Tj ET
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 288.90 Tm (to production deployment.) Tj ET
-BT /F1 8.45 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 276.65 Tm (Technologies: Python - FastAPI - LLMs & RAG - GCP) Tj ET
-BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 251.30 Tm (EDUCATION) Tj ET
-q 1.35 w 0.060 0.490 0.520 RG 48.00 243.30 m 547.28 243.30 l S Q
-BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 227.80 Tm (Bachelor's Degree in Computer Engineering) Tj ET
-BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 507.05 227.80 Tm (2021-2025) Tj ET
-BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 213.30 Tm (Polytechnic University of Valencia \(UPV\)) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 196.30 Tm (Specialization in Artificial Intelligence and Machine Learning. Training in algorithms, data structures, software architectures,) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 183.60 Tm (and machine learning systems.) Tj ET
-BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 160.40 Tm (Erasmus in Computer Science) Tj ET
-BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 488.94 160.40 Tm (6 months, 2024) Tj ET
-BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 145.90 Tm (Technical University of Munich \(TUM\)) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 128.90 Tm (International exchange program focused on AI and robotics. Participation in applied research projects on implicit neural) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 116.20 Tm (models.) Tj ET
-BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 93.00 Tm (Akademia Bankinter) Tj ET
-BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 528.58 93.00 Tm (2023) Tj ET
-BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 78.50 Tm (Bankinter Innovation Foundation) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 61.50 Tm (Training program in innovation and technological entrepreneurship. Development of leadership skills and management of) Tj ET
+BT /F1 9.25 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 619.75 Tm (Computer Engineer specializing in AI and machine learning, with experience building and validating AI agents, automating) Tj ET
+BT /F1 9.25 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 606.50 Tm (QA, and developing backend systems with Python and Spring Boot. At Mercadona IT, he works on an AI-agent platform) Tj ET
+BT /F1 9.25 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 593.25 Tm (and an integration-testing framework.) Tj ET
+BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 564.25 Tm (PROFESSIONAL EXPERIENCE) Tj ET
+q 1.35 w 0.060 0.490 0.520 RG 48.00 556.25 m 547.28 556.25 l S Q
+BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 540.75 Tm (QA & AI Engineer) Tj ET
+BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 476.14 540.75 Tm (Jul. 2025 - Present) Tj ET
+BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 526.25 Tm (Mercadona IT) Tj ET
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 509.15 Tm (- Develops evaluation workflows to validate the correct behavior and outputs of AI agents.) Tj ET
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 496.25 Tm (- Builds AI agents for integration-test development.) Tj ET
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 483.35 Tm (- Contributes to an integration-testing framework deployed on Okteto.) Tj ET
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 470.45 Tm (- Develops backend services for monitoring automated tests and visualizing their reports.) Tj ET
+BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 445.15 Tm (Backend AI Engineer) Tj ET
+BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 465.94 445.15 Tm (Oct. 2024 - Jun. 2025) Tj ET
+BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 430.65 Tm (Urobora SL \(AI Startup\)) Tj ET
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 413.55 Tm (- Built autonomous agents for task automation and enterprise RAG systems.) Tj ET
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 400.65 Tm (- Developed microservices deployed on GCP and Kubernetes, from research to production.) Tj ET
+BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 374.85 Tm (EDUCATION) Tj ET
+q 1.35 w 0.060 0.490 0.520 RG 48.00 366.85 m 547.28 366.85 l S Q
+BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 351.35 Tm (Bachelor's Degree in Computer Engineering) Tj ET
+BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 507.05 351.35 Tm (2021-2025) Tj ET
+BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 336.85 Tm (Polytechnic University of Valencia \(UPV\)) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 319.85 Tm (Specialization in Artificial Intelligence and Machine Learning.) Tj ET
+BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 296.65 Tm (Erasmus in Computer Science) Tj ET
+BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 488.94 296.65 Tm (6 months, 2024) Tj ET
+BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 282.15 Tm (Technical University of Munich \(TUM\)) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 265.15 Tm (AI and robotics exchange program with applied research on implicit neural models.) Tj ET
+BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 241.95 Tm (Akademia Bankinter) Tj ET
+BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 528.58 241.95 Tm (2023) Tj ET
+BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 227.45 Tm (Bankinter Innovation Foundation) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 210.45 Tm (Program in innovation and technological entrepreneurship.) Tj ET
+BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 187.25 Tm (Diploma in Social Innovation) Tj ET
+BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 507.05 187.25 Tm (2019-2020) Tj ET
+BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 172.75 Tm (CEU San Pablo Valencia) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 155.75 Tm (Program in social innovation and corporate responsibility.) Tj ET
+BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 130.05 Tm (SKILLS) Tj ET
+q 1.35 w 0.060 0.490 0.520 RG 48.00 122.05 m 547.28 122.05 l S Q
+BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 108.05 Tm (Backend & Core Engineering) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 95.30 Tm (Python - Java - Spring Boot - FastAPI - REST APIs) Tj ET
+BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 78.95 Tm (Artificial Intelligence) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 66.20 Tm (LLMs & RAG - AI Agents - PyTorch - TensorFlow) Tj ET
 q 0.65 w 0.880 0.900 0.920 RG 48.00 39.00 m 547.28 39.00 l S Q
 BT /F1 7.30 Tf 0.350 0.390 0.440 rg 1 0 0 1 369.81 27.00 Tm (Carlos Hernández Martínez  -  Curriculum Vitae  |  1 / 2) Tj ET
 endstream
 endobj
 9 0 obj
-<< /Length 5513 >>
+<< /Length 2892 >>
 stream
 q 0.060 0.490 0.520 rg 0.00 833.89 595.28 8.00 re f Q
 BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 811.89 Tm (Carlos Hernández Martínez) Tj ET
 BT /F1 7.20 Tf 0.350 0.390 0.440 rg 1 0 0 1 472.28 811.89 Tm (CURRICULUM VITAE) Tj ET
 q 0.80 w 0.880 0.900 0.920 RG 48.00 801.89 m 547.28 801.89 l S Q
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 779.00 Tm (innovative projects.) Tj ET
-BT /F2 10.40 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 755.80 Tm (Diploma in Social Innovation) Tj ET
-BT /F1 8.50 Tf 0.350 0.390 0.440 rg 1 0 0 1 507.05 755.80 Tm (2019-2020) Tj ET
-BT /F1 9.00 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 741.30 Tm (CEU San Pablo Valencia) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 724.30 Tm (Training in social innovation and corporate responsibility in collaboration with Edwards Lifesciences.) Tj ET
-BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 698.60 Tm (SKILLS) Tj ET
-q 1.35 w 0.060 0.490 0.520 RG 48.00 690.60 m 547.28 690.60 l S Q
-BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 676.60 Tm (Backend & Core Engineering) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 663.85 Tm (Python - Java - Spring Boot - Spring Batch) Tj ET
-BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 647.50 Tm (Artificial Intelligence) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 634.75 Tm (AI Agents Development - Autonomous Agents Validation - Google ADK - LiteLLM - Claude - Model Context Protocol \(MCP\) -) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 622.65 Tm (PyTorch - TensorFlow) Tj ET
-BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 606.30 Tm (QA & Software Quality) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 593.55 Tm (Integration FWK \(Spring Boot\) - IntegraT - AI QA Automation - User Story to Test Generation - Mutant Testing - SonarQube -) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 581.45 Tm (Playwright - Postman) Tj ET
-BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 565.10 Tm (DevOps & Cloud) Tj ET
-BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 552.35 Tm (Google Cloud - CI/CD \(GitHub Actions, Jenkins, CloudBees\) - Spinnaker) Tj ET
-BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 536.00 Tm (Professional competencies) Tj ET
-BT /F1 8.80 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 523.20 Tm (- Technical Leadership & Mentoring) Tj ET
-BT /F1 8.80 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 511.20 Tm (- Strategic Product Vision) Tj ET
-BT /F1 8.80 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 499.20 Tm (- Cross-functional Collaboration) Tj ET
-BT /F1 8.80 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 487.20 Tm (- Analytical Thinking & Complex Problem Solving) Tj ET
-BT /F1 8.80 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 475.20 Tm (- Adaptability in Agile & Startup Environments) Tj ET
-BT /F1 8.80 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 463.20 Tm (- International Technical Communication) Tj ET
-BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 438.00 Tm (PROJECTS) Tj ET
-q 1.35 w 0.060 0.490 0.520 RG 48.00 430.00 m 547.28 430.00 l S Q
-BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 414.50 Tm (Medical Diagnosis System with Deep Learning - Bachelor's Thesis) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 400.00 Tm (Bachelor's thesis project developing an automatic classification system for knee osteoarthritis using medical radiographs.) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 387.30 Tm (Implementation of CNN architectures \(ResNet, EfficientNet\) with PyTorch and TensorFlow, achieving 80% accuracy in binary) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 374.60 Tm (classification. Application of fine-tuning techniques, data augmentation, and cross-domain validation. Focus on real clinical) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 361.90 Tm (utility and scalability of the assisted diagnosis system.) Tj ET
-BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 349.75 Tm (Tags: Python - PyTorch - TensorFlow - Computer Vision - Healthcare AI) Tj ET
-BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 338.05 Tm (Links: https://github.com/Tempus23/Radiography_TFG) Tj ET
-BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 313.20 Tm (Neural Implicit Models for Robotics - TUM Research) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 298.70 Tm (Collaborative research at the Technical University of Munich \(TUM\) with KUKA Robotics. Development of implicit neural) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 286.00 Tm (models for real-time collision detection in robotic manipulators. PyTorch implementation of swept volume models and) Tj ET
-BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 273.30 Tm (optimization for efficient inference. Contribution to research paper at the intersection of Deep Learning and industrial robotics.) Tj ET
-BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 261.15 Tm (Tags: Python - PyTorch - Robotics - Research - Neural Networks) Tj ET
-BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 249.45 Tm (Links: https://github.com/Amrsaeed/FastCollisionDetection) Tj ET
-BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 224.10 Tm (LANGUAGES) Tj ET
-q 1.35 w 0.060 0.490 0.520 RG 48.00 216.10 m 547.28 216.10 l S Q
-BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 203.00 Tm (Spanish: Native - English: B2/C1 \(Cambridge Certificate\)) Tj ET
+BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 778.00 Tm (QA & Software Quality) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 765.25 Tm (Playwright - Postman - Integration Testing - Test Automation) Tj ET
+BT /F2 9.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 748.90 Tm (DevOps & Cloud) Tj ET
+BT /F1 8.75 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 736.15 Tm (GCP - Kubernetes - CI/CD) Tj ET
+BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 707.80 Tm (PROJECTS) Tj ET
+q 1.35 w 0.060 0.490 0.520 RG 48.00 699.80 m 547.28 699.80 l S Q
+BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 684.30 Tm (Medical Diagnosis with Deep Learning - Bachelor's Thesis) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 669.80 Tm (Built a deep-learning system to classify knee osteoarthritis from medical radiographs using ResNet and EfficientNet with) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 657.10 Tm (PyTorch and TensorFlow. Achieved 80% binary-classification accuracy through fine-tuning, data augmentation, and) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 644.40 Tm (cross-domain validation.) Tj ET
+BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 632.25 Tm (Tags: Python - PyTorch - TensorFlow - Computer Vision - Healthcare AI) Tj ET
+BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 620.55 Tm (Links: https://github.com/Tempus23/Radiography_TFG) Tj ET
+BT /F2 10.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 595.70 Tm (Neural Implicit Models for Robotics - TUM Research) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 581.20 Tm (Developed implicit neural models for real-time collision detection in robotic manipulators in collaboration with TUM and KUKA) Tj ET
+BT /F1 9.00 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 568.50 Tm (Robotics. Implemented swept-volume models in PyTorch and optimized inference for industrial robotics research.) Tj ET
+BT /F1 8.45 Tf 0.060 0.490 0.520 rg 1 0 0 1 48.00 556.35 Tm (Tags: Python - PyTorch - Robotics - Research - Neural Networks) Tj ET
+BT /F1 8.35 Tf 0.350 0.390 0.440 rg 1 0 0 1 48.00 544.65 Tm (Links: https://github.com/Amrsaeed/FastCollisionDetection) Tj ET
+BT /F2 10.00 Tf 0.080 0.160 0.270 rg 1 0 0 1 48.00 519.30 Tm (LANGUAGES) Tj ET
+q 1.35 w 0.060 0.490 0.520 RG 48.00 511.30 m 547.28 511.30 l S Q
+BT /F1 9.10 Tf 0.120 0.150 0.190 rg 1 0 0 1 48.00 498.20 Tm (Spanish: Native - English: B2/C1 \(Cambridge Certificate\)) Tj ET
 q 0.65 w 0.880 0.900 0.920 RG 48.00 39.00 m 547.28 39.00 l S Q
 BT /F1 7.30 Tf 0.350 0.390 0.440 rg 1 0 0 1 369.81 27.00 Tm (Carlos Hernández Martínez  -  Curriculum Vitae  |  2 / 2) Tj ET
 endstream
@@ -147,10 +123,10 @@ xref
 0000000431 00000 n 
 0000000583 00000 n 
 0000000735 00000 n 
-0000007480 00000 n 
-0000013044 00000 n 
+0000006247 00000 n 
+0000009190 00000 n 
 trailer
-<< /Size 11 /Root 1 0 R /ID [<BCC6243AF8EA4D6E6EB843A965E43EBB><BCC6243AF8EA4D6E6EB843A965E43EBB>] >>
+<< /Size 11 /Root 1 0 R /ID [<69F89E3288708952661065B32D315BF0><69F89E3288708952661065B32D315BF0>] >>
 startxref
-13061
+9207
 %%EOF

@@ -68,10 +68,10 @@ function buildLanguages(languages: any[]): string {
 function buildExperience(professional_experience: any[]): string {
   let context = `=== Professional Experience ===\n`;
   professional_experience.forEach((exp: any) => {
-    context += `- ${exp.title} at ${exp.company} (${exp.date}): ${exp.description}\n`;
-    if (exp.keywords?.length) {
-      context += `  Technologies: ${exp.keywords.join(", ")}\n`;
-    }
+    const description = Array.isArray(exp.description)
+      ? exp.description.join(" ")
+      : exp.description;
+    context += `- ${exp.title} at ${exp.company} (${exp.date}): ${description}\n`;
     context += `\n`;
   });
   return context + `\n`;
@@ -96,9 +96,6 @@ function buildSkills(skills: any): string {
     skills.technical.forEach((group: any) => {
       context += `- ${group.category}: ${group.items.join(", ")}\n`;
     });
-  }
-  if (skills.competencies?.length) {
-    context += `- Competencies: ${skills.competencies.join(", ")}\n`;
   }
   return context + `\n`;
 }
