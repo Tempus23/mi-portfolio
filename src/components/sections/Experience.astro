@@ -6,7 +6,7 @@ const { professional_experience } = cvData as {
     title: string;
     company: string;
     date: string;
-    description: string;
+    description: string | string[];
     keywords?: string[];
   }[];
 };
@@ -40,9 +40,15 @@ const { professional_experience } = cvData as {
           </time>
         </div>
         
-        <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
-          {experience.description}
-        </p>
+        {Array.isArray(experience.description) ? (
+          <ul class="list-disc space-y-2 pl-5 text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
+            {experience.description.map((item) => <li>{item}</li>)}
+          </ul>
+        ) : (
+          <p class="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">
+            {experience.description}
+          </p>
+        )}
 
         {experience.keywords && experience.keywords.length > 0 && (
           <div class="flex flex-wrap gap-2 mt-2">

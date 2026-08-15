@@ -353,7 +353,11 @@ def build_layout(data: dict[str, Any]) -> FlowLayout:
         layout.section("PROFESSIONAL EXPERIENCE")
         for index, job in enumerate(experience):
             layout.entry_header(job.get("title", ""), job.get("company", ""), job.get("date", ""))
-            layout.paragraph(job.get("description", ""), size=9.1, leading=12.9)
+            description = job.get("description", "")
+            if isinstance(description, list):
+                layout.bullet_lines(description, size=9.1, leading=12.9)
+            else:
+                layout.paragraph(description, size=9.1, leading=12.9)
             keywords = job.get("keywords", [])
             if keywords:
                 layout.labeled_lines("Technologies", keywords, size=8.45, leading=11.8, color=MUTED)

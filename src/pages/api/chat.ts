@@ -68,7 +68,10 @@ function buildLanguages(languages: any[]): string {
 function buildExperience(professional_experience: any[]): string {
   let context = `=== Professional Experience ===\n`;
   professional_experience.forEach((exp: any) => {
-    context += `- ${exp.title} at ${exp.company} (${exp.date}): ${exp.description}\n`;
+    const description = Array.isArray(exp.description)
+      ? exp.description.join(" ")
+      : exp.description;
+    context += `- ${exp.title} at ${exp.company} (${exp.date}): ${description}\n`;
     if (exp.keywords?.length) {
       context += `  Technologies: ${exp.keywords.join(", ")}\n`;
     }
