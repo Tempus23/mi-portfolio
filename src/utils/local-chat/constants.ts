@@ -46,7 +46,7 @@ export const FEW_SHOT = [
     {
         role: "assistant",
         content:
-            "¡Hola! Soy el asistente virtual de Carlos Hernández Martínez. Puedo informarte sobre su experiencia como QA & AI Engineer en Mercadona IT o sus proyectos de IA.",
+            "¡Hola! Soy el asistente virtual de Carlos Hernández Martínez. Puedo informarte sobre su experiencia con agentes de IA, evaluación, backend y automatización de calidad.",
     },
     {
         role: "user",
@@ -55,7 +55,7 @@ export const FEW_SHOT = [
     {
         role: "assistant",
         content:
-            "Carlos es actualmente QA & AI Engineer en Mercadona IT. Trabaja en ATENEA, una plataforma de agentes de IA construida con Google ADK, LiteLLM y Claude, y en IntegraT, un framework de testing de integración en Spring Boot. También valida agentes y desarrolla agentes para tareas de QA, como generar tests a partir de historias de usuario.",
+            "Carlos trabaja actualmente como QA Backend Developer, especializado en agentes de IA y evaluación. Diseña un framework de evaluación, desarrolla agentes y herramientas en Python, mantiene un framework de pruebas de integración en Java y contribuye al backend de una plataforma interna de calidad.",
     },
     {
         role: "user",

@@ -3,7 +3,7 @@
     "name": "Carlos Hernández Martínez",
     "image_path": "me.jpg",
     "personal_image_alt": "Carlos Hernández Martínez",
-    "role": "QA & AI Engineer | Backend Developer",
+    "role": "AI Engineer | AI Agents & Evaluation",
     "emails": [
       "chermar.pro@gmail.com",
       "carlos.cbm32@gmail.com"
@@ -11,32 +11,33 @@
     "linkedin": "https://linkedin.com/in/carl0shdez",
     "github": "https://github.com/Tempus23",
     "location": "Valencia, Spain",
-    "tagline": "Bridging the gap between AI innovation and software reliability."
+    "tagline": "Building and evaluating reliable AI agents with Python."
   },
   "about_me": {
     "description_paragraphs": [
-      "Computer Engineer specializing in AI and machine learning, with experience building and validating AI agents, automating QA, and developing backend systems with Python and Spring Boot. At Mercadona IT, he works on an AI-agent platform and an integration-testing framework."
+      "Computer Engineer focused on AI agents and evaluation, with experience building AI-powered tools, automating software-quality workflows, and developing backend systems with Python and Spring Boot."
     ]
   },
   "professional_experience": [
     {
       "date": "Jul. 2025 - Present",
-      "title": "QA & AI Engineer",
+      "title": "QA Backend Developer — AI Agents & Evaluation",
       "company": "Mercadona IT",
       "description": [
-        "Develops evaluation workflows to validate the correct behavior and outputs of AI agents.",
-        "Builds AI agents for integration-test development.",
-        "Contributes to an integration-testing framework deployed on Okteto.",
-        "Develops backend services for monitoring automated tests and visualizing their reports."
+        "Designs a reusable evaluation framework for AI agents.",
+        "Builds Python agents and tools to automate quality workflows, including integration-test generation.",
+        "Maintains and evolves a Java-based integration-testing framework.",
+        "Develops backend capabilities for an internal software-quality platform."
       ]
     },
     {
       "date": "Oct. 2024 - Jun. 2025",
-      "title": "Backend AI Engineer",
+      "title": "AI Software Engineer — Python, Agents & RAG",
       "company": "Urobora SL (AI Startup)",
       "description": [
-        "Built autonomous agents for task automation and enterprise RAG systems.",
-        "Developed microservices deployed on GCP and Kubernetes, from research to production."
+        "Developed Python backend services for autonomous AI agents and enterprise RAG systems.",
+        "Built asynchronous microservices using RabbitMQ and containerized them with Docker.",
+        "Deployed and scaled AI services on GCP and Kubernetes, contributing across the lifecycle from experimentation to production."
       ]
     }
   ],
@@ -83,6 +84,9 @@
         "items": [
           "LLMs & RAG",
           "AI Agents",
+          "AI Agent Evaluation",
+          "Google ADK",
+          "Promptfoo",
           "PyTorch",
           "TensorFlow"
         ]
